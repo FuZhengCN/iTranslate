@@ -2,9 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="settings.css" />
   <title>iTranslate Settings</title>
 </head>
 <body>
-  <p>iTranslate settings — placeholder</p>
+  <div class="container">
+    <h1>iTranslate Settings</h1>
+
+    <section class="form-group">
+      <label for="apiEndpoint">API Endpoint</label>
+      <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/v1" />
+      <span class="hint">Default: DeepSeek API. Change if using a proxy.</span>
+    </section>
+
+    <section class="form-group">
+      <label for="apiKey">API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-..." />
+      <span class="hint">Your DeepSeek API key. Stored locally in your browser.</span>
+    </section>
+
+    <section class="form-group">
+      <label for="model">Model</label>
+      <input type="text" id="model" placeholder="deepseek-chat" />
+    </section>
+
+    <section class="form-group">
+      <label for="systemPrompt">Custom System Prompt (optional)</label>
+      <textarea id="systemPrompt" rows="4" placeholder="You are a professional English-to-Chinese translator..."></textarea>
+    </section>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn-primary">Save</button>
+      <button id="testBtn" class="btn-secondary">Test Connection</button>
+    </div>
+
+    <div id="status" class="status hidden"></div>
+  </div>
+
+  <script src="settings.ts" type="module"></script>
 </body>
 </html>
