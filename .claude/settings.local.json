@@ -9,7 +9,14 @@
       "Bash(git config *)",
       "Bash(npm install *)",
       "Bash(npm run *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(git commit *)",
+      "Bash(git -C \"C:/Users/fuzheng/source/workspace/vibeCoding/iTranslate\" log --oneline -5)",
+      "Bash(git *)",
+      "Bash(file *)",
+      "Bash(which convert *)",
+      "Bash(which magick *)",
+      "Bash(npx tsc *)"
     ]
   }
 }
