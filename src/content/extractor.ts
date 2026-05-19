@@ -1,7 +1,7 @@
 import { isProbablyReaderable } from '@mozilla/readability';
 import type { TranslationSegment } from '../shared/types';
 
-const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME', 'CODE', 'PRE', 'KBD']);
+const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME', 'CODE', 'PRE', 'KBD', 'NAV', 'FOOTER', 'HEADER', 'ASIDE']);
 const SKIP_CLASS_NAMES = /(header|footer|nav|sidebar|comment|menu|widget|advert|banner)/i;
 
 function isSkippable(el: Element): boolean {
