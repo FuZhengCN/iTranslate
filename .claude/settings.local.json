@@ -16,7 +16,8 @@
       "Bash(file *)",
       "Bash(which convert *)",
       "Bash(which magick *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx vitest *)"
     ]
   }
 }
