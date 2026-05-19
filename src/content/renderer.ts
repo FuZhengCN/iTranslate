@@ -18,8 +18,8 @@ export function renderTranslations(
 
     if (translationsInGroup.length === 0) continue;
 
-    const parent = node.parentElement;
-    if (!parent) continue;
+    const originalEl = node.parentElement;
+    if (!originalEl) continue;
 
     const translatedText = translationsInGroup.map((r) => r.translated).join(' ');
 
@@ -27,6 +27,11 @@ export function renderTranslations(
     translation.className = 'itranslate-translation';
     translation.textContent = translatedText;
 
-    parent.insertAdjacentElement('afterend', translation);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'itranslate-group';
+    wrapper.appendChild(translation);
+
+    originalEl.insertAdjacentElement('beforebegin', wrapper);
+    wrapper.insertBefore(originalEl, translation);
   }
 }
