@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "iTranslate",
+  "version": "1.0.0",
+  "description": "Immersive bilingual English-Chinese translation using DeepSeek AI",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background/index.ts"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.ts"],
+      "css": ["src/content/styles.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "iTranslate"
+  },
+  "options_page": "src/settings/settings.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
