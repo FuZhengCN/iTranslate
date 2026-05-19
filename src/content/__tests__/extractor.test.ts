@@ -73,6 +73,28 @@ describe('extractor', () => {
     expect(result.allSegments.length).toBeGreaterThan(0);
   });
 
+  it('skips already-translated elements on repeated extraction', () => {
+    // Simulate a page that already has translation elements injected
+    document.body.innerHTML = `
+      <main>
+        <p>Hello world.</p>
+        <p class="itranslate-translation">你好世界。</p>
+        <p>More text.</p>
+        <p class="itranslate-translation">更多文本。</p>
+      </main>
+    `;
+
+    const result = extractSegments();
+    const texts = result.allSegments.map((s) => s.text);
+
+    // Should only extract original text, not translations
+    expect(result.allSegments.length).toBe(2);
+    expect(texts).toContain('Hello world.');
+    expect(texts).toContain('More text.');
+    expect(texts.some((t) => t.includes('你好世界'))).toBe(false);
+    expect(texts.some((t) => t.includes('更多文本'))).toBe(false);
+  });
+
   it('skips very short text', () => {
     document.body.innerHTML = `
       <main>

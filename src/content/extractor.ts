@@ -7,6 +7,8 @@ function isSkippable(el: Element): boolean {
   const tag = el.tagName;
   if (SKIP_TAGS.has(tag)) return true;
   const className = el.className?.toString() ?? '';
+  // Skip already-translated elements
+  if (className.includes('itranslate-translation')) return true;
   const id = el.id ?? '';
   if (SKIP_CLASS_NAMES.test(className) || SKIP_CLASS_NAMES.test(id)) return true;
   const role = el.getAttribute('role') ?? '';
