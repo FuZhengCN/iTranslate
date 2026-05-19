@@ -1,6 +1,6 @@
 import { extractSegments } from './extractor';
 import type { ExtractionResult } from './extractor';
-import { renderTranslations } from './renderer';
+import { renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
 
 let translateInProgress = false;
@@ -20,6 +20,9 @@ async function translatePage(): Promise<void> {
       console.log('[iTranslate] No translatable content found');
       return;
     }
+
+    // Show placeholders immediately so user knows work is in progress
+    renderPlaceholders(extraction.sourceElements);
 
     const response = await chrome.runtime.sendMessage({
       action: 'translate',

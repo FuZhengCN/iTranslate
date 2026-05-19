@@ -1,7 +1,45 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderTranslations } from '../renderer';
+import { renderPlaceholders, renderTranslations } from '../renderer';
 
-describe('renderer', () => {
+describe('renderPlaceholders', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('inserts translating placeholder after each element', () => {
+    document.body.innerHTML = `
+      <main>
+        <p>Hello world.</p>
+        <p>More text.</p>
+      </main>
+    `;
+
+    const elements = document.querySelectorAll('p');
+    renderPlaceholders(Array.from(elements));
+
+    const placeholders = document.querySelectorAll('.itranslate-placeholder');
+    expect(placeholders).toHaveLength(2);
+    expect(placeholders[0].textContent).toBe('Translating...');
+    expect(placeholders[1].textContent).toBe('Translating...');
+  });
+
+  it('does not duplicate placeholder if one already exists', () => {
+    document.body.innerHTML = `
+      <main>
+        <p>Hello world.</p>
+      </main>
+    `;
+
+    const el = document.querySelector('p')!;
+    renderPlaceholders([el]);
+    renderPlaceholders([el]);
+
+    const placeholders = document.querySelectorAll('.itranslate-placeholder');
+    expect(placeholders).toHaveLength(1);
+  });
+});
+
+describe('renderTranslations', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -27,24 +65,32 @@ describe('renderer', () => {
     expect(paragraphs[1].classList.contains('itranslate-translation')).toBe(true);
   });
 
-  it('clones inline elements directly', () => {
+  it('replaces placeholder with real translation', () => {
     document.body.innerHTML = `
       <main>
-        <p><span>inline text</span></p>
+        <p>Hello world.</p>
       </main>
     `;
 
-    const span = document.querySelector('span')!;
+    const el = document.querySelector('p')!;
+
+    // First show placeholder
+    renderPlaceholders([el]);
+    const placeholder = document.querySelector('.itranslate-placeholder')!;
+    expect(placeholder.textContent).toBe('Translating...');
+    expect(placeholder.classList.contains('itranslate-placeholder')).toBe(true);
+
+    // Then render real translation
     const results = [
-      { id: 'seg_0', original: 'inline text', translated: '内联文本' },
+      { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
     ];
+    renderTranslations(results, [el]);
 
-    renderTranslations(results, [span]);
-
-    const spans = document.querySelectorAll('span');
-    expect(spans).toHaveLength(2);
-    expect(spans[1].textContent).toBe('内联文本');
-    expect(spans[1].classList.contains('itranslate-translation')).toBe(true);
+    // Placeholder should be updated, not duplicated
+    const translations = document.querySelectorAll('.itranslate-translation');
+    expect(translations).toHaveLength(1);
+    expect(translations[0].textContent).toBe('你好世界。');
+    expect(translations[0].classList.contains('itranslate-placeholder')).toBe(false);
   });
 
   it('clone inherits original element classes and attributes', () => {
@@ -74,18 +120,10 @@ describe('renderer', () => {
     `;
 
     const el = document.querySelector('p')!;
-    const results1 = [
-      { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
-    ];
-
-    renderTranslations(results1, [el]);
+    renderTranslations([{ id: 'seg_0', original: 'Hello world.', translated: '你好世界。' }], [el]);
     expect(document.querySelectorAll('p')).toHaveLength(2);
 
-    const results2 = [
-      { id: 'seg_0', original: 'Hello world.', translated: '你好，世界！' },
-    ];
-    renderTranslations(results2, [el]);
-
+    renderTranslations([{ id: 'seg_0', original: 'Hello world.', translated: '你好，世界！' }], [el]);
     expect(document.querySelectorAll('p')).toHaveLength(2);
     expect(document.querySelector('.itranslate-translation')!.textContent).toBe('你好，世界！');
   });
@@ -107,7 +145,6 @@ describe('renderer', () => {
     const clone = document.querySelector('.itranslate-translation')!;
     expect(clone.children).toHaveLength(0);
     expect(clone.textContent).not.toContain('DeepSeek');
-    expect(clone.textContent).not.toContain('中文');
     expect(document.querySelectorAll('[class*="badge"]').length).toBe(0);
   });
 

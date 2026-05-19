@@ -1,5 +1,19 @@
 import type { TranslationResult } from '../shared/types';
 
+export function renderPlaceholders(sourceElements: Element[]): void {
+  for (const el of sourceElements) {
+    // Skip if a translation or placeholder already exists for this element
+    const existing = el.nextElementSibling;
+    if (existing?.classList.contains('itranslate-translation')) continue;
+
+    const clone = el.cloneNode(false) as HTMLElement;
+    clone.textContent = 'Translating...';
+    clone.classList.add('itranslate-translation', 'itranslate-placeholder');
+
+    el.insertAdjacentElement('afterend', clone);
+  }
+}
+
 export function renderTranslations(
   results: TranslationResult[],
   sourceElements: Element[]
@@ -11,10 +25,11 @@ export function renderTranslations(
     const result = resultMap.get(`seg_${i}`);
     if (!result) continue;
 
-    // Check existing translation — update instead of duplicating
+    // Find existing translation element (might be a placeholder)
     const existing = el.nextElementSibling;
     if (existing?.classList.contains('itranslate-translation')) {
       existing.textContent = result.translated;
+      existing.classList.remove('itranslate-placeholder');
       continue;
     }
 

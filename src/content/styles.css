@@ -1,3 +1,8 @@
 .itranslate-translation {
   /* Marker class only — clone inherits original element's font, size, and color */
 }
+
+.itranslate-placeholder {
+  color: #a0aec0;
+  font-style: italic;
+}
