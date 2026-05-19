@@ -31,9 +31,9 @@ async function translatePage(): Promise<void> {
       return;
     }
 
-    renderTranslations(response.results, extraction.sourceGroups);
+    renderTranslations(response.results, extraction.sourceElements);
 
-    const root = extraction.sourceGroups[0]?.node.parentElement?.closest('article, main, [role="main"]') ?? document.body;
+    const root = extraction.sourceElements[0]?.closest('article, main, [role="main"]') ?? document.body;
     startObserving(root, () => {
       translatePage();
     });

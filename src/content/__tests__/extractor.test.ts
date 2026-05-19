@@ -6,11 +6,13 @@ describe('extractor', () => {
     document.body.innerHTML = '';
   });
 
-  it('extracts text from main content area', () => {
+  it('extracts text from elements inside main content area', () => {
     document.body.innerHTML = `
-      <nav>Navigation here</nav>
+      <nav>Navigation</nav>
       <main>
-        <p>Machine learning is a fascinating field. It has many applications.</p>
+        <h1>Machine Learning</h1>
+        <p>Machine learning is a fascinating field.</p>
+        <span>Some inline text here.</span>
       </main>
       <footer>Footer content</footer>
     `;
@@ -18,7 +20,9 @@ describe('extractor', () => {
     const result = extractSegments();
     const texts = result.allSegments.map((s) => s.text);
 
-    expect(texts.some((t) => t.includes('Machine learning'))).toBe(true);
+    expect(texts.some((t) => t.includes('Machine Learning'))).toBe(true);
+    expect(texts.some((t) => t.includes('fascinating field'))).toBe(true);
+    expect(texts.some((t) => t.includes('inline text'))).toBe(true);
     expect(texts.some((t) => t.includes('Footer'))).toBe(false);
     expect(texts.some((t) => t.includes('Navigation'))).toBe(false);
   });
@@ -29,7 +33,7 @@ describe('extractor', () => {
     expect(result.allSegments).toHaveLength(0);
   });
 
-  it('skips script and style content', () => {
+  it('skips script, style, and hidden content', () => {
     document.body.innerHTML = `
       <main>
         <p>Visible text here.</p>
@@ -44,15 +48,18 @@ describe('extractor', () => {
     expect(texts[0]).toContain('Visible text');
   });
 
-  it('groups long paragraphs into segments', () => {
+  it('each text-containing element becomes one segment', () => {
     document.body.innerHTML = `
       <main>
-        <p>First sentence is here. Second sentence continues. Third sentence goes on. Fourth is long too. Fifth finishes it. Sixth is extra content.</p>
+        <h1>Title Here</h1>
+        <p>First paragraph text.</p>
+        <p>Second paragraph with more content.</p>
       </main>
     `;
 
     const result = extractSegments();
-    expect(result.allSegments.length).toBeGreaterThanOrEqual(1);
+    expect(result.allSegments.length).toBe(3);
+    expect(result.sourceElements.length).toBe(3);
   });
 
   it('falls back to body when no main content area found', () => {
@@ -64,5 +71,19 @@ describe('extractor', () => {
 
     const result = extractSegments();
     expect(result.allSegments.length).toBeGreaterThan(0);
+  });
+
+  it('skips very short text', () => {
+    document.body.innerHTML = `
+      <main>
+        <span>Hi</span>
+        <p>Hello world this is enough text.</p>
+      </main>
+    `;
+
+    const result = extractSegments();
+    const texts = result.allSegments.map((s) => s.text);
+    expect(texts.some((t) => t === 'Hi')).toBe(false);
+    expect(texts.some((t) => t.includes('Hello world'))).toBe(true);
   });
 });

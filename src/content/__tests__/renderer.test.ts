@@ -6,23 +6,19 @@ describe('renderer', () => {
     document.body.innerHTML = '';
   });
 
-  it('clones block element and inserts translation after it', () => {
+  it('clones element and inserts translation after it', () => {
     document.body.innerHTML = `
       <main>
         <p>Hello world.</p>
       </main>
     `;
 
-    const textNode = document.querySelector('p')!.firstChild as Text;
-    const sourceGroups = [
-      { node: textNode, segments: [{ id: 'seg_0' }] },
-    ];
-
+    const el = document.querySelector('p')!;
     const results = [
       { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
     ];
 
-    renderTranslations(results, sourceGroups);
+    renderTranslations(results, [el]);
 
     const paragraphs = document.querySelectorAll('p');
     expect(paragraphs).toHaveLength(2);
@@ -31,73 +27,39 @@ describe('renderer', () => {
     expect(paragraphs[1].classList.contains('itranslate-translation')).toBe(true);
   });
 
-  it('inserts translation after block ancestor when text is in inline element', () => {
+  it('clones inline elements directly', () => {
     document.body.innerHTML = `
       <main>
-        <p>Text with <span>some inline</span> content.</p>
+        <p><span>inline text</span></p>
       </main>
     `;
 
-    // Text node inside <span> — should clone <p>, not <span>
-    const inlineNode = document.querySelector('span')!.firstChild as Text;
-    const sourceGroups = [
-      { node: inlineNode, segments: [{ id: 'seg_0' }] },
-    ];
-
+    const span = document.querySelector('span')!;
     const results = [
-      { id: 'seg_0', original: 'some inline', translated: '一些内联' },
+      { id: 'seg_0', original: 'inline text', translated: '内联文本' },
     ];
 
-    renderTranslations(results, sourceGroups);
+    renderTranslations(results, [span]);
 
-    const allP = document.querySelectorAll('p');
-    expect(allP).toHaveLength(2); // original <p> + translation <p> as sibling
-    expect(allP[1].classList.contains('itranslate-translation')).toBe(true);
-    expect(allP[1].textContent).toBe('一些内联');
+    const spans = document.querySelectorAll('span');
+    expect(spans).toHaveLength(2);
+    expect(spans[1].textContent).toBe('内联文本');
+    expect(spans[1].classList.contains('itranslate-translation')).toBe(true);
   });
 
-  it('merges multiple segments from the same block', () => {
-    document.body.innerHTML = `
-      <main>
-        <p>Hello. World.</p>
-      </main>
-    `;
-
-    const textNode = document.querySelector('p')!.firstChild as Text;
-    const sourceGroups = [
-      { node: textNode, segments: [{ id: 'seg_0' }, { id: 'seg_1' }] },
-    ];
-
-    const results = [
-      { id: 'seg_0', original: 'Hello.', translated: '你好。' },
-      { id: 'seg_1', original: 'World.', translated: '世界。' },
-    ];
-
-    renderTranslations(results, sourceGroups);
-
-    const translations = document.querySelectorAll('.itranslate-translation');
-    expect(translations).toHaveLength(1);
-    expect(translations[0].textContent).toContain('你好。');
-    expect(translations[0].textContent).toContain('世界。');
-  });
-
-  it('clone inherits original block element classes and attributes', () => {
+  it('clone inherits original element classes and attributes', () => {
     document.body.innerHTML = `
       <main>
         <div class="intro" data-id="123">Hello world.</div>
       </main>
     `;
 
-    const textNode = document.querySelector('div')!.firstChild as Text;
-    const sourceGroups = [
-      { node: textNode, segments: [{ id: 'seg_0' }] },
-    ];
-
+    const el = document.querySelector('div')!;
     const results = [
       { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
     ];
 
-    renderTranslations(results, sourceGroups);
+    renderTranslations(results, [el]);
 
     const clone = document.querySelector('.itranslate-translation')!;
     expect(clone.className).toContain('intro');
@@ -111,22 +73,18 @@ describe('renderer', () => {
       </main>
     `;
 
-    const textNode = document.querySelector('p')!.firstChild as Text;
-    const sourceGroups = [
-      { node: textNode, segments: [{ id: 'seg_0' }] },
-    ];
-
+    const el = document.querySelector('p')!;
     const results1 = [
       { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
     ];
 
-    renderTranslations(results1, sourceGroups);
+    renderTranslations(results1, [el]);
     expect(document.querySelectorAll('p')).toHaveLength(2);
 
     const results2 = [
       { id: 'seg_0', original: 'Hello world.', translated: '你好，世界！' },
     ];
-    renderTranslations(results2, sourceGroups);
+    renderTranslations(results2, [el]);
 
     expect(document.querySelectorAll('p')).toHaveLength(2);
     expect(document.querySelector('.itranslate-translation')!.textContent).toBe('你好，世界！');
@@ -139,16 +97,12 @@ describe('renderer', () => {
       </main>
     `;
 
-    const textNode = document.querySelector('p')!.firstChild as Text;
-    const sourceGroups = [
-      { node: textNode, segments: [{ id: 'seg_0' }] },
-    ];
-
+    const el = document.querySelector('p')!;
     const results = [
       { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
     ];
 
-    renderTranslations(results, sourceGroups);
+    renderTranslations(results, [el]);
 
     const clone = document.querySelector('.itranslate-translation')!;
     expect(clone.children).toHaveLength(0);
@@ -157,7 +111,7 @@ describe('renderer', () => {
     expect(document.querySelectorAll('[class*="badge"]').length).toBe(0);
   });
 
-  it('keeps original block element unchanged', () => {
+  it('keeps original element unchanged', () => {
     document.body.innerHTML = `
       <main>
         <p class="intro">Hello world.</p>
@@ -165,16 +119,11 @@ describe('renderer', () => {
     `;
 
     const original = document.querySelector('p')!;
-    const textNode = original.firstChild as Text;
-    const sourceGroups = [
-      { node: textNode, segments: [{ id: 'seg_0' }] },
-    ];
-
     const results = [
       { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
     ];
 
-    renderTranslations(results, sourceGroups);
+    renderTranslations(results, [original]);
 
     expect(original.textContent).toBe('Hello world.');
     expect(original.classList.contains('itranslate-translation')).toBe(false);
