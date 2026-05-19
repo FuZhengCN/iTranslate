@@ -1,63 +1,40 @@
 import type { TranslationResult } from '../shared/types';
 
-const BLOCK_TAGS = new Set([
-  'P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
-  'BLOCKQUOTE', 'PRE', 'SECTION', 'ARTICLE', 'ASIDE',
-  'MAIN', 'HEADER', 'FOOTER', 'FIGCAPTION', 'DETAILS',
-  'TD', 'TH', 'DD', 'DT', 'FIELDSET',
-]);
-
-function findBlockAncestor(el: Element): Element {
-  let current: Element | null = el;
-  while (current) {
-    if (BLOCK_TAGS.has(current.tagName)) return current;
-    current = current.parentElement;
-  }
-  return el; // fallback to the original parent
-}
-
 export function renderTranslations(
   results: TranslationResult[],
   sourceGroups: { node: Text; segments: { id: string }[] }[]
 ): void {
   const resultMap = new Map(results.map((r) => [r.id, r]));
 
-  // Group translations by block ancestor so each block gets one translation
-  const blockMap = new Map<Element, string[]>();
-
   for (const group of sourceGroups) {
     const node = group.node;
-    if (!node.parentElement) continue;
-
-    const block = findBlockAncestor(node.parentElement);
-    const texts: string[] = [];
+    const translationsInGroup: TranslationResult[] = [];
     for (const seg of group.segments) {
       const result = resultMap.get(seg.id);
-      if (result) texts.push(result.translated);
+      if (result) {
+        translationsInGroup.push(result);
+      }
     }
-    if (texts.length === 0) continue;
 
-    const existing = blockMap.get(block);
-    if (existing) {
-      existing.push(...texts);
-    } else {
-      blockMap.set(block, texts);
-    }
-  }
+    if (translationsInGroup.length === 0) continue;
 
-  for (const [block, texts] of blockMap) {
-    const translatedText = texts.join(' ');
+    const originalEl = node.parentElement;
+    if (!originalEl) continue;
 
-    const existing = block.nextElementSibling;
+    const translatedText = translationsInGroup.map((r) => r.translated).join(' ');
+
+    // Check if translation already exists — update instead of duplicating
+    const existing = originalEl.nextElementSibling;
     if (existing?.classList.contains('itranslate-translation')) {
       existing.textContent = translatedText;
       continue;
     }
 
-    const clone = block.cloneNode(false) as HTMLElement;
+    // Clone the original element to inherit its tag, classes, and styles
+    const clone = originalEl.cloneNode(false) as HTMLElement;
     clone.textContent = translatedText;
     clone.classList.add('itranslate-translation');
 
-    block.insertAdjacentElement('afterend', clone);
+    originalEl.insertAdjacentElement('afterend', clone);
   }
 }
