@@ -2,9 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>iTranslate</title>
+  <meta name="viewport" content="width=320" />
+  <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <p>iTranslate popup — placeholder</p>
+  <div class="popup">
+    <div class="header">
+      <span class="logo">iTranslate</span>
+      <span class="lang-badge">EN → ZH</span>
+    </div>
+
+    <button id="translateBtn" class="btn-primary">Translate This Page</button>
+
+    <div id="stats" class="stats hidden">
+      <div class="stat-row">
+        <span>Segments found:</span>
+        <span id="segCount">-</span>
+      </div>
+      <div class="stat-row">
+        <span>Cached:</span>
+        <span id="cacheHits" class="hit">-</span>
+      </div>
+      <div class="stat-row">
+        <span>API calls:</span>
+        <span id="apiCalls" class="miss">-</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="settingsBtn" class="btn-secondary">Settings</button>
+      <button id="clearCacheBtn" class="btn-secondary">Clear Cache</button>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+  </div>
+
+  <script src="popup.ts" type="module"></script>
 </body>
 </html>
