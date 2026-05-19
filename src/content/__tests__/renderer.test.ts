@@ -6,7 +6,7 @@ describe('renderer', () => {
     document.body.innerHTML = '';
   });
 
-  it('injects translation cards after original text nodes', () => {
+  it('injects translation paragraphs after original text nodes', () => {
     document.body.innerHTML = `
       <main>
         <p>Hello world.</p>
@@ -24,11 +24,9 @@ describe('renderer', () => {
 
     renderTranslations(results, sourceGroups);
 
-    const cards = document.querySelectorAll('.itranslate-card');
-    expect(cards).toHaveLength(1);
-    expect(cards[0].textContent).toContain('你好世界。');
-    expect(cards[0].textContent).toContain('中文');
-    expect(cards[0].textContent).toContain('DeepSeek');
+    const translations = document.querySelectorAll('.itranslate-translation');
+    expect(translations).toHaveLength(1);
+    expect(translations[0].textContent).toBe('你好世界。');
   });
 
   it('handles multiple segments for one text node', () => {
@@ -50,9 +48,34 @@ describe('renderer', () => {
 
     renderTranslations(results, sourceGroups);
 
-    const cards = document.querySelectorAll('.itranslate-card');
-    expect(cards).toHaveLength(1);
-    expect(cards[0].textContent).toContain('你好。');
-    expect(cards[0].textContent).toContain('世界。');
+    const translations = document.querySelectorAll('.itranslate-translation');
+    expect(translations).toHaveLength(1);
+    expect(translations[0].textContent).toContain('你好。');
+    expect(translations[0].textContent).toContain('世界。');
+  });
+
+  it('does not inject any badge or label elements', () => {
+    document.body.innerHTML = `
+      <main>
+        <p>Hello world.</p>
+      </main>
+    `;
+
+    const textNode = document.querySelector('p')!.firstChild as Text;
+    const sourceGroups = [
+      { node: textNode, segments: [{ id: 'seg_0' }] },
+    ];
+
+    const results = [
+      { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
+    ];
+
+    renderTranslations(results, sourceGroups);
+
+    const translation = document.querySelector('.itranslate-translation')!;
+    expect(translation.tagName).toBe('P');
+    expect(translation.children).toHaveLength(0);
+    expect(translation.textContent).not.toContain('DeepSeek');
+    expect(translation.textContent).not.toContain('中文');
   });
 });

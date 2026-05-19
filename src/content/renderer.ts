@@ -23,19 +23,10 @@ export function renderTranslations(
 
     const translatedText = translationsInGroup.map((r) => r.translated).join(' ');
 
-    const card = document.createElement('div');
-    card.className = 'itranslate-card';
-    card.innerHTML = `
-      <div class="itranslate-badge">中文 · DeepSeek</div>
-      <p class="itranslate-text">${escapeHtml(translatedText)}</p>
-    `;
+    const translation = document.createElement('p');
+    translation.className = 'itranslate-translation';
+    translation.textContent = translatedText;
 
-    parent.insertAdjacentElement('afterend', card);
+    parent.insertAdjacentElement('afterend', translation);
   }
-}
-
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }
