@@ -6,7 +6,7 @@ describe('renderer', () => {
     document.body.innerHTML = '';
   });
 
-  it('wraps original element and translation in a group container', () => {
+  it('clones original element and inserts translation after it', () => {
     document.body.innerHTML = `
       <main>
         <p>Hello world.</p>
@@ -24,17 +24,35 @@ describe('renderer', () => {
 
     renderTranslations(results, sourceGroups);
 
-    const groups = document.querySelectorAll('.itranslate-group');
-    expect(groups).toHaveLength(1);
+    const paragraphs = document.querySelectorAll('p');
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0].textContent).toBe('Hello world.');
+    expect(paragraphs[1].textContent).toBe('你好世界。');
+    expect(paragraphs[1].classList.contains('itranslate-translation')).toBe(true);
+  });
 
-    const group = groups[0];
-    const original = group.querySelector('p:not(.itranslate-translation)');
-    expect(original).not.toBeNull();
-    expect(original!.textContent).toContain('Hello world.');
+  it('clone inherits original element classes and attributes', () => {
+    document.body.innerHTML = `
+      <main>
+        <p class="intro" data-id="123">Hello world.</p>
+      </main>
+    `;
 
-    const translation = group.querySelector('.itranslate-translation');
-    expect(translation).not.toBeNull();
-    expect(translation!.textContent).toBe('你好世界。');
+    const textNode = document.querySelector('p')!.firstChild as Text;
+    const sourceGroups = [
+      { node: textNode, segments: [{ id: 'seg_0' }] },
+    ];
+
+    const results = [
+      { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
+    ];
+
+    renderTranslations(results, sourceGroups);
+
+    const clone = document.querySelectorAll('p')[1];
+    expect(clone.className).toContain('intro');
+    expect(clone.className).toContain('itranslate-translation');
+    expect(clone.getAttribute('data-id')).toBe('123');
   });
 
   it('handles multiple segments for one text node', () => {
@@ -56,12 +74,12 @@ describe('renderer', () => {
 
     renderTranslations(results, sourceGroups);
 
-    const translation = document.querySelector('.itranslate-translation')!;
-    expect(translation.textContent).toContain('你好。');
-    expect(translation.textContent).toContain('世界。');
+    const clone = document.querySelector('.itranslate-translation')!;
+    expect(clone.textContent).toContain('你好。');
+    expect(clone.textContent).toContain('世界。');
   });
 
-  it('has no badge, label, or decorative elements', () => {
+  it('no badge, label, or decorative elements', () => {
     document.body.innerHTML = `
       <main>
         <p>Hello world.</p>
@@ -79,17 +97,18 @@ describe('renderer', () => {
 
     renderTranslations(results, sourceGroups);
 
-    const group = document.querySelector('.itranslate-group')!;
-    expect(group.children).toHaveLength(2); // original p + translation p
-    expect(group.textContent).not.toContain('DeepSeek');
-    expect(group.textContent).not.toContain('中文');
-    expect(group.querySelectorAll('[class*="badge"]').length).toBe(0);
+    const clone = document.querySelector('.itranslate-translation')!;
+    expect(clone.children).toHaveLength(0);
+    expect(clone.textContent).not.toContain('DeepSeek');
+    expect(clone.textContent).not.toContain('中文');
+    expect(document.querySelectorAll('[class*="badge"]').length).toBe(0);
+    expect(document.querySelectorAll('.itranslate-group').length).toBe(0);
   });
 
-  it('preserves original element attributes and structure', () => {
+  it('keeps original element unchanged', () => {
     document.body.innerHTML = `
       <main>
-        <p class="intro" data-id="123">Hello world.</p>
+        <p class="intro">Hello world.</p>
       </main>
     `;
 
@@ -105,8 +124,7 @@ describe('renderer', () => {
 
     renderTranslations(results, sourceGroups);
 
-    const wrappedOriginal = document.querySelector('.itranslate-group p:not(.itranslate-translation)')!;
-    expect(wrappedOriginal.className).toBe('intro');
-    expect(wrappedOriginal.getAttribute('data-id')).toBe('123');
+    expect(original.textContent).toBe('Hello world.');
+    expect(original.classList.contains('itranslate-translation')).toBe(false);
   });
 });

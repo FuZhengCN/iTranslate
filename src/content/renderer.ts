@@ -23,15 +23,11 @@ export function renderTranslations(
 
     const translatedText = translationsInGroup.map((r) => r.translated).join(' ');
 
-    const translation = document.createElement('p');
-    translation.className = 'itranslate-translation';
-    translation.textContent = translatedText;
+    // Clone the original element to inherit its tag, classes, and styles
+    const clone = originalEl.cloneNode(false) as HTMLElement;
+    clone.textContent = translatedText;
+    clone.classList.add('itranslate-translation');
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'itranslate-group';
-    wrapper.appendChild(translation);
-
-    originalEl.insertAdjacentElement('beforebegin', wrapper);
-    wrapper.insertBefore(originalEl, translation);
+    originalEl.insertAdjacentElement('afterend', clone);
   }
 }
