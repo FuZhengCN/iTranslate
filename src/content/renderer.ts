@@ -23,6 +23,13 @@ export function renderTranslations(
 
     const translatedText = translationsInGroup.map((r) => r.translated).join(' ');
 
+    // Check if translation already exists — update instead of duplicating
+    const existing = originalEl.nextElementSibling;
+    if (existing?.classList.contains('itranslate-translation')) {
+      existing.textContent = translatedText;
+      continue;
+    }
+
     // Clone the original element to inherit its tag, classes, and styles
     const clone = originalEl.cloneNode(false) as HTMLElement;
     clone.textContent = translatedText;

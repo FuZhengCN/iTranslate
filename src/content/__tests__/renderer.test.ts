@@ -105,6 +105,36 @@ describe('renderer', () => {
     expect(document.querySelectorAll('.itranslate-group').length).toBe(0);
   });
 
+  it('does not duplicate translation on repeated calls', () => {
+    document.body.innerHTML = `
+      <main>
+        <p>Hello world.</p>
+      </main>
+    `;
+
+    const textNode = document.querySelector('p')!.firstChild as Text;
+    const sourceGroups = [
+      { node: textNode, segments: [{ id: 'seg_0' }] },
+    ];
+
+    const results1 = [
+      { id: 'seg_0', original: 'Hello world.', translated: '你好世界。' },
+    ];
+
+    // First translation
+    renderTranslations(results1, sourceGroups);
+    expect(document.querySelectorAll('p')).toHaveLength(2);
+
+    // Second translation with different result — should update, not duplicate
+    const results2 = [
+      { id: 'seg_0', original: 'Hello world.', translated: '你好，世界！' },
+    ];
+    renderTranslations(results2, sourceGroups);
+
+    expect(document.querySelectorAll('p')).toHaveLength(2);
+    expect(document.querySelector('.itranslate-translation')!.textContent).toBe('你好，世界！');
+  });
+
   it('keeps original element unchanged', () => {
     document.body.innerHTML = `
       <main>
