@@ -1,6 +1,6 @@
 import { extractSegments } from './extractor';
 import type { ExtractionResult } from './extractor';
-import { renderPlaceholders, renderTranslations } from './renderer';
+import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
 
 let translateInProgress = false;
@@ -9,6 +9,9 @@ let lastExtraction: ExtractionResult | null = null;
 async function translatePage(): Promise<void> {
   if (translateInProgress) return;
   translateInProgress = true;
+
+  // Clean up any existing translations before re-running
+  removeTranslations();
 
   try {
     stopObserving();
@@ -65,5 +68,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'translatePage') {
     translatePage();
     sendResponse({ received: true });
+  }
+  if (message.action === 'undoTranslation') {
+    removeTranslations();
+    stopObserving();
+    sendResponse({ received: true });
+    return true;
   }
 });
