@@ -14,6 +14,22 @@ async function getActiveTab(): Promise<chrome.tabs.Tab> {
   return tab;
 }
 
+async function syncState(): Promise<void> {
+  try {
+    const tab = await getActiveTab();
+    if (!tab.id) return;
+    const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
+    if (response?.isTranslated) {
+      isTranslated = true;
+      translateBtn.textContent = 'Undo Translation';
+    }
+  } catch {
+    // Content script not injected or not responding — stay with defaults
+  }
+}
+
+syncState();
+
 translateBtn.addEventListener('click', async () => {
   errorDiv.classList.add('hidden');
 

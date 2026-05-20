@@ -85,6 +85,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     translatePage();
     sendResponse({ received: true });
   }
+  if (message.action === 'getState') {
+    const hasTranslations = document.querySelector('.itranslate-translation') !== null;
+    sendResponse({ isTranslated: hasTranslations });
+    return true;
+  }
   if (message.action === 'undoTranslation') {
     removeTranslations();
     stopObserving();
