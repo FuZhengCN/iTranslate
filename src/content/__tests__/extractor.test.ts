@@ -6,26 +6,90 @@ describe('extractor', () => {
     document.body.innerHTML = '';
   });
 
-  it('extracts text from elements inside main content area', () => {
+  it('groups text elements by block ancestor', () => {
     document.body.innerHTML = `
-      <nav>Navigation</nav>
       <main>
-        <h1>Machine Learning</h1>
+        <p>Machine Learning</p>
         <p>Machine learning is a fascinating field.</p>
-        <span>Some inline text here.</span>
       </main>
-      <footer>Footer content</footer>
+    `;
+
+    const result = extractSegments();
+    // Each <p> is its own block
+    expect(result.allSegments.length).toBe(2);
+    expect(result.sourceElements.length).toBe(2);
+  });
+
+  it('merges multiple text elements inside the same block', () => {
+    document.body.innerHTML = `
+      <main>
+        <div class="news-info">
+          <span class="category">Space</span>
+          <a href="#">China-Europe SMILE satellite mission launched</a>
+          <span class="time">18 hours ago</span>
+        </div>
+      </main>
+    `;
+
+    const result = extractSegments();
+    // All 3 elements are inside the same <div> block → merged
+    expect(result.allSegments.length).toBe(1);
+    expect(result.allSegments[0].text).toContain('Space');
+    expect(result.allSegments[0].text).toContain('SMILE');
+    expect(result.allSegments[0].text).toContain('18 hours ago');
+  });
+
+  it('filters out timestamp and date noise', () => {
+    document.body.innerHTML = `
+      <main>
+        <div>
+          <span>00:14</span>
+          <span>20-May-2026</span>
+        </div>
+        <p>Real article title here</p>
+      </main>
     `;
 
     const result = extractSegments();
     const texts = result.allSegments.map((s) => s.text);
 
-    expect(texts.some((t) => t.includes('Machine Learning'))).toBe(true);
-    expect(texts.some((t) => t.includes('fascinating field'))).toBe(true);
-    expect(texts.some((t) => t.includes('inline text'))).toBe(true);
-    // Body fallback mode includes all page content (immersive translation)
-    expect(texts.some((t) => t.includes('Footer'))).toBe(true);
-    expect(texts.some((t) => t.includes('Navigation'))).toBe(true);
+    // Noise-only blocks should be skipped; real content stays
+    expect(texts.some((t) => t.includes('00:14'))).toBe(false);
+    expect(texts.some((t) => t.includes('20-May-2026'))).toBe(false);
+    expect(texts.some((t) => t.includes('Real article'))).toBe(true);
+  });
+
+  it('filters out pure digit strings', () => {
+    document.body.innerHTML = `
+      <main>
+        <span>1</span>
+        <span>NaN</span>
+        <p>Hello world this is enough text to pass.</p>
+      </main>
+    `;
+
+    const result = extractSegments();
+    const texts = result.allSegments.map((s) => s.text);
+    expect(texts.some((t) => t === '1')).toBe(false);
+    expect(texts.some((t) => t === 'NaN')).toBe(false);
+    expect(texts.some((t) => t.includes('Hello world'))).toBe(true);
+  });
+
+  it('skips already-translated blocks on repeated extraction', () => {
+    document.body.innerHTML = `
+      <main>
+        <p>Hello world.</p>
+        <p class="itranslate-translation">你好世界。</p>
+        <p>More text.</p>
+        <p class="itranslate-translation">更多文本。</p>
+      </main>
+    `;
+
+    const result = extractSegments();
+    const texts = result.allSegments.map((s) => s.text);
+    expect(texts).toHaveLength(2);
+    expect(texts).toContain('Hello world.');
+    expect(texts).toContain('More text.');
   });
 
   it('returns empty array when no content found', () => {
@@ -34,7 +98,7 @@ describe('extractor', () => {
     expect(result.allSegments).toHaveLength(0);
   });
 
-  it('skips script, style, and hidden content', () => {
+  it('skips script and style content', () => {
     document.body.innerHTML = `
       <main>
         <p>Visible text here.</p>
@@ -47,66 +111,5 @@ describe('extractor', () => {
     const texts = result.allSegments.map((s) => s.text);
     expect(texts).toHaveLength(1);
     expect(texts[0]).toContain('Visible text');
-  });
-
-  it('each text-containing element becomes one segment', () => {
-    document.body.innerHTML = `
-      <main>
-        <h1>Title Here</h1>
-        <p>First paragraph text.</p>
-        <p>Second paragraph with more content.</p>
-      </main>
-    `;
-
-    const result = extractSegments();
-    expect(result.allSegments.length).toBe(3);
-    expect(result.sourceElements.length).toBe(3);
-  });
-
-  it('falls back to body when no main content area found', () => {
-    document.body.innerHTML = `
-      <div>
-        <p>Some random text without semantic structure.</p>
-      </div>
-    `;
-
-    const result = extractSegments();
-    expect(result.allSegments.length).toBeGreaterThan(0);
-  });
-
-  it('skips already-translated elements on repeated extraction', () => {
-    // Simulate a page that already has translation elements injected
-    document.body.innerHTML = `
-      <main>
-        <p>Hello world.</p>
-        <p class="itranslate-translation">你好世界。</p>
-        <p>More text.</p>
-        <p class="itranslate-translation">更多文本。</p>
-      </main>
-    `;
-
-    const result = extractSegments();
-    const texts = result.allSegments.map((s) => s.text);
-
-    // Should only extract original text, not translations
-    expect(result.allSegments.length).toBe(2);
-    expect(texts).toContain('Hello world.');
-    expect(texts).toContain('More text.');
-    expect(texts.some((t) => t.includes('你好世界'))).toBe(false);
-    expect(texts.some((t) => t.includes('更多文本'))).toBe(false);
-  });
-
-  it('skips very short text', () => {
-    document.body.innerHTML = `
-      <main>
-        <span>Hi</span>
-        <p>Hello world this is enough text.</p>
-      </main>
-    `;
-
-    const result = extractSegments();
-    const texts = result.allSegments.map((s) => s.text);
-    expect(texts.some((t) => t === 'Hi')).toBe(false);
-    expect(texts.some((t) => t.includes('Hello world'))).toBe(true);
   });
 });

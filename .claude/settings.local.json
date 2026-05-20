@@ -17,7 +17,9 @@
       "Bash(which convert *)",
       "Bash(which magick *)",
       "Bash(npx tsc *)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "WebFetch(domain:www.cgtn.com)",
+      "WebSearch"
     ]
   }
 }
