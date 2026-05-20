@@ -1,6 +1,7 @@
 import type { Settings } from '../shared/types';
 import { getSettings } from '../shared/storage';
 
+const MAX_BATCH_SIZE = 30;
 const DELIMITER = '|||';
 
 function buildPrompt(systemPrompt: string, texts: string[]): string {
@@ -34,9 +35,7 @@ function parseResponse(response: string, count: number): string[] {
   return translations.map((t, i) => t ?? `[Translation unavailable for segment ${i}]`);
 }
 
-export async function translateBatch(texts: string[]): Promise<string[]> {
-  if (texts.length === 0) return [];
-
+async function translateOneBatch(texts: string[]): Promise<string[]> {
   const settings: Settings = await getSettings();
 
   if (!settings.apiKey) {
@@ -89,6 +88,20 @@ export async function translateBatch(texts: string[]): Promise<string[]> {
   }
 
   throw lastError ?? new Error('Translation failed');
+}
+
+export async function translateBatch(texts: string[]): Promise<string[]> {
+  if (texts.length === 0) return [];
+
+  // Split into chunks to avoid timeouts and token overflow
+  const allResults: string[] = [];
+  for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
+    const chunk = texts.slice(i, i + MAX_BATCH_SIZE);
+    const results = await translateOneBatch(chunk);
+    allResults.push(...results);
+  }
+
+  return allResults;
 }
 
 export async function testConnection(settings: Settings): Promise<boolean> {

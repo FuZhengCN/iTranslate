@@ -133,7 +133,7 @@ export function extractSegments(): ExtractionResult {
     const meaningful = texts.filter((t) => !isNoiseText(t));
     if (meaningful.length === 0) continue;
 
-    const merged = meaningful.join(' · ');
+    const merged = meaningful.join('\n');
 
     // Skip blocks with very short combined text — filters single-word
     // labels, navigation items, and other non-content snippets
