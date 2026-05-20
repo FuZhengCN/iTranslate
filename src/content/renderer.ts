@@ -34,10 +34,6 @@ function applyTextStyles(source: Element, target: HTMLElement): void {
   if (style.color === 'rgb(255, 255, 255)') {
     target.style.opacity = '1';
   }
-  console.log('[iTranslate] applyTextStyles — leaf:', leaf.tagName,
-    '| color:', style.color,
-    '| font:', style.fontSize, style.fontWeight, style.fontFamily.split(',')[0],
-    '| white override:', style.color === 'rgb(255, 255, 255)');
 }
 
 export function renderPlaceholders(sourceElements: Element[]): void {
