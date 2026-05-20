@@ -1,5 +1,6 @@
 .itranslate-translation {
-  opacity: 0.7;
+  border-left: 3px solid #7c3aed;
+  padding-left: 10px;
 }
 
 .itranslate-placeholder {
