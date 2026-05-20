@@ -16,12 +16,19 @@ body {
   margin-bottom: 12px;
 }
 
-.logo { font-size: 16px; font-weight: 700; color: #2b6cb0; }
+.logo {
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 .lang-badge {
   font-size: 10px;
-  background: #ebf8ff;
-  color: #2b6cb0;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
   padding: 2px 8px;
   border-radius: 10px;
   font-weight: 500;
@@ -30,7 +37,7 @@ body {
 .btn-primary {
   width: 100%;
   padding: 10px 16px;
-  background: #2b6cb0;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
   color: white;
   border: none;
   border-radius: 6px;
@@ -39,11 +46,11 @@ body {
   margin-bottom: 12px;
 }
 
-.btn-primary:hover { background: #2c5282; }
+.btn-primary:hover { background: linear-gradient(135deg, #4338ca, #6d28d9); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .stats {
-  background: #f7fafc;
+  background: #f8f7fc;
   border-radius: 6px;
   padding: 10px 12px;
   margin-bottom: 12px;
@@ -73,7 +80,7 @@ body {
   cursor: pointer;
 }
 
-.btn-secondary:hover { background: #f7fafc; }
+.btn-secondary:hover { background: #f8f7fc; }
 
 .error {
   margin-top: 10px;
