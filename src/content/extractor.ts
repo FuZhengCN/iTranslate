@@ -13,9 +13,8 @@ function isSkippable(el: Element): boolean {
   if (SKIP_CLASS_NAMES.test(className) || SKIP_CLASS_NAMES.test(id)) return true;
   const role = el.getAttribute('role') ?? '';
   if (/banner|navigation|complementary|contentinfo/i.test(role)) return true;
-  // Skip hidden elements
-  const style = getComputedStyle(el);
-  if (style.display === 'none' || style.visibility === 'hidden') return true;
+  // Lightweight hidden check — no getComputedStyle
+  if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return true;
   return false;
 }
 
@@ -30,6 +29,7 @@ function hasDirectText(el: Element): boolean {
 
 function findContentRoot(): Element {
   const selectors = [
+    // Article/detail pages
     'article',
     '[role="main"]',
     'main',
@@ -39,14 +39,23 @@ function findContentRoot(): Element {
     '.news-content',
     '#content',
     '.content',
+    // CGTN specific
     '.cg-detail-mainWrap',
     '.new-detailWrap-v3',
     '.cg-mainWrapper',
+    // Homepage / generic
+    '.g-layout',
+    '[class*="home"][class*="container"]',
+    '[class*="main"][class*="wrapper"]',
   ];
   for (const sel of selectors) {
     const el = document.querySelector(sel);
-    if (el) return el;
+    if (el) {
+      console.log(`[iTranslate] Content root: "${sel}" (${el.querySelectorAll('*').length} elements)`);
+      return el;
+    }
   }
+  console.log('[iTranslate] Content root: body (fallback)');
   return document.body;
 }
 
@@ -76,5 +85,6 @@ export function extractSegments(): ExtractionResult {
     allSegments.push({ id, text });
   }
 
+  console.log(`[iTranslate] Extracted ${sourceElements.length} translatable elements from ${allElements.length} total`);
   return { sourceElements, allSegments };
 }
