@@ -10,6 +10,7 @@ export interface TranslationResult {
 }
 
 export interface CacheEntry {
+  original: string;
   translated: string;
   timestamp: number;
 }

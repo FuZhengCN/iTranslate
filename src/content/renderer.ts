@@ -4,20 +4,29 @@ import type { TranslationResult } from '../shared/types';
  *  can copy its computed style to the translation clone. Returns the block
  *  itself if it has direct text, otherwise the first descendant that does. */
 function findTextLeaf(block: Element): Element | null {
+  // If block itself has direct text, use it (most reliable)
   for (const child of block.childNodes) {
     if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
       return block;
     }
   }
-  const all = block.querySelectorAll('*');
-  for (const el of all) {
+  // Otherwise, find the descendant with the longest trimmed text content.
+  // Prevents picking metadata elements (byline, caption, etc.) whose tiny
+  // text is unrepresentative of the block's actual visual style.
+  let bestEl: Element | null = null;
+  let bestLen = 0;
+  for (const el of block.querySelectorAll('*')) {
     for (const child of el.childNodes) {
-      if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
-        return el;
+      if (child.nodeType === Node.TEXT_NODE) {
+        const len = (child.textContent?.trim() ?? '').length;
+        if (len > bestLen) {
+          bestEl = el;
+          bestLen = len;
+        }
       }
     }
   }
-  return null;
+  return bestEl;
 }
 
 /** Copy key text-rendering computed styles from source element's text leaf

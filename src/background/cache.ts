@@ -12,6 +12,9 @@ function getDB(): Promise<IDBPDatabase> {
           db.createObjectStore(CACHE_STORE_NAME);
         }
       },
+    }).catch((err) => {
+      dbPromise = null;
+      throw err;
     });
   }
   return dbPromise;
@@ -34,12 +37,10 @@ export async function cacheClear(): Promise<void> {
 
 export async function cacheGetBulk(keys: string[]): Promise<Map<string, CacheEntry>> {
   const db = await getDB();
+  const entries = await Promise.all(keys.map((k) => db.get(CACHE_STORE_NAME, k)));
   const result = new Map<string, CacheEntry>();
-  for (const key of keys) {
-    const entry = await db.get(CACHE_STORE_NAME, key);
-    if (entry) {
-      result.set(key, entry);
-    }
+  for (let i = 0; i < keys.length; i++) {
+    if (entries[i]) result.set(keys[i], entries[i]);
   }
   return result;
 }

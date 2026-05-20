@@ -2,7 +2,7 @@ import type { TranslationSegment, TranslationResult } from '../shared/types';
 import { cacheGetBulk, cacheSetBulk } from './cache';
 import { translateBatch } from './translator';
 
-function sha256(text: string): string {
+function segmentKey(text: string): string {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
@@ -24,7 +24,7 @@ export async function handleTranslate(
   segments: TranslationSegment[],
   tabId?: number
 ): Promise<{ results: TranslationResult[]; stats: { hits: number; misses: number } }> {
-  const keys = segments.map((s) => sha256(s.text));
+  const keys = segments.map((s) => segmentKey(s.text));
   const cacheMap = await cacheGetBulk(keys);
 
   const results: TranslationResult[] = [];
@@ -34,7 +34,8 @@ export async function handleTranslate(
   for (let i = 0; i < segments.length; i++) {
     const key = keys[i];
     const cached = cacheMap.get(key);
-    if (cached) {
+    // Verify original text to guard against hash collisions
+    if (cached && cached.original === segments[i].text) {
       hits++;
       results.push({ id: segments[i].id, original: segments[i].text, translated: cached.translated });
     } else {
@@ -53,17 +54,15 @@ export async function handleTranslate(
 
     const newEntries = new Map();
     for (let i = 0; i < misses.length; i++) {
-      const { idx, key } = misses[i];
+      const { idx, key, text } = misses[i];
       const translated = translations[i];
       results.push({ id: segments[idx].id, original: segments[idx].text, translated });
-      newEntries.set(key, { translated, timestamp: Date.now() });
+      newEntries.set(key, { original: text, translated, timestamp: Date.now() });
     }
 
-    results.sort((a, b) => {
-      const idxA = segments.findIndex((s) => s.id === a.id);
-      const idxB = segments.findIndex((s) => s.id === b.id);
-      return idxA - idxB;
-    });
+    // Build a position map to avoid O(n²) findIndex calls in sort
+    const positionMap = new Map(segments.map((s, i) => [s.id, i]));
+    results.sort((a, b) => (positionMap.get(a.id) ?? 0) - (positionMap.get(b.id) ?? 0));
 
     cacheSetBulk(newEntries).catch(() => {});
   }

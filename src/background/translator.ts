@@ -2,7 +2,6 @@ import type { Settings } from '../shared/types';
 import { getSettings } from '../shared/storage';
 
 const MAX_BATCH_SIZE = 30;
-const DELIMITER = '|||';
 
 function buildPrompt(systemPrompt: string, texts: string[]): string {
   const segments = texts.map((t, i) => `[${i}] ${t}`).join('\n\n');
@@ -23,31 +22,21 @@ function parseResponse(response: string, count: number): string[] {
     }
   }
 
-  // Fallback: if parsing failed, try splitting by delimiter
-  if (translations.some((t) => t === null)) {
-    const parts = response.split(DELIMITER);
-    if (parts.length === count) {
-      return parts.map((p) => p.trim());
-    }
-  }
-
-  // Use original text for any segments we couldn't parse
   return translations.map((t, i) => t ?? `[Translation unavailable for segment ${i}]`);
 }
 
-async function translateOneBatch(texts: string[]): Promise<string[]> {
-  const settings: Settings = await getSettings();
-
+async function translateOneBatch(texts: string[], settings: Settings): Promise<string[]> {
   if (!settings.apiKey) {
     throw new Error('API key not configured');
   }
 
   const prompt = buildPrompt(settings.systemPrompt, texts);
+  const endpoint = settings.apiEndpoint.replace(/\/+$/, '');
 
   let lastError: Error | null = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(`${settings.apiEndpoint}/chat/completions`, {
+      const response = await fetch(`${endpoint}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,10 +85,12 @@ export async function translateBatch(
 ): Promise<string[]> {
   if (texts.length === 0) return [];
 
+  const settings: Settings = await getSettings();
+
   const allResults: string[] = [];
   for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
     const chunk = texts.slice(i, i + MAX_BATCH_SIZE);
-    const results = await translateOneBatch(chunk);
+    const results = await translateOneBatch(chunk, settings);
     allResults.push(...results);
     onProgress?.(allResults.length);
   }
@@ -109,7 +100,8 @@ export async function translateBatch(
 
 export async function testConnection(settings: Settings): Promise<boolean> {
   try {
-    const response = await fetch(`${settings.apiEndpoint}/chat/completions`, {
+    const endpoint = settings.apiEndpoint.replace(/\/+$/, '');
+    const response = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

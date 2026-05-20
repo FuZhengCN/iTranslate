@@ -12,7 +12,7 @@ describe('cache', () => {
   });
 
   it('stores and retrieves a single entry', async () => {
-    const entry = { translated: '你好', timestamp: Date.now() };
+    const entry = { original: 'hello', translated: '你好', timestamp: Date.now() };
     await cacheSet('key1', entry);
     const result = await cacheGet('key1');
     expect(result).toEqual(entry);
@@ -20,8 +20,8 @@ describe('cache', () => {
 
   it('stores and retrieves bulk entries', async () => {
     const entries = new Map([
-      ['key1', { translated: '你好', timestamp: Date.now() }],
-      ['key2', { translated: '世界', timestamp: Date.now() }],
+      ['key1', { original: 'hello', translated: '你好', timestamp: Date.now() }],
+      ['key2', { original: 'world', translated: '世界', timestamp: Date.now() }],
     ]);
     await cacheSetBulk(entries);
     const result = await cacheGetBulk(['key1', 'key2', 'key3']);
@@ -32,7 +32,7 @@ describe('cache', () => {
   });
 
   it('clears all entries', async () => {
-    await cacheSet('key1', { translated: '你好', timestamp: Date.now() });
+    await cacheSet('key1', { original: 'hello', translated: '你好', timestamp: Date.now() });
     await cacheClear();
     const result = await cacheGet('key1');
     expect(result).toBeUndefined();

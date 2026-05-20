@@ -6,7 +6,18 @@ import { getSettings } from '../shared/storage';
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'translate') {
-    const segments: TranslationSegment[] = message.segments;
+    const segments = message.segments;
+    if (!Array.isArray(segments) || segments.length === 0 || segments.length > 500) {
+      sendResponse({ success: false, error: 'Invalid segments payload' });
+      return false;
+    }
+    const valid = segments.every(
+      (s: unknown) => s != null && typeof (s as TranslationSegment).id === 'string' && typeof (s as TranslationSegment).text === 'string'
+    );
+    if (!valid) {
+      sendResponse({ success: false, error: 'Malformed segment entries' });
+      return false;
+    }
     handleTranslate(segments, _sender.tab?.id)
       .then((result) => sendResponse({ success: true, ...result }))
       .catch((err: Error) => sendResponse({ success: false, error: err.message }));

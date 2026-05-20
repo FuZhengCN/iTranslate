@@ -1,12 +1,10 @@
 import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './extractor';
-import type { ExtractionResult } from './extractor';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
 import { hideTranslatingToast, showTranslatingToast, updateProgress } from './toast';
 
 let translateInProgress = false;
-let lastExtraction: ExtractionResult | null = null;
 
 async function catchUpNewContent(): Promise<void> {
   const extraction = extractSegments();
@@ -53,7 +51,6 @@ async function translatePage(): Promise<void> {
     removeTranslations();
 
     const extraction = extractSegments();
-    lastExtraction = extraction;
 
     if (extraction.allSegments.length === 0) {
       console.log('[iTranslate] No translatable content found');
@@ -92,11 +89,6 @@ async function translatePage(): Promise<void> {
     renderTranslations(response.results, extraction.sourceElements);
     hideTranslatingToast();
 
-    const root = extraction.sourceElements[0]?.closest('article, main, [role="main"]') ?? document.body;
-    startObserving(root, () => {
-      translatePage();
-    });
-
     chrome.runtime.sendMessage({
       action: 'translationComplete',
       stats: response.stats,
@@ -108,6 +100,14 @@ async function translatePage(): Promise<void> {
     // Re-extract and translate only blocks that don't already have a
     // translation clone as their next sibling.
     await catchUpNewContent();
+
+    // Start observer only AFTER catch-up completes, so the observer's
+    // own DOM mutations from injecting placeholders/translations don't
+    // trigger a re-translation loop.
+    const root = extraction.sourceElements[0]?.closest('article, main, [role="main"]') ?? document.body;
+    startObserving(root, () => {
+      translatePage();
+    });
 
   } catch (err) {
     console.error('[iTranslate] Error:', err);

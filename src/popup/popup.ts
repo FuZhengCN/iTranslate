@@ -8,6 +8,7 @@ const apiCallsEl = document.getElementById('apiCalls') as HTMLSpanElement;
 const errorDiv = document.getElementById('error') as HTMLDivElement;
 
 let isTranslated = false;
+let activeTabId: number | null = null;
 
 async function getActiveTab(): Promise<chrome.tabs.Tab> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -18,6 +19,7 @@ async function syncState(): Promise<void> {
   try {
     const tab = await getActiveTab();
     if (!tab.id) return;
+    activeTabId = tab.id;
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {
       isTranslated = true;
@@ -36,6 +38,8 @@ translateBtn.addEventListener('click', async () => {
   try {
     const tab = await getActiveTab();
     if (!tab.id) throw new Error('No active tab');
+
+    activeTabId = tab.id;
 
     if (!isTranslated) {
       translateBtn.disabled = true;
@@ -70,7 +74,10 @@ clearCacheBtn.addEventListener('click', async () => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
+  // Only respond to messages from the active tab to avoid cross-tab UI updates
+  if (sender.tab?.id !== activeTabId) return;
+
   if (message.action === 'translationComplete') {
     statsDiv.classList.remove('hidden');
     segCountEl.textContent = String(message.totalSegments);
