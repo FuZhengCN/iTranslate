@@ -40,7 +40,10 @@ export function renderTranslations(
       existing.classList.remove('itranslate-placeholder');
       const white = isWhiteText(el);
       (existing as HTMLElement).style.opacity = white ? '1' : '';
-      console.log('[iTranslate] translation clone (updated) — whiteText:', white, '| opacity set:', white ? '1' : '(css 0.9)');
+      const afterStyle = getComputedStyle(existing);
+      console.log('[iTranslate] clone (updated) — inline opacity:', (existing as HTMLElement).style.opacity,
+        '| computed opacity:', afterStyle.opacity,
+        '| computed color:', afterStyle.color);
       continue;
     }
 
@@ -49,9 +52,13 @@ export function renderTranslations(
     clone.classList.add('itranslate-translation');
     const white = isWhiteText(el);
     if (white) clone.style.opacity = '1';
-    console.log('[iTranslate] translation clone (new) — whiteText:', white, '| opacity set:', white ? '1' : '(css 0.9)');
 
     el.insertAdjacentElement('afterend', clone);
+
+    const afterStyle = getComputedStyle(clone);
+    console.log('[iTranslate] clone (new) — inline opacity:', clone.style.opacity,
+      '| computed opacity:', afterStyle.opacity,
+      '| computed color:', afterStyle.color);
   }
 }
 
