@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderPlaceholders, renderTranslations } from '../renderer';
+import { renderPlaceholders, renderTranslations, removeTranslations } from '../renderer';
 
 describe('renderPlaceholders', () => {
   beforeEach(() => {
@@ -165,5 +165,39 @@ describe('renderTranslations', () => {
 
     expect(original.textContent).toBe('Hello world.');
     expect(original.classList.contains('itranslate-translation')).toBe(false);
+  });
+});
+
+describe('removeTranslations', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('removes all translation elements and preserves originals', () => {
+    const original = document.createElement('div');
+    original.textContent = 'Original text';
+    document.body.appendChild(original);
+
+    for (let i = 0; i < 3; i++) {
+      const clone = document.createElement('div');
+      clone.classList.add('itranslate-translation');
+      clone.textContent = `Translation ${i}`;
+      document.body.appendChild(clone);
+    }
+
+    removeTranslations();
+
+    expect(document.querySelectorAll('.itranslate-translation')).toHaveLength(0);
+    expect(document.body.children).toHaveLength(1);
+    expect(document.body.children[0].textContent).toBe('Original text');
+  });
+
+  it('is safe to call when no translations exist', () => {
+    const original = document.createElement('div');
+    original.textContent = 'Original text';
+    document.body.appendChild(original);
+
+    expect(() => removeTranslations()).not.toThrow();
+    expect(document.body.children).toHaveLength(1);
   });
 });

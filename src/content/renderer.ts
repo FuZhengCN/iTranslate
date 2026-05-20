@@ -40,3 +40,7 @@ export function renderTranslations(
     el.insertAdjacentElement('afterend', clone);
   }
 }
+
+export function removeTranslations(): void {
+  document.querySelectorAll('.itranslate-translation').forEach(el => el.remove());
+}
