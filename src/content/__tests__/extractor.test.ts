@@ -23,8 +23,9 @@ describe('extractor', () => {
     expect(texts.some((t) => t.includes('Machine Learning'))).toBe(true);
     expect(texts.some((t) => t.includes('fascinating field'))).toBe(true);
     expect(texts.some((t) => t.includes('inline text'))).toBe(true);
-    expect(texts.some((t) => t.includes('Footer'))).toBe(false);
-    expect(texts.some((t) => t.includes('Navigation'))).toBe(false);
+    // Body fallback mode includes all page content (immersive translation)
+    expect(texts.some((t) => t.includes('Footer'))).toBe(true);
+    expect(texts.some((t) => t.includes('Navigation'))).toBe(true);
   });
 
   it('returns empty array when no content found', () => {

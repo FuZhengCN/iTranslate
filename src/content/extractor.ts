@@ -50,14 +50,30 @@ function findContentRoot(): Element {
     '#content',
     '.content',
   ];
+  let bestEl: Element | null = null;
+  let bestCount = 0;
+
   for (const sel of selectors) {
     const el = document.querySelector(sel);
-    // Only accept if it has actual child elements
-    if (el && el.querySelectorAll('*').length > 0) {
-      console.log(`[iTranslate] Content root: "${sel}" (${el.querySelectorAll('*').length} elements)`);
-      return el;
+    const count = el ? el.querySelectorAll('*').length : 0;
+    if (count > bestCount) {
+      bestEl = el;
+      bestCount = count;
     }
   }
+
+  // If the best match has very few elements, body likely has more
+  const bodyCount = document.body.querySelectorAll('*').length;
+  if (bestCount < 30 && bodyCount > bestCount) {
+    console.log(`[iTranslate] Content root: body (fallback, best was ${bestCount} vs body ${bodyCount})`);
+    return document.body;
+  }
+
+  if (bestEl && bestCount > 0) {
+    console.log(`[iTranslate] Content root: matched selector (${bestCount} elements)`);
+    return bestEl;
+  }
+
   console.log('[iTranslate] Content root: body (fallback)');
   return document.body;
 }
