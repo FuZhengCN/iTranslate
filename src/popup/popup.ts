@@ -64,4 +64,9 @@ chrome.runtime.onMessage.addListener((message) => {
     translateBtn.disabled = false;
     translateBtn.textContent = 'Undo Translation';
   }
+  if (message.action === 'translationError') {
+    isTranslated = false;
+    translateBtn.disabled = false;
+    translateBtn.textContent = 'Translate This Page';
+  }
 });

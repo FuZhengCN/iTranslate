@@ -33,13 +33,21 @@ async function translatePage(): Promise<void> {
     // Show placeholders immediately so user knows work is in progress
     renderPlaceholders(extraction.sourceElements);
 
-    const response = await chrome.runtime.sendMessage({
-      action: 'translate',
-      segments: extraction.allSegments,
-    });
+    const TRANSLATE_TIMEOUT = 120_000; // 2 minutes — batches + retries can be slow
+    const response = await Promise.race([
+      chrome.runtime.sendMessage({
+        action: 'translate',
+        segments: extraction.allSegments,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Translation timed out')), TRANSLATE_TIMEOUT)
+      ),
+    ]);
 
     if (!response.success) {
       alert(`Translation failed: ${response.error}`);
+      removeTranslations();
+      chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
       return;
     }
 
@@ -59,6 +67,8 @@ async function translatePage(): Promise<void> {
   } catch (err) {
     console.error('[iTranslate] Error:', err);
     alert(`Translation error: ${(err as Error).message}`);
+    removeTranslations();
+    chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
   } finally {
     translateInProgress = false;
   }
