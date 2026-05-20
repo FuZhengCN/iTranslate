@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="20" fill="#2b6cb0"/>
-  <text x="64" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="48" font-weight="bold" fill="white">iT</text>
-  <text x="64" y="100" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#ebf8ff">EN→ZH</text>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#g)"/>
+  <path d="M22 44 Q50 28 78 44 Q98 56 112 44" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M16 70 Q48 90 80 70 Q100 58 116 74" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="64" cy="60" r="4" fill="white" opacity="0.6"/>
 </svg>
