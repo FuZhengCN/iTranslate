@@ -41,6 +41,7 @@ function findContentRoot(): Element {
     '.content',
     '.cg-detail-mainWrap',
     '.new-detailWrap-v3',
+    '.cg-mainWrapper',
   ];
   for (const sel of selectors) {
     const el = document.querySelector(sel);
@@ -61,11 +62,14 @@ export function extractSegments(): ExtractionResult {
   const allSegments: TranslationSegment[] = [];
 
   for (const el of allElements) {
-    if (isSkippable(el)) continue;
+    // Cheap checks first — skip elements without direct text before
+    // calling getComputedStyle in isSkippable
     if (!hasDirectText(el)) continue;
 
     const text = el.textContent?.trim();
     if (!text || text.length <= 3) continue;
+
+    if (isSkippable(el)) continue;
 
     const id = `seg_${allSegments.length}`;
     sourceElements.push(el);
