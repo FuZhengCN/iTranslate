@@ -7,7 +7,7 @@ import { getSettings } from '../shared/storage';
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'translate') {
     const segments: TranslationSegment[] = message.segments;
-    handleTranslate(segments)
+    handleTranslate(segments, _sender.tab?.id)
       .then((result) => sendResponse({ success: true, ...result }))
       .catch((err: Error) => sendResponse({ success: false, error: err.message }));
     return true;

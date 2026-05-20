@@ -12,8 +12,17 @@ function sha256(text: string): string {
   return 'seg_' + Math.abs(hash).toString(36) + '_' + text.length.toString(36);
 }
 
+function sendProgress(tabId: number, completed: number, total: number): void {
+  chrome.tabs.sendMessage(tabId, {
+    action: 'translationProgress',
+    completed,
+    total,
+  }).catch(() => {});
+}
+
 export async function handleTranslate(
-  segments: TranslationSegment[]
+  segments: TranslationSegment[],
+  tabId?: number
 ): Promise<{ results: TranslationResult[]; stats: { hits: number; misses: number } }> {
   const keys = segments.map((s) => sha256(s.text));
   const cacheMap = await cacheGetBulk(keys);
@@ -33,9 +42,14 @@ export async function handleTranslate(
     }
   }
 
+  // Report cache-hit progress
+  if (tabId != null) sendProgress(tabId, hits, segments.length);
+
   if (misses.length > 0) {
     const texts = misses.map((m) => m.text);
-    const translations = await translateBatch(texts);
+    const translations = await translateBatch(texts, (batchCompleted) => {
+      if (tabId != null) sendProgress(tabId, hits + batchCompleted, segments.length);
+    });
 
     const newEntries = new Map();
     for (let i = 0; i < misses.length; i++) {

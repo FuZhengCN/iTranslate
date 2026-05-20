@@ -90,15 +90,18 @@ async function translateOneBatch(texts: string[]): Promise<string[]> {
   throw lastError ?? new Error('Translation failed');
 }
 
-export async function translateBatch(texts: string[]): Promise<string[]> {
+export async function translateBatch(
+  texts: string[],
+  onProgress?: (completed: number) => void
+): Promise<string[]> {
   if (texts.length === 0) return [];
 
-  // Split into chunks to avoid timeouts and token overflow
   const allResults: string[] = [];
   for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
     const chunk = texts.slice(i, i + MAX_BATCH_SIZE);
     const results = await translateOneBatch(chunk);
     allResults.push(...results);
+    onProgress?.(allResults.length);
   }
 
   return allResults;

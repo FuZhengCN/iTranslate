@@ -1,11 +1,45 @@
+import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './extractor';
 import type { ExtractionResult } from './extractor';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
-import { hideTranslatingToast, showTranslatingToast } from './toast';
+import { hideTranslatingToast, showTranslatingToast, updateProgress } from './toast';
 
 let translateInProgress = false;
 let lastExtraction: ExtractionResult | null = null;
+
+async function catchUpNewContent(): Promise<void> {
+  const extraction = extractSegments();
+  // Filter to blocks that don't already have a translation sibling
+  const newSourceElements: Element[] = [];
+  const newSegments: TranslationSegment[] = [];
+
+  for (let i = 0; i < extraction.sourceElements.length; i++) {
+    const el = extraction.sourceElements[i];
+    const sibling = el.nextElementSibling;
+    if (sibling?.classList.contains('itranslate-translation')) continue;
+    newSourceElements.push(el);
+    newSegments.push({ ...extraction.allSegments[i], id: `seg_${newSegments.length}` });
+  }
+
+  if (newSegments.length === 0) return;
+
+  console.log(`[iTranslate] Catch-up: ${newSegments.length} new blocks found after translation`);
+  renderPlaceholders(newSourceElements);
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'translate',
+      segments: newSegments,
+    });
+
+    if (response.success) {
+      renderTranslations(response.results, newSourceElements);
+    }
+  } catch {
+    // Silently ignore catch-up failures — best-effort
+  }
+}
 
 async function translatePage(): Promise<void> {
   if (translateInProgress) return;
@@ -69,6 +103,12 @@ async function translatePage(): Promise<void> {
       totalSegments: extraction.allSegments.length,
     }).catch(() => {});
 
+    // Catch-up scan: content loaded during the API call window (when the
+    // observer was disconnected) would otherwise be permanently missed.
+    // Re-extract and translate only blocks that don't already have a
+    // translation clone as their next sibling.
+    await catchUpNewContent();
+
   } catch (err) {
     console.error('[iTranslate] Error:', err);
     alert(`Translation error: ${(err as Error).message}`);
@@ -89,6 +129,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const hasTranslations = document.querySelector('.itranslate-translation') !== null;
     sendResponse({ isTranslated: hasTranslations });
     return true;
+  }
+  if (message.action === 'translationProgress') {
+    updateProgress(message.completed, message.total);
+    return;
   }
   if (message.action === 'undoTranslation') {
     removeTranslations();

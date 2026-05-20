@@ -82,16 +82,19 @@
   }
 }
 
-.itranslate-toast-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: itranslate-toast-spin 0.7s linear infinite;
+.itranslate-toast-dots {
+  display: flex;
+  gap: 5px;
 }
 
-@keyframes itranslate-toast-spin {
-  to { transform: rotate(360deg); }
+.itranslate-toast-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: background 0.25s ease;
+}
+
+.itranslate-toast-dot.on {
+  background: #fff;
 }
