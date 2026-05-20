@@ -2,6 +2,7 @@ import { extractSegments } from './extractor';
 import type { ExtractionResult } from './extractor';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
+import { hideTranslatingToast, showTranslatingToast } from './toast';
 
 let translateInProgress = false;
 let lastExtraction: ExtractionResult | null = null;
@@ -30,7 +31,8 @@ async function translatePage(): Promise<void> {
       return;
     }
 
-    // Show placeholders immediately so user knows work is in progress
+    // Show toast + placeholders immediately so user knows work is in progress
+    showTranslatingToast();
     renderPlaceholders(extraction.sourceElements);
 
     const TRANSLATE_TIMEOUT = 120_000; // 2 minutes — batches + retries can be slow
@@ -46,12 +48,14 @@ async function translatePage(): Promise<void> {
 
     if (!response.success) {
       alert(`Translation failed: ${response.error}`);
+      hideTranslatingToast();
       removeTranslations();
       chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
       return;
     }
 
     renderTranslations(response.results, extraction.sourceElements);
+    hideTranslatingToast();
 
     const root = extraction.sourceElements[0]?.closest('article, main, [role="main"]') ?? document.body;
     startObserving(root, () => {
@@ -67,6 +71,7 @@ async function translatePage(): Promise<void> {
   } catch (err) {
     console.error('[iTranslate] Error:', err);
     alert(`Translation error: ${(err as Error).message}`);
+    hideTranslatingToast();
     removeTranslations();
     chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
   } finally {
