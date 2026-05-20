@@ -22,7 +22,8 @@ function findTextLeaf(block: Element): Element | null {
 
 /** Copy key text-rendering computed styles from source element's text leaf
  *  to the translation target, so the clone matches the original text
- *  appearance even though it lacks the inner DOM structure. */
+ *  appearance even though it lacks the inner DOM structure. Also resets
+ *  height constraints so translated text can freely expand or contract. */
 function applyTextStyles(source: Element, target: HTMLElement): void {
   const leaf = findTextLeaf(source) ?? source;
   const style = getComputedStyle(leaf);
@@ -34,6 +35,15 @@ function applyTextStyles(source: Element, target: HTMLElement): void {
   if (style.color === 'rgb(255, 255, 255)') {
     target.style.opacity = '1';
   }
+
+  // Remove height constraints inherited from the cloned block so the
+  // translation can naturally size itself — English 3 lines may become
+  // Chinese 2 lines, or vice versa.
+  target.style.height = 'auto';
+  target.style.maxHeight = 'none';
+  target.style.minHeight = '0';
+  target.style.overflow = 'visible';
+  target.style.webkitLineClamp = 'unset';
 }
 
 export function renderPlaceholders(sourceElements: Element[]): void {
