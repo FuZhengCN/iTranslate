@@ -11,23 +11,24 @@ async function translatePage(): Promise<void> {
   if (translateInProgress) return;
   translateInProgress = true;
 
-  // Clean up any existing translations before re-running
-  removeTranslations();
-
   try {
+    // Disconnect observer before any DOM mutations to prevent re-trigger loops
     stopObserving();
+
+    // Clean up any existing translations before re-running
+    removeTranslations();
 
     const extraction = extractSegments();
     lastExtraction = extraction;
 
     if (extraction.allSegments.length === 0) {
       console.log('[iTranslate] No translatable content found');
-      // Brief non-intrusive toast so user knows what happened
       const toast = document.createElement('div');
       toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;pointer-events:none;';
       toast.textContent = 'No translatable content found on this page.';
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
+      hideTranslatingToast();
       return;
     }
 
