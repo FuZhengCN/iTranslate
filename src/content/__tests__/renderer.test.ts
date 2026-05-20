@@ -19,8 +19,9 @@ describe('renderPlaceholders', () => {
 
     const placeholders = document.querySelectorAll('.itranslate-placeholder');
     expect(placeholders).toHaveLength(2);
-    expect(placeholders[0].textContent).toBe('Translating...');
-    expect(placeholders[1].textContent).toBe('Translating...');
+    // Each placeholder contains 3 bouncing dot spans
+    expect(placeholders[0].querySelectorAll('.itranslate-dot')).toHaveLength(3);
+    expect(placeholders[1].querySelectorAll('.itranslate-dot')).toHaveLength(3);
   });
 
   it('does not duplicate placeholder if one already exists', () => {
@@ -74,10 +75,10 @@ describe('renderTranslations', () => {
 
     const el = document.querySelector('p')!;
 
-    // First show placeholder
+    // First show placeholder (three bouncing dots)
     renderPlaceholders([el]);
     const placeholder = document.querySelector('.itranslate-placeholder')!;
-    expect(placeholder.textContent).toBe('Translating...');
+    expect(placeholder.querySelectorAll('.itranslate-dot')).toHaveLength(3);
     expect(placeholder.classList.contains('itranslate-placeholder')).toBe(true);
 
     // Then render real translation

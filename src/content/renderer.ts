@@ -7,7 +7,7 @@ export function renderPlaceholders(sourceElements: Element[]): void {
     if (existing?.classList.contains('itranslate-translation')) continue;
 
     const clone = el.cloneNode(false) as HTMLElement;
-    clone.textContent = 'Translating...';
+    clone.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
     clone.classList.add('itranslate-translation', 'itranslate-placeholder');
 
     el.insertAdjacentElement('afterend', clone);
