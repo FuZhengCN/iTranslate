@@ -33,6 +33,7 @@ translateBtn.addEventListener('click', async () => {
   } catch (err) {
     errorDiv.textContent = 'Could not translate this page. Make sure you are on a webpage (not a browser internal page).';
     errorDiv.classList.remove('hidden');
+    isTranslated = false;
     translateBtn.disabled = false;
     translateBtn.textContent = 'Translate This Page';
   }
