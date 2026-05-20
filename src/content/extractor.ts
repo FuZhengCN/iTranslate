@@ -29,28 +29,31 @@ function hasDirectText(el: Element): boolean {
 
 function findContentRoot(): Element {
   const selectors = [
-    // Article/detail pages
+    // Article/detail pages (semantic)
     'article',
     '[role="main"]',
     'main',
+    // Article/detail pages (common class names)
     '.post-content',
     '.article-content',
     '.entry-content',
     '.news-content',
-    '#content',
-    '.content',
     // CGTN specific
     '.cg-detail-mainWrap',
     '.new-detailWrap-v3',
     '.cg-mainWrapper',
-    // Homepage / generic
+    // Homepage / generic layout
     '.g-layout',
     '[class*="home"][class*="container"]',
     '[class*="main"][class*="wrapper"]',
+    // Very generic — last resort
+    '#content',
+    '.content',
   ];
   for (const sel of selectors) {
     const el = document.querySelector(sel);
-    if (el) {
+    // Only accept if it has actual child elements
+    if (el && el.querySelectorAll('*').length > 0) {
       console.log(`[iTranslate] Content root: "${sel}" (${el.querySelectorAll('*').length} elements)`);
       return el;
     }
