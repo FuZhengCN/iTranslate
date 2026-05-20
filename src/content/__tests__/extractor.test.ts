@@ -9,15 +9,30 @@ describe('extractor', () => {
   it('groups text elements by block ancestor', () => {
     document.body.innerHTML = `
       <main>
-        <p>Machine Learning</p>
-        <p>Machine learning is a fascinating field.</p>
+        <p>Machine Learning is everywhere now.</p>
+        <p>Deep learning transforms many industries.</p>
       </main>
     `;
 
     const result = extractSegments();
-    // Each <p> is its own block
+    // Each <p> is its own block with enough text (> 20 chars)
     expect(result.allSegments.length).toBe(2);
     expect(result.sourceElements.length).toBe(2);
+  });
+
+  it('skips blocks with very short combined text', () => {
+    document.body.innerHTML = `
+      <main>
+        <div><span>Space</span></div>
+        <div><span>Home</span></div>
+        <p>Machine learning is transforming industries worldwide.</p>
+      </main>
+    `;
+
+    const result = extractSegments();
+    // Short label blocks should be skipped; only the long paragraph stays
+    expect(result.allSegments.length).toBe(1);
+    expect(result.allSegments[0].text).toContain('Machine learning');
   });
 
   it('merges multiple text elements inside the same block', () => {
@@ -78,18 +93,18 @@ describe('extractor', () => {
   it('skips already-translated blocks on repeated extraction', () => {
     document.body.innerHTML = `
       <main>
-        <p>Hello world.</p>
-        <p class="itranslate-translation">你好世界。</p>
-        <p>More text.</p>
-        <p class="itranslate-translation">更多文本。</p>
+        <p>Hello world, this is a long enough sentence.</p>
+        <p class="itranslate-translation">你好世界，这是一个足够长的句子。</p>
+        <p>More text content that must be translated here.</p>
+        <p class="itranslate-translation">更多需要翻译的文本内容。</p>
       </main>
     `;
 
     const result = extractSegments();
     const texts = result.allSegments.map((s) => s.text);
     expect(texts).toHaveLength(2);
-    expect(texts).toContain('Hello world.');
-    expect(texts).toContain('More text.');
+    expect(texts[0]).toContain('Hello world');
+    expect(texts[1]).toContain('More text');
   });
 
   it('returns empty array when no content found', () => {
@@ -101,7 +116,7 @@ describe('extractor', () => {
   it('skips script and style content', () => {
     document.body.innerHTML = `
       <main>
-        <p>Visible text here.</p>
+        <p>Visible text here that is long enough.</p>
         <script>console.log("not text");</script>
         <style>body { color: red; }</style>
       </main>

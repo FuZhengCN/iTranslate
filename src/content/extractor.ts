@@ -130,11 +130,15 @@ export function extractSegments(): ExtractionResult {
   const allSegments: TranslationSegment[] = [];
 
   for (const [block, texts] of blockTexts) {
-    // Skip blocks that only contain noise (already filtered, but double-check)
     const meaningful = texts.filter((t) => !isNoiseText(t));
     if (meaningful.length === 0) continue;
 
     const merged = meaningful.join(' · ');
+
+    // Skip blocks with very short combined text — filters single-word
+    // labels, navigation items, and other non-content snippets
+    if (merged.length < 20) continue;
+
     const id = `seg_${allSegments.length}`;
     sourceElements.push(block);
     allSegments.push({ id, text: merged });
