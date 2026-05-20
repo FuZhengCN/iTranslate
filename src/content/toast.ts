@@ -10,8 +10,6 @@ export function showTranslatingToast(): void {
 
 export function hideTranslatingToast(): void {
   if (!toastEl) return;
-  toastEl.classList.add('itranslate-toast--hiding');
-  const el = toastEl;
+  toastEl.remove();
   toastEl = null;
-  el.addEventListener('animationend', () => el.remove());
 }
