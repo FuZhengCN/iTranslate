@@ -110,3 +110,63 @@ input:focus, textarea:focus {
 }
 
 .status.hidden { display: none; }
+
+.lang-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.lang-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lang-col .hint {
+  font-size: 11px;
+  color: #a0aec0;
+  margin-bottom: 4px;
+}
+
+.lang-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+}
+
+.lang-select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.swap-btn {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 1px;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 6px;
+  color: #7c3aed;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.swap-btn:hover {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.hint-inline {
+  font-weight: 400;
+  color: #a0aec0;
+  font-size: 11px;
+}
