@@ -1,3 +1,5 @@
+import { getSettings } from '../shared/storage';
+
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
 const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
@@ -6,6 +8,7 @@ const segCountEl = document.getElementById('segCount') as HTMLSpanElement;
 const cacheHitsEl = document.getElementById('cacheHits') as HTMLSpanElement;
 const apiCallsEl = document.getElementById('apiCalls') as HTMLSpanElement;
 const errorDiv = document.getElementById('error') as HTMLDivElement;
+const langBadge = document.getElementById('langBadge') as HTMLSpanElement;
 
 let isTranslated = false;
 let activeTabId: number | null = null;
@@ -20,6 +23,10 @@ async function syncState(): Promise<void> {
     const tab = await getActiveTab();
     if (!tab.id) return;
     activeTabId = tab.id;
+
+    const settings = await getSettings();
+    langBadge.textContent = `${settings.sourceLang} → ${settings.targetLang}`;
+
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {
       isTranslated = true;
