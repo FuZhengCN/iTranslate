@@ -7,7 +7,18 @@ import { getSettings } from '../shared/storage';
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'translate') {
     const segments = message.segments;
-    if (!Array.isArray(segments) || segments.length === 0 || segments.length > 500) {
+    if (!Array.isArray(segments)) {
+      console.error('[iTranslate] Validation: segments is not an array', typeof segments);
+      sendResponse({ success: false, error: 'Invalid segments payload' });
+      return false;
+    }
+    if (segments.length === 0) {
+      console.error('[iTranslate] Validation: segments array is empty');
+      sendResponse({ success: false, error: 'Invalid segments payload' });
+      return false;
+    }
+    if (segments.length > 2000) {
+      console.error('[iTranslate] Validation: too many segments', segments.length);
       sendResponse({ success: false, error: 'Invalid segments payload' });
       return false;
     }
@@ -15,6 +26,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       (s: unknown) => s != null && typeof (s as TranslationSegment).id === 'string' && typeof (s as TranslationSegment).text === 'string'
     );
     if (!valid) {
+      console.error('[iTranslate] Validation: malformed segment entries', segments);
       sendResponse({ success: false, error: 'Malformed segment entries' });
       return false;
     }
