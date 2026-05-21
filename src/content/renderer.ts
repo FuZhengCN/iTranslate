@@ -37,7 +37,6 @@ function applyTextStyles(source: Element, target: HTMLElement): void {
   const leaf = findTextLeaf(source) ?? source;
   const style = getComputedStyle(leaf);
   target.style.color = style.color;
-  target.style.fontFamily = style.fontFamily;
   target.style.fontSize = style.fontSize;
   target.style.fontWeight = style.fontWeight;
   target.style.lineHeight = style.lineHeight;
@@ -56,10 +55,15 @@ function applyTextStyles(source: Element, target: HTMLElement): void {
 }
 
 export function renderPlaceholders(sourceElements: Element[]): void {
+  let count = 0;
+  let skipped = 0;
   for (const el of sourceElements) {
     // Skip if a translation or placeholder already exists for this element
     const existing = el.nextElementSibling;
-    if (existing?.classList.contains('itranslate-translation')) continue;
+    if (existing?.classList.contains('itranslate-translation')) {
+      skipped++;
+      continue;
+    }
 
     const clone = el.cloneNode(false) as HTMLElement;
     clone.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
@@ -67,7 +71,9 @@ export function renderPlaceholders(sourceElements: Element[]): void {
     applyTextStyles(el, clone);
 
     el.insertAdjacentElement('afterend', clone);
+    count++;
   }
+  console.log(`[iTranslate] 📍 Placeholders: ${count} inserted, ${skipped} skipped (already present)`);
 }
 
 export function renderTranslations(
@@ -75,11 +81,16 @@ export function renderTranslations(
   sourceElements: Element[]
 ): void {
   const resultMap = new Map(results.map((r) => [r.id, r]));
+  let rendered = 0;
+  let missing = 0;
 
   for (let i = 0; i < sourceElements.length; i++) {
     const el = sourceElements[i];
     const result = resultMap.get(`seg_${i}`);
-    if (!result) continue;
+    if (!result) {
+      missing++;
+      continue;
+    }
 
     // Find existing translation element (might be a placeholder)
     const existing = el.nextElementSibling;
@@ -87,6 +98,7 @@ export function renderTranslations(
       existing.textContent = result.translated;
       existing.classList.remove('itranslate-placeholder');
       applyTextStyles(el, existing as HTMLElement);
+      rendered++;
       continue;
     }
 
@@ -96,7 +108,9 @@ export function renderTranslations(
     applyTextStyles(el, clone);
 
     el.insertAdjacentElement('afterend', clone);
+    rendered++;
   }
+  console.log(`[iTranslate] 🎨 Rendered: ${rendered} translations, ${missing} missing results`);
 }
 
 export function removeTranslations(): void {

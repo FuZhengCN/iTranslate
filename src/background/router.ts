@@ -24,12 +24,16 @@ export async function handleTranslate(
   segments: TranslationSegment[],
   tabId?: number
 ): Promise<{ results: TranslationResult[]; stats: { hits: number; misses: number } }> {
+  console.log(`[iTranslate] 🔍 Router: handling ${segments.length} segments`);
   const keys = segments.map((s) => segmentKey(s.text));
   const cacheMap = await cacheGetBulk(keys);
+
+  console.log(`[iTranslate] 💾 Cache lookup: ${cacheMap.size}/${keys.length} keys found in IndexedDB`);
 
   const results: TranslationResult[] = [];
   const misses: { idx: number; text: string; key: string }[] = [];
   let hits = 0;
+  let collisions = 0;
 
   for (let i = 0; i < segments.length; i++) {
     const key = keys[i];
@@ -39,15 +43,22 @@ export async function handleTranslate(
       hits++;
       results.push({ id: segments[i].id, original: segments[i].text, translated: cached.translated });
     } else {
+      if (cached) {
+        collisions++;
+        console.log(`[iTranslate] ⚠️  Hash collision! key=${key} cached="${cached.original.slice(0, 50)}" vs current="${segments[i].text.slice(0, 50)}"`);
+      }
       misses.push({ idx: i, text: segments[i].text, key });
     }
   }
+
+  console.log(`[iTranslate] 📊 Cache result: ${hits} hits, ${misses.length} misses, ${collisions} collisions`);
 
   // Report cache-hit progress
   if (tabId != null) sendProgress(tabId, hits, segments.length);
 
   if (misses.length > 0) {
     const texts = misses.map((m) => m.text);
+    console.log(`[iTranslate] 🌐 Sending ${texts.length} texts to API`);
     const translations = await translateBatch(texts, (batchCompleted) => {
       if (tabId != null) sendProgress(tabId, hits + batchCompleted, segments.length);
     });

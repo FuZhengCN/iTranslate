@@ -34,7 +34,7 @@ describe('translator', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('splits large batches into chunks of 30', async () => {
+  it('splits by character count into balanced batches', async () => {
     const mockSettings = {
       apiEndpoint: 'https://api.deepseek.com/v1',
       apiKey: 'sk-test',
@@ -53,11 +53,9 @@ describe('translator', () => {
     let callCount = 0;
     const mockFetch = vi.fn().mockImplementation(() => {
       callCount++;
-      // Return numbered translations based on which chunk this is
-      const base = (callCount - 1) * 30;
       const lines: string[] = [];
-      for (let i = 0; i < 30; i++) {
-        lines.push(`[${i}] 翻译${base + i}`);
+      for (let i = 0; i < 100; i++) {
+        lines.push(`[${i}] translated`);
       }
       return Promise.resolve({
         ok: true,
@@ -71,11 +69,11 @@ describe('translator', () => {
 
     const { translateBatch } = await import('../translator');
 
-    // 40 texts → should split into 30 + 10 = 2 API calls
-    const texts = Array.from({ length: 40 }, (_, i) => `Text ${i}`);
+    // 50 × 100-char Latin segments ≈ 1750 estimated tokens, TARGET_BATCH_TOKENS=1500 → 2 batches
+    const texts = Array.from({ length: 50 }, (_, i) => `Segment ${i}: `.padEnd(100, 'x'));
     const results = await translateBatch(texts);
 
-    expect(results).toHaveLength(40);
+    expect(results).toHaveLength(50);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 

@@ -2,46 +2,61 @@ import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './extractor';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
-import { hideTranslatingToast, showTranslatingToast, updateProgress } from './toast';
 
 let translateInProgress = false;
+let catchUpInProgress = false;
 
 async function catchUpNewContent(): Promise<void> {
-  const extraction = extractSegments();
-  // Filter to blocks that don't already have a translation sibling
-  const newSourceElements: Element[] = [];
-  const newSegments: TranslationSegment[] = [];
-
-  for (let i = 0; i < extraction.sourceElements.length; i++) {
-    const el = extraction.sourceElements[i];
-    const sibling = el.nextElementSibling;
-    if (sibling?.classList.contains('itranslate-translation')) continue;
-    newSourceElements.push(el);
-    newSegments.push({ ...extraction.allSegments[i], id: `seg_${newSegments.length}` });
-  }
-
-  if (newSegments.length === 0) return;
-
-  console.log(`[iTranslate] Catch-up: ${newSegments.length} new blocks found after translation`);
-  renderPlaceholders(newSourceElements);
+  if (catchUpInProgress) return;
+  catchUpInProgress = true;
 
   try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'translate',
-      segments: newSegments,
-    });
+    const extraction = extractSegments();
+    // Filter to blocks that don't already have a translation sibling
+    const newSourceElements: Element[] = [];
+    const newSegments: TranslationSegment[] = [];
 
-    if (response.success) {
-      renderTranslations(response.results, newSourceElements);
+    for (let i = 0; i < extraction.sourceElements.length; i++) {
+      const el = extraction.sourceElements[i];
+      const sibling = el.nextElementSibling;
+      if (sibling?.classList.contains('itranslate-translation')) continue;
+      newSourceElements.push(el);
+      newSegments.push({ ...extraction.allSegments[i], id: `seg_${newSegments.length}` });
     }
-  } catch {
-    // Silently ignore catch-up failures — best-effort
+
+    if (newSegments.length === 0) {
+      console.log('[iTranslate] Catch-up: no new blocks found, skipping');
+      return;
+    }
+
+    console.log(`[iTranslate] Catch-up: ${newSegments.length} new blocks found after translation`);
+    renderPlaceholders(newSourceElements);
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'translate',
+        segments: newSegments,
+      });
+
+      if (response.success) {
+        renderTranslations(response.results, newSourceElements);
+      }
+    } catch {
+      // Silently ignore catch-up failures — best-effort
+    }
+  } finally {
+    catchUpInProgress = false;
   }
 }
 
-async function translatePage(): Promise<void> {
-  if (translateInProgress) return;
+async function translatePage(caller = 'popup'): Promise<void> {
+  console.log(`[iTranslate] ▶  translatePage called by: ${caller}`);
+  if (translateInProgress) {
+    console.log('[iTranslate] ⏸  translatePage skipped — already in progress');
+    return;
+  }
   translateInProgress = true;
+  const t0 = performance.now();
 
   try {
     // Disconnect observer before any DOM mutations to prevent re-trigger loops
@@ -59,14 +74,16 @@ async function translatePage(): Promise<void> {
       toast.textContent = 'No translatable content found on this page.';
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
-      hideTranslatingToast();
+      console.log(`[iTranslate] ⏱  Total flow: ${(performance.now() - t0).toFixed(0)}ms (no content)`);
       return;
     }
 
-    // Show toast + placeholders immediately so user knows work is in progress
-    showTranslatingToast();
+    const totalChars = extraction.allSegments.reduce((sum, s) => sum + s.text.length, 0);
+    console.log(`[iTranslate] 🚀 Sending ${extraction.allSegments.length} segments (${totalChars} total chars) to background for translation`);
+
     renderPlaceholders(extraction.sourceElements);
 
+    const tSend = performance.now();
     const TRANSLATE_TIMEOUT = 120_000; // 2 minutes — batches + retries can be slow
     const response = await Promise.race([
       chrome.runtime.sendMessage({
@@ -78,22 +95,27 @@ async function translatePage(): Promise<void> {
       ),
     ]);
 
+    console.log(`[iTranslate] ⏱  Background translation took ${(performance.now() - tSend).toFixed(0)}ms`);
+
     if (!response.success) {
+      console.error(`[iTranslate] ❌ Translation failed: ${response.error}`);
       alert(`Translation failed: ${response.error}`);
-      hideTranslatingToast();
       removeTranslations();
       chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
       return;
     }
 
+    console.log(`[iTranslate] 📊 Cache stats: ${response.stats.hits} hits, ${response.stats.misses} misses`);
+
     renderTranslations(response.results, extraction.sourceElements);
-    hideTranslatingToast();
 
     chrome.runtime.sendMessage({
       action: 'translationComplete',
       stats: response.stats,
       totalSegments: extraction.allSegments.length,
     }).catch(() => {});
+
+    console.log(`[iTranslate] ⏱  Total flow (extract → render): ${(performance.now() - t0).toFixed(0)}ms`);
 
     // Catch-up scan: content loaded during the API call window (when the
     // observer was disconnected) would otherwise be permanently missed.
@@ -106,13 +128,12 @@ async function translatePage(): Promise<void> {
     // trigger a re-translation loop.
     const root = extraction.sourceElements[0]?.closest('article, main, [role="main"]') ?? document.body;
     startObserving(root, () => {
-      translatePage();
+      catchUpNewContent();
     });
 
   } catch (err) {
     console.error('[iTranslate] Error:', err);
     alert(`Translation error: ${(err as Error).message}`);
-    hideTranslatingToast();
     removeTranslations();
     chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
   } finally {
@@ -129,10 +150,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const hasTranslations = document.querySelector('.itranslate-translation') !== null;
     sendResponse({ isTranslated: hasTranslations });
     return true;
-  }
-  if (message.action === 'translationProgress') {
-    updateProgress(message.completed, message.total);
-    return;
   }
   if (message.action === 'undoTranslation') {
     removeTranslations();

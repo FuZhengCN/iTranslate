@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ success: false, error: 'Invalid segments payload' });
       return false;
     }
-    if (segments.length > 2000) {
+    if (segments.length > 5000) {
       console.error('[iTranslate] Validation: too many segments', segments.length);
       sendResponse({ success: false, error: 'Invalid segments payload' });
       return false;

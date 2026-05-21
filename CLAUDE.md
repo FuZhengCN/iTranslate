@@ -37,14 +37,14 @@ This is a **Manifest V3 browser extension** (Chrome/Edge) for multilingual bilin
 | `getState` | popup → content | Query whether page has active translations |
 | `translationComplete` | content → runtime | Notify popup: translation succeeded (with stats) |
 | `translationError` | content → runtime | Notify popup: translation failed |
-| `translationProgress` | background → content | Real-time progress (completed/total) for 5-dot indicator |
+| `translationProgress` | background → content | (unused — handler removed, toast is gone) |
 | `translate` | content → background | Request translation of segments → returns results |
 | `clearCache` | popup → background | Purge IndexedDB cache |
 | `testConnection` | settings → background | Verify API key/endpoint works |
 
 Popup listener filters by `sender.tab.id` against `activeTabId` to avoid cross-tab UI corruption.
 
-Background validates translate payloads: segments must be an array ≤2000, each with `id` and `text` strings. Validation failures are logged with specific reasons to the service worker console.
+Background validates translate payloads: segments must be an array ≤5000, each with `id` and `text` strings. Validation failures are logged with specific reasons to the service worker console.
 
 ### Data Flow (translate action)
 
@@ -52,46 +52,43 @@ Background validates translate payloads: segments must be an array ≤2000, each
 Popup click → content script
   ├─ stopObserving()         // prevent MutationObserver re-trigger
   ├─ removeTranslations()    // clean previous run
-  ├─ extractSegments()       // walk DOM, group text by block ancestor
+  ├─ extractSegments()       // walk body DOM, group text by block ancestor
   ├─ renderPlaceholders()    // inject clones with 5-dot progress indicator
   ├─ chrome.runtime.sendMessage({ action: 'translate', segments })
   │     ↓
   │   background router
   │     ├─ cacheGetBulk()    // IndexedDB lookup with collision guard (stores original text)
-  │     ├─ sendProgress()    // cache hits counted
-  │     ├─ translateBatch()  // batches of ≤30 to DeepSeek API, retry 3x with backoff
-  │     │   └─ sendProgress() after each batch
+  │     ├─ translateBatch()  // token-based batches, parallel (3 concurrent), retry 3x on 429/5xx
   │     └─ sort results, cacheSetBulk() new entries, return
   │     ↓
   ├─ renderTranslations()    // replace placeholder content with real translations
-  ├─ hideTranslatingToast()
   ├─ send translationComplete to popup
   ├─ catchUpNewContent()     // re-extract for content loaded during API call window
   │     └─ filter blocks without translation sibling → translate → render
-  └─ startObserving(root, callback)  // reconnect MutationObserver LAST
+  └─ startObserving(root, () => catchUpNewContent())  // reconnect observer, incremental only
 ```
 
 Observer is disconnected during translation to prevent our own DOM mutations from triggering re-translation. Catch-up scan compensates for content that loaded while the observer was offline. Observer is reconnected only after catch-up completes, so catch-up's DOM mutations don't trigger a re-translation loop.
 
 ### Key Modules
 
-- **`src/background/translator.ts`** — OpenAI-compatible API client (`/chat/completions`). Settings fetched once in `translateBatch`, passed to `translateOneBatch` (avoids repeated storage reads in retry loop). Endpoint trailing slashes normalized. Retries with exponential backoff, handles 429 rate limits. `buildPrompt()` is language-agnostic (system prompt carries the language direction).
+- **`src/background/translator.ts`** — OpenAI-compatible API client (`/chat/completions`). Batching is token-aware: segments accumulate by estimated token count (CJK 1.5 tok/char, Latin 0.35 tok/char, target 1500/batch) instead of fixed count. Batches run in parallel with `MAX_CONCURRENT_BATCHES=3` concurrency. `thinking: { type: 'disabled' }` sent to prevent DeepSeek reasoning mode from producing empty content. Retries only on 429/5xx (not 4xx). Temperature 0.1. Dynamic `max_tokens` estimated from prompt length. `parseResponse()` supports `[N]`, `N.`, `N)`, `N、` formats.
 - **`src/background/cache.ts`** — IndexedDB wrapper via `idb` library. Key: `segmentKey(text)` (djb2 hash + text length as cache key). Value: `{ original, translated, timestamp }`. **Original text stored and verified on lookup** to guard against hash collisions. `cacheGetBulk` uses parallel `Promise.all` reads. `dbPromise` resets on open failure to allow retry.
 - **`src/background/router.ts`** — Orchestrates cache lookup + API call. Sends progress messages (`translationProgress`) after cache check and after each batch. Results sorted with a position map (not O(n²) `findIndex`). `handleTranslate(segments, tabId?)`.
-- **`src/content/extractor.ts`** — Block-level extraction: walks all elements (`querySelectorAll('*')`), filters to those with direct text, groups by nearest block ancestor (`P/DIV/LI/H1-H6` etc.), merges text within each block with newline separator. Filters noise (timestamps, dates, pure digits). Skips blocks with combined text < 20 chars. Skips elements with `itranslate-translation` class. `findContentRoot()` tries semantic selectors → site-specific classes → body fallback, preferring the root with the most child elements.
-- **`src/content/renderer.ts`** — Two-phase render: `renderPlaceholders()` injects clones with 5-dot progress indicator; `renderTranslations()` replaces with real text. `findTextLeaf()` picks the descendant with the **longest** text content to get representative computed styles (avoids picking byline/caption styles). `applyTextStyles()` copies color, fontFamily, fontSize, fontWeight, lineHeight from text leaf to clone; resets height constraints so translated text can expand/contract naturally; keeps white text at opacity=1 for dark backgrounds. Clones use `cloneNode(false)` (shallow clone of block ancestor), inserted via `afterend`. Dedup: checks `nextElementSibling` before inserting. `removeTranslations()` removes all `.itranslate-translation` elements.
-- **`src/content/toast.ts`** — Translating notification: 5 segmented dots that light up proportionally via `updateProgress(completed, total)`. Synchronous removal (no animationend dependency) to prevent observer re-trigger.
-- **`src/content/observer.ts`** — MutationObserver wrapper with debounce (default 1000ms). `startObserving(root, callback)` / `stopObserving()`. Watches `childList` + `subtree`.
+- **`src/content/extractor.ts`** — Full-page block extraction from `document.body`. Walks all elements, filters to those with direct text, groups by nearest block ancestor (`P/DIV/LI/H1-H6` etc.). Language-aware minimum chars: CJK blocks ≥12 chars, Latin blocks ≥20 chars. CJK detection (`isCJK`) covers Hanzi, Hiragana, Katakana, CJK punctuation. Filters noise (timestamps, dates, pure digits). Skips elements with `itranslate-translation` class or matching `SKIP_CLASS_NAMES`/ARIA roles.
+- **`src/content/renderer.ts`** — Two-phase render: `renderPlaceholders()` injects clones with 5-dot progress indicator; `renderTranslations()` replaces with real text. `findTextLeaf()` picks the descendant with longest text to get representative computed styles. `applyTextStyles()` copies color, fontSize, fontWeight, lineHeight from text leaf (not fontFamily — CSS sets `sans-serif` globally). Resets height constraints so translation can expand/contract. White text gets opacity=1. Clones via `cloneNode(false)`, inserted via `afterend`. Dedup checks `nextElementSibling`. `removeTranslations()` clears all `.itranslate-translation`.
+- **`src/content/toast.ts`** — Dead code (no longer imported). Previously showed a 5-dot progress toast; removed in favor of placeholder-only progress indication.
+- **`src/content/observer.ts`** — MutationObserver wrapper with debounce (default 1000ms). `startObserving(root, callback)` / `stopObserving()`. Watches `childList` + `subtree`. Callback now fires `catchUpNewContent()` (incremental), not full `translatePage()`.
 - **`src/shared/storage.ts`** — Wraps `chrome.storage.sync` for settings persistence. `getSettings()` merges saved values over defaults so new Settings fields (e.g. `sourceLang`, `targetLang`) get fallback values for users with old saved settings.
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS` (sourceLang: English, targetLang: Chinese), `LANGUAGE_OPTIONS` (6 languages with label/value pairs), cache DB/store names, storage key.
 
 ### Translation DOM Pattern
 
-Original elements untouched. Translation is a **shallow clone** of the block ancestor element (same tag, classes, attributes), inserted immediately after via `insertAdjacentElement('afterend', clone)`. CSS class `itranslate-translation` marks all translation elements (opacity 0.9). The `.itranslate-placeholder` class shows the 5-dot progress indicator; it is removed when real translation arrives.
+Original elements untouched. Translation is a **shallow clone** of the block ancestor element (same tag, classes, attributes), inserted immediately after via `insertAdjacentElement('afterend', clone)`. CSS class `itranslate-translation` marks all translation elements (`opacity: 0.85`, `font-family: sans-serif`). The `.itranslate-placeholder` class shows the 5-dot progress indicator; it is removed when real translation arrives.
 
 ### Visual Design
 
-Unified purple gradient (#4f46e5 → #7c3aed): popup logo, buttons, toast background. Progress indicator: 5 white dots on translucent background, lighting up sequentially. Font: system-ui.
+Unified purple gradient (#4f46e5 → #7c3aed): popup logo, buttons. Progress indicator: 5 white dots on translucent background, lighting up sequentially. Translation font: `sans-serif` (browser default, language-neutral). Translation opacity: 0.85 for visual distinction from original. No toast notification bar.
 
 ### Test Strategy
 

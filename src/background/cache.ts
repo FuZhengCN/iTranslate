@@ -52,4 +52,5 @@ export async function cacheSetBulk(entries: Map<string, CacheEntry>): Promise<vo
     await tx.store.put(entry, key);
   }
   await tx.done;
+  console.log(`[iTranslate] 💾 Cached ${entries.size} new entries`);
 }
