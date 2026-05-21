@@ -20,4 +20,6 @@ export interface Settings {
   apiKey: string;
   model: string;
   systemPrompt: string;
+  sourceLang: string;
+  targetLang: string;
 }

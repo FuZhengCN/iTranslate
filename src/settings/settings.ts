@@ -30,6 +30,8 @@ function getFormSettings(): Settings {
     apiKey: apiKeyEl.value.trim(),
     model: modelEl.value.trim() || DEFAULT_SETTINGS.model,
     systemPrompt: systemPromptEl.value.trim() || DEFAULT_SETTINGS.systemPrompt,
+    sourceLang: DEFAULT_SETTINGS.sourceLang,
+    targetLang: DEFAULT_SETTINGS.targetLang,
   };
 }
 
