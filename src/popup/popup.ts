@@ -1,4 +1,5 @@
 import { getSettings } from '../shared/storage';
+import { LANGUAGE_OPTIONS } from '../shared/constants';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
@@ -25,7 +26,9 @@ async function syncState(): Promise<void> {
     activeTabId = tab.id;
 
     const settings = await getSettings();
-    langBadge.textContent = `${settings.sourceLang} → ${settings.targetLang}`;
+    const sourceLabel = LANGUAGE_OPTIONS.find((l) => l.value === settings.sourceLang)?.label ?? settings.sourceLang;
+    const targetLabel = LANGUAGE_OPTIONS.find((l) => l.value === settings.targetLang)?.label ?? settings.targetLang;
+    langBadge.textContent = `${sourceLabel} → ${targetLabel}`;
 
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {

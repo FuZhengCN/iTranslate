@@ -3,9 +3,9 @@ import { getSettings } from '../shared/storage';
 
 const MAX_BATCH_SIZE = 30;
 
-function buildPrompt(systemPrompt: string, texts: string[]): string {
+function buildPrompt(texts: string[]): string {
   const segments = texts.map((t, i) => `[${i}] ${t}`).join('\n\n');
-  return `Translate the following English texts to Chinese. Each text is wrapped with a numbered tag. Output the translations using the same numbered tags, one per line, with no additional commentary:\n\n${segments}`;
+  return `Translate the following texts. Each text is wrapped with a numbered tag. Output the translations using the same numbered tags, one per line, with no additional commentary:\n\n${segments}`;
 }
 
 function parseResponse(response: string, count: number): string[] {
@@ -30,7 +30,7 @@ async function translateOneBatch(texts: string[], settings: Settings): Promise<s
     throw new Error('API key not configured');
   }
 
-  const prompt = buildPrompt(settings.systemPrompt, texts);
+  const prompt = buildPrompt(texts);
   const endpoint = settings.apiEndpoint.replace(/\/+$/, '');
 
   let lastError: Error | null = null;

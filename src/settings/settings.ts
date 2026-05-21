@@ -58,20 +58,30 @@ function getFormSettings(): Settings {
   };
 }
 
-// Auto-update system prompt when language changes
+// Track manual edits so we can warn before auto-overwriting
+let promptEdited = false;
+systemPromptEl.addEventListener('input', () => { promptEdited = true; });
+
+function trySetPrompt(prompt: string): void {
+  if (!promptEdited || confirm('Changing the language will replace your custom system prompt. Continue?')) {
+    systemPromptEl.value = prompt;
+    promptEdited = false;
+  }
+}
+
 sourceLangEl.addEventListener('change', () => {
-  systemPromptEl.value = generateSystemPrompt(sourceLangEl.value, targetLangEl.value);
+  trySetPrompt(generateSystemPrompt(sourceLangEl.value, targetLangEl.value));
 });
 
 targetLangEl.addEventListener('change', () => {
-  systemPromptEl.value = generateSystemPrompt(sourceLangEl.value, targetLangEl.value);
+  trySetPrompt(generateSystemPrompt(sourceLangEl.value, targetLangEl.value));
 });
 
 swapBtn.addEventListener('click', () => {
   const srcVal = sourceLangEl.value;
   sourceLangEl.value = targetLangEl.value;
   targetLangEl.value = srcVal;
-  systemPromptEl.value = generateSystemPrompt(sourceLangEl.value, targetLangEl.value);
+  trySetPrompt(generateSystemPrompt(sourceLangEl.value, targetLangEl.value));
 });
 
 saveBtn.addEventListener('click', async () => {
