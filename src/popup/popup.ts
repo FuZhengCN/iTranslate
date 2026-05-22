@@ -1,18 +1,43 @@
-import { getSettings } from '../shared/storage';
+import { getSettings, saveSettings } from '../shared/storage';
 import { LANGUAGE_OPTIONS } from '../shared/constants';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
 const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
-const statsDiv = document.getElementById('stats') as HTMLDivElement;
-const segCountEl = document.getElementById('segCount') as HTMLSpanElement;
-const cacheHitsEl = document.getElementById('cacheHits') as HTMLSpanElement;
-const apiCallsEl = document.getElementById('apiCalls') as HTMLSpanElement;
+const sourceLangEl = document.getElementById('sourceLang') as HTMLSelectElement;
+const targetLangEl = document.getElementById('targetLang') as HTMLSelectElement;
+const swapBtn = document.getElementById('swapBtn') as HTMLButtonElement;
 const errorDiv = document.getElementById('error') as HTMLDivElement;
-const langBadge = document.getElementById('langBadge') as HTMLSpanElement;
 
 let isTranslated = false;
 let activeTabId: number | null = null;
+
+function populateLanguageSelects(): void {
+  for (const lang of LANGUAGE_OPTIONS) {
+    const opt1 = document.createElement('option');
+    opt1.value = lang.value;
+    opt1.textContent = lang.label;
+    sourceLangEl.appendChild(opt1);
+
+    const opt2 = document.createElement('option');
+    opt2.value = lang.value;
+    opt2.textContent = lang.label;
+    targetLangEl.appendChild(opt2);
+  }
+}
+
+async function loadLanguageSettings(): Promise<void> {
+  const settings = await getSettings();
+  sourceLangEl.value = settings.sourceLang;
+  targetLangEl.value = settings.targetLang;
+}
+
+async function saveLanguageSettings(): Promise<void> {
+  const settings = await getSettings();
+  settings.sourceLang = sourceLangEl.value;
+  settings.targetLang = targetLangEl.value;
+  await saveSettings(settings);
+}
 
 async function getActiveTab(): Promise<chrome.tabs.Tab> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -25,11 +50,6 @@ async function syncState(): Promise<void> {
     if (!tab.id) return;
     activeTabId = tab.id;
 
-    const settings = await getSettings();
-    const sourceLabel = LANGUAGE_OPTIONS.find((l) => l.value === settings.sourceLang)?.label ?? settings.sourceLang;
-    const targetLabel = LANGUAGE_OPTIONS.find((l) => l.value === settings.targetLang)?.label ?? settings.targetLang;
-    langBadge.textContent = `${sourceLabel} → ${targetLabel}`;
-
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {
       isTranslated = true;
@@ -40,7 +60,24 @@ async function syncState(): Promise<void> {
   }
 }
 
+populateLanguageSelects();
+loadLanguageSettings();
 syncState();
+
+sourceLangEl.addEventListener('change', () => {
+  saveLanguageSettings();
+});
+
+targetLangEl.addEventListener('change', () => {
+  saveLanguageSettings();
+});
+
+swapBtn.addEventListener('click', async () => {
+  const srcVal = sourceLangEl.value;
+  sourceLangEl.value = targetLangEl.value;
+  targetLangEl.value = srcVal;
+  await saveLanguageSettings();
+});
 
 translateBtn.addEventListener('click', async () => {
   errorDiv.classList.add('hidden');
@@ -77,7 +114,9 @@ clearCacheBtn.addEventListener('click', async () => {
   try {
     await chrome.runtime.sendMessage({ action: 'clearCache' });
     clearCacheBtn.textContent = 'Cache Cleared!';
-    setTimeout(() => { clearCacheBtn.textContent = 'Clear Cache'; }, 1500);
+    setTimeout(() => {
+      clearCacheBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Clear Cache';
+    }, 1500);
   } catch (err) {
     errorDiv.textContent = 'Failed to clear cache.';
     errorDiv.classList.remove('hidden');
@@ -85,14 +124,9 @@ clearCacheBtn.addEventListener('click', async () => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  // Only respond to messages from the active tab to avoid cross-tab UI updates
   if (sender.tab?.id !== activeTabId) return;
 
   if (message.action === 'translationComplete') {
-    statsDiv.classList.remove('hidden');
-    segCountEl.textContent = String(message.totalSegments);
-    cacheHitsEl.textContent = String(message.stats?.hits ?? 0);
-    apiCallsEl.textContent = String(message.stats?.misses ?? 0);
     isTranslated = true;
     translateBtn.disabled = false;
     translateBtn.textContent = 'Undo Translation';
