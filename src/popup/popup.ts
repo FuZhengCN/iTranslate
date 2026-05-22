@@ -61,10 +61,11 @@ function generateSystemPrompt(sourceLang: string, targetLang: string): string {
   return `You are a professional ${sourceLang}-to-${targetLang} translator. Translate the following text accurately while preserving the original meaning, tone, and formatting. Only output the ${targetLang} translation, nothing else.`;
 }
 
-async function saveLanguageSettings(): Promise<void> {
+async function saveLanguageSettings(lockSource = false): Promise<void> {
   const settings = await getSettings();
   settings.sourceLang = sourceLangEl.value;
   settings.targetLang = targetLangEl.value;
+  if (lockSource) settings.sourceLangLocked = true;
   settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
   await saveSettings(settings);
 }
@@ -94,13 +95,8 @@ populateLanguageSelects();
 loadLanguageSettings();
 syncState();
 
-sourceLangEl.addEventListener('change', async () => {
-  const settings = await getSettings();
-  if (!settings.sourceLangLocked) {
-    settings.sourceLangLocked = true;
-    await saveSettings(settings);
-  }
-  saveLanguageSettings();
+sourceLangEl.addEventListener('change', () => {
+  saveLanguageSettings(true);
 });
 
 targetLangEl.addEventListener('change', () => {
