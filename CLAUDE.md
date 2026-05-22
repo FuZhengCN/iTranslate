@@ -19,80 +19,86 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 
 ## Architecture
 
-This is a **Manifest V3 browser extension** (Chrome/Edge) for multilingual bilingual translation (default EN→ZH). Built with TypeScript, bundled with Vite + `@crxjs/vite-plugin`.
+**Manifest V3 浏览器扩展**（Chrome/Edge），多语种双语翻译（默认英→中）。TypeScript 编写，Vite + `@crxjs/vite-plugin` 构建。
+
+**扩展加载方式：**
+- 开发：`npm run dev` 启动 Vite dev server，Chrome 加载**源码目录**（项目根目录，非 `dist/`）
+- 生产：`npm run build`，Chrome 加载 `dist/` 目录
+
+**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 30 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
 
 ### Extension Contexts (4 isolated execution environments)
 
-| Context | Entry | Purpose |
-|---------|-------|---------|
-| **Background** (service worker) | `src/background/index.ts` | Handles API calls to DeepSeek, manages IndexedDB cache, validates incoming messages |
-| **Content script** | `src/content/index.ts` | Injected into http/https pages. Extracts text blocks, sends to background for translation, renders results into DOM |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | Toolbar popup — translate/undo button, source/target language selects with swap, cache clear. Auto-detects source language from `<html lang>` and target language from `navigator.language` on open (respects lock flags when user has manually chosen). Syncs button state with page on open |
-| **Settings** | `src/settings/settings.html` + `settings.ts` | Options page — source/target language pickers with swap button, API endpoint, API key, model name, auto-generated system prompt (editable), test connection |
+| Context | Entry | 用途 |
+|---------|-------|------|
+| **Background** (service worker) | `src/background/index.ts` | 处理 DeepSeek API 调用，管理 IndexedDB 缓存，校验消息 |
+| **Content script** | `src/content/index.ts` | 注入 http/https 页面。提取文本块，发送到 background 翻译，结果渲染到 DOM |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，清除缓存。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言（若用户手动选择过则尊重锁定标志）。打开时同步按钮状态 |
+| **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接 |
 
 ### Message Catalog
 
-| Action | Direction | Purpose |
-|--------|-----------|---------|
-| `translatePage` | popup → content | Trigger translation |
-| `undoTranslation` | popup → content | Remove all translation clones, stop observer |
-| `getState` | popup → content | Query whether page has active translations |
-| `translationComplete` | content → runtime | Notify popup: translation succeeded (with stats) |
-| `translationError` | content → runtime | Notify popup: translation failed |
-| `translationProgress` | background → content | (unused — handler removed, toast is gone) |
-| `translate` | content → background | Request translation of segments → returns results |
-| `clearCache` | popup → background | Purge IndexedDB cache |
-| `testConnection` | settings → background | Verify API key/endpoint works |
+| Action | 方向 | 用途 |
+|--------|------|------|
+| `translatePage` | popup → content | 触发翻译 |
+| `undoTranslation` | popup → content | 移除所有翻译克隆，停止 observer |
+| `getState` | popup → content | 查询页面是否有活跃翻译 |
+| `translationComplete` | content → runtime | 通知 popup：翻译成功（含统计） |
+| `translationError` | content → runtime | 通知 popup：翻译失败 |
+| `translationProgress` | background → content | （未使用，handler 已移除） |
+| `translate` | content → background | 请求翻译文本段 → 返回结果 |
+| `clearCache` | popup → background | 清空 IndexedDB 缓存 |
+| `testConnection` | settings → background | 验证 API key/endpoint 可用 |
 
-Popup listener filters by `sender.tab.id` against `activeTabId` to avoid cross-tab UI corruption.
+Popup 消息监听按 `sender.tab.id` 与 `activeTabId` 过滤，避免跨标签 UI 污染。
 
-Background validates translate payloads: segments must be an array ≤5000, each with `id` and `text` strings. Validation failures are logged with specific reasons to the service worker console.
+Background 校验翻译请求：segments 必须是数组且 ≤5000 项，每项含 `id` 和 `text` 字符串。校验失败的具体原因记录到 service worker 控制台。
 
 ### Data Flow (translate action)
 
 ```
 Popup click → content script
-  ├─ stopObserving()         // prevent MutationObserver re-trigger
-  ├─ removeTranslations()    // clean previous run
-  ├─ extractSegments()       // walk body DOM, group text by block ancestor
-  ├─ renderPlaceholders()    // inject clones with 5-dot progress indicator
+  ├─ stopObserving()         // 停止 MutationObserver，防止重入
+  ├─ removeTranslations()    // 清理上次结果
+  ├─ extractSegments()       // 遍历 body DOM，按块级祖先分组文本
+  ├─ renderPlaceholders()    // 注入带 5 点进度指示器的克隆元素
   ├─ chrome.runtime.sendMessage({ action: 'translate', segments })
   │     ↓
   │   background router
-  │     ├─ cacheGetBulk()    // IndexedDB lookup with collision guard (stores original text)
-  │     ├─ translateBatch()  // token-based batches, parallel (3 concurrent), retry 3x on 429/5xx
-  │     └─ sort results, cacheSetBulk() new entries, return
+  │     ├─ cacheGetBulk()    // IndexedDB 查找，带原文校验防哈希碰撞
+  │     ├─ translateBatch()  // 按 token 分批，并行 3 并发，429/5xx 重试 3 次
+  │     └─ 结果排序，cacheSetBulk() 缓存新条目，返回
   │     ↓
-  ├─ renderTranslations()    // replace placeholder content with real translations
-  ├─ send translationComplete to popup
-  ├─ catchUpNewContent()     // re-extract for content loaded during API call window
-  │     └─ filter blocks without translation sibling → translate → render
-  └─ startObserving(root, () => catchUpNewContent())  // reconnect observer, incremental only
+  ├─ renderTranslations()    // 替换占位符为真实翻译
+  ├─ 发送 translationComplete 到 popup
+  ├─ catchUpNewContent()     // 重新提取 API 调用期间新加载的内容
+  │     └─ 过滤无翻译兄弟节点的 block → 翻译 → 渲染
+  └─ startObserving(root, () => catchUpNewContent())  // 重新连接 observer，仅增量
 ```
 
-Observer is disconnected during translation to prevent our own DOM mutations from triggering re-translation. Catch-up scan compensates for content that loaded while the observer was offline. Observer is reconnected only after catch-up completes, so catch-up's DOM mutations don't trigger a re-translation loop.
+翻译期间断开 Observer，防止自身 DOM 变更触发重译。追扫（catch-up）补偿 Observer 离线期间加载的新内容。Observer 仅在追扫完成后重连，避免追扫的 DOM 变更触发翻译循环。
 
 ### Key Modules
 
-- **`src/background/translator.ts`** — OpenAI-compatible API client (`/chat/completions`). Batching is token-aware: segments accumulate by estimated token count (CJK 1.5 tok/char, Latin 0.35 tok/char, target 1500/batch) instead of fixed count. Batches run in parallel with `MAX_CONCURRENT_BATCHES=3` concurrency. `thinking: { type: 'disabled' }` sent to prevent DeepSeek reasoning mode from producing empty content. Retries only on 429/5xx (not 4xx). Temperature 0.1. Dynamic `max_tokens` estimated from prompt length. `parseResponse()` supports `[N]`, `N.`, `N)`, `N、` formats.
-- **`src/background/cache.ts`** — IndexedDB wrapper via `idb` library. Key: `segmentKey(text)` (djb2 hash + text length as cache key). Value: `{ original, translated, timestamp }`. **Original text stored and verified on lookup** to guard against hash collisions. `cacheGetBulk` uses parallel `Promise.all` reads. `dbPromise` resets on open failure to allow retry.
-- **`src/background/router.ts`** — Orchestrates cache lookup + API call. Sends progress messages (`translationProgress`) after cache check and after each batch. Results sorted with a position map (not O(n²) `findIndex`). `handleTranslate(segments, tabId?)`.
-- **`src/content/extractor.ts`** — Full-page block extraction from `document.body`. Walks all elements, filters to those with direct text, groups by nearest block ancestor (`P/DIV/LI/H1-H6` etc.). Language-aware minimum chars: CJK blocks ≥12 chars, Latin blocks ≥20 chars. CJK detection (`isCJK`) covers Hanzi, Hiragana, Katakana, CJK punctuation. Filters noise (timestamps, dates, pure digits). Skips elements with `itranslate-translation` class or matching `SKIP_CLASS_NAMES`/ARIA roles.
-- **`src/content/renderer.ts`** — Two-phase render: `renderPlaceholders()` injects clones with 5-dot progress indicator; `renderTranslations()` replaces with real text. `findTextLeaf()` picks the descendant with longest text to get representative computed styles. `applyTextStyles()` copies color, fontSize, fontWeight, lineHeight from text leaf (not fontFamily — CSS sets `sans-serif` globally). Resets height constraints so translation can expand/contract. White text gets opacity=1. Clones via `cloneNode(false)`, inserted via `afterend`. Dedup checks `nextElementSibling`. `removeTranslations()` clears all `.itranslate-translation`.
-- **`src/content/toast.ts`** — Dead code (no longer imported). Previously showed a 5-dot progress toast; removed in favor of placeholder-only progress indication.
-- **`src/content/observer.ts`** — MutationObserver wrapper with debounce (default 1000ms). `startObserving(root, callback)` / `stopObserving()`. Watches `childList` + `subtree`. Callback now fires `catchUpNewContent()` (incremental), not full `translatePage()`.
-- **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`（所有 `zh*` 变体→`zh_CN`，其余→`en`）。翻译文件位于 `_locales/en/messages.json` 和 `_locales/zh_CN/messages.json`（各 30 条消息）。注意：`__MSG_*__` 占位符不能在 HTML 中使用（Vite/Crxjs dev server 会拦截），所有 UI 文本通过 JS `t()` 在初始化时设置，HTML 中保留英文回退文本。
-- **`src/shared/storage.ts`** — Wraps `chrome.storage.sync` for settings persistence. `getSettings()` merges saved values over defaults so new Settings fields (e.g. `sourceLang`, `targetLang`, `*Locked` flags) get fallback values for users with old saved settings.
-- **`src/shared/constants.ts`** — `DEFAULT_SETTINGS` (sourceLang: English, targetLang: Chinese, `sourceLangLocked`/`targetLangLocked` both false), `LANGUAGE_OPTIONS` (6 languages with label/value pairs), cache DB/store names, storage key.
-- **`src/shared/lang-detect.ts`** — Language detection utilities. `detectPageLang(tag)` maps BCP 47 language tags (e.g. `zh-CN`, `en`) to language names via `LANG_TAG_MAP` (zh/en/ja/ko/fr/de → Chinese/English/Japanese/Korean/French/German). `detectLangFromText(text)` scans Unicode script ranges (CJK, Hiragana, Katakana, Hangul) to detect language from body text, used as fallback when `<html lang>` is missing.
+- **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止 DeepSeek 推理模式产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
+- **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text)`（djb2 hash + 文本长度）。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
+- **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存检查后和每批完成后发送进度消息。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。
+- **`src/content/extractor.ts`** — 从 `document.body` 全页提取文本块。遍历所有元素，筛选有直接文本节点的元素，按最近块级祖先（`P/DIV/LI/H1-H6` 等）分组。按语种设最低字符数：CJK ≥12 字，拉丁 ≥20 字。CJK 检测（`isCJK`）覆盖汉字、平假名、片假名、CJK 标点。过滤噪音（时间戳、日期、纯数字）。跳过带 `itranslate-translation` 类或匹配 `SKIP_CLASS_NAMES`/ARIA 角色的元素。
+- **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入带 5 点进度指示器的克隆元素；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
+- **`src/content/toast.ts`** — 死代码（不再被引用）。以前显示 5 点进度条，已移除改用占位符进度指示。可安全删除。
+- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree`。回调现在触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
+- **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
+- **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段（如 `sourceLang`、`targetLang`、`*Locked`）对旧用户自动获得默认值。
+- **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese、`sourceLangLocked`/`targetLangLocked` 均为 false）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
+- **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
 
 ### Translation DOM Pattern
 
-Original elements untouched. Translation is a **shallow clone** of the block ancestor element (same tag, classes, attributes), inserted immediately after via `insertAdjacentElement('afterend', clone)`. CSS class `itranslate-translation` marks all translation elements (`opacity: 0.85`, `font-family: sans-serif`). The `.itranslate-placeholder` class shows the 5-dot progress indicator; it is removed when real translation arrives.
+原始元素保持不变。翻译是块级祖先元素的**浅克隆**（相同标签、类、属性），通过 `insertAdjacentElement('afterend', clone)` 插入其后。CSS 类 `itranslate-translation` 标记所有翻译元素（`opacity: 0.85`，`font-family: sans-serif`）。`.itranslate-placeholder` 类显示 5 点进度指示器，翻译完成后移除。
 
 ### Visual Design
 
-Unified purple gradient (#4f46e5 → #7c3aed): popup logo, buttons. Progress indicator: 5 white dots on translucent background, lighting up sequentially. Translation font: `sans-serif` (browser default, language-neutral). Translation opacity: 0.85 for visual distinction from original. No toast notification bar.
+统一紫色渐变（#4f46e5 → #7c3aed）：popup logo、按钮。进度指示器：半透明背景上 5 个白色圆点依次亮起。翻译字体：`sans-serif`（浏览器默认，语言无关）。翻译透明度：0.85，与原文形成视觉区分。无 toast 通知栏。
 
 ### Test Strategy
 
