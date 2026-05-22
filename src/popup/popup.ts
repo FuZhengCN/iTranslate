@@ -30,6 +30,9 @@ async function loadLanguageSettings(): Promise<void> {
   const settings = await getSettings();
   sourceLangEl.value = settings.sourceLang;
   targetLangEl.value = settings.targetLang;
+  // Sync system prompt with current language pair on load
+  settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
+  await saveSettings(settings);
 }
 
 function generateSystemPrompt(sourceLang: string, targetLang: string): string {
