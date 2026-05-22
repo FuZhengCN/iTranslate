@@ -1,6 +1,7 @@
 import { getSettings, saveSettings } from '../shared/storage';
 import { LANGUAGE_OPTIONS } from '../shared/constants';
 import { detectPageLang, detectLangFromText } from '../shared/lang-detect';
+import { t } from '../shared/i18n';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
@@ -9,6 +10,7 @@ const sourceLangEl = document.getElementById('sourceLang') as HTMLSelectElement;
 const targetLangEl = document.getElementById('targetLang') as HTMLSelectElement;
 const swapBtn = document.getElementById('swapBtn') as HTMLButtonElement;
 const errorDiv = document.getElementById('error') as HTMLDivElement;
+const versionLabel = document.getElementById('versionLabel') as HTMLSpanElement;
 
 let isTranslated = false;
 let activeTabId: number | null = null;
@@ -105,7 +107,7 @@ async function syncState(): Promise<void> {
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {
       isTranslated = true;
-      translateBtn.textContent = 'Undo Translation';
+      translateBtn.textContent = t('undoTranslation');
     }
   } catch {
     // Content script not injected or not responding — stay with defaults
@@ -115,6 +117,9 @@ async function syncState(): Promise<void> {
 populateLanguageSelects();
 loadLanguageSettings();
 syncState();
+
+// Set version label
+versionLabel.textContent = t('version', [chrome.runtime.getManifest().version]);
 
 sourceLangEl.addEventListener('change', () => {
   saveLanguageSettings(true);
@@ -153,7 +158,7 @@ translateBtn.addEventListener('click', async () => {
 
     if (!isTranslated) {
       translateBtn.disabled = true;
-      translateBtn.textContent = 'Translating...';
+      translateBtn.textContent = t('translating');
       try {
         await chrome.tabs.sendMessage(tab.id, { action: 'translatePage' });
       } catch {
@@ -170,15 +175,15 @@ translateBtn.addEventListener('click', async () => {
         await chrome.tabs.sendMessage(tab.id, { action: 'undoTranslation' });
       }
       isTranslated = false;
-      translateBtn.textContent = 'Translate This Page';
+      translateBtn.textContent = t('translatePage');
       window.close();
     }
   } catch (err) {
-    errorDiv.textContent = 'Could not translate this page. Make sure you are on a webpage (not a browser internal page).';
+    errorDiv.textContent = t('cannotTranslatePage');
     errorDiv.classList.remove('hidden');
     isTranslated = false;
     translateBtn.disabled = false;
-    translateBtn.textContent = 'Translate This Page';
+    translateBtn.textContent = t('translatePage');
   }
 });
 
@@ -189,12 +194,12 @@ settingsBtn.addEventListener('click', () => {
 clearCacheBtn.addEventListener('click', async () => {
   try {
     await chrome.runtime.sendMessage({ action: 'clearCache' });
-    clearCacheBtn.textContent = 'Cache Cleared!';
+    clearCacheBtn.textContent = t('cacheCleared');
     setTimeout(() => {
-      clearCacheBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Clear Cache';
+      clearCacheBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> ' + t('clearCache');
     }, 1500);
   } catch (err) {
-    errorDiv.textContent = 'Failed to clear cache.';
+    errorDiv.textContent = t('failedToClearCache');
     errorDiv.classList.remove('hidden');
   }
 });
@@ -205,11 +210,11 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.action === 'translationComplete') {
     isTranslated = true;
     translateBtn.disabled = false;
-    translateBtn.textContent = 'Undo Translation';
+    translateBtn.textContent = t('undoTranslation');
   }
   if (message.action === 'translationError') {
     isTranslated = false;
     translateBtn.disabled = false;
-    translateBtn.textContent = 'Translate This Page';
+    translateBtn.textContent = t('translatePage');
   }
 });
