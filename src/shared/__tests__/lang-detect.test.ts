@@ -60,3 +60,43 @@ describe('detectPageLang', () => {
     expect(detectPageLang('Ja')).toBe('Japanese');
   });
 });
+
+describe('detectLangFromText', () => {
+  it('detects Chinese from CJK-heavy text', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    expect(detectLangFromText('机器学习正在改变世界的面貌')).toBe('Chinese');
+  });
+
+  it('detects Japanese from mixed CJK and kana', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    expect(detectLangFromText('機械学習は世界を変えています')).toBe('Japanese');
+  });
+
+  it('detects Korean from Hangul text', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    expect(detectLangFromText('기계 학습이 세상을 바꾸고 있습니다')).toBe('Korean');
+  });
+
+  it('returns null for English/Latin-only text', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    expect(detectLangFromText('Machine learning is transforming the world')).toBeNull();
+  });
+
+  it('returns null for short text with too few CJK chars', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    expect(detectLangFromText('你好')).toBeNull(); // only 2 CJK chars, threshold is 3+
+  });
+
+  it('returns null for empty string', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    expect(detectLangFromText('')).toBeNull();
+  });
+
+  it('distinguishes Japanese (kana) from Chinese (no kana)', async () => {
+    const { detectLangFromText } = await import('../lang-detect');
+    // CJK chars alone → Chinese
+    expect(detectLangFromText('今天天气很好我们出去玩吧')).toBe('Chinese');
+    // CJK + hiragana → Japanese
+    expect(detectLangFromText('今日は天気がいいですね')).toBe('Japanese');
+  });
+});

@@ -1,6 +1,6 @@
 import { getSettings, saveSettings } from '../shared/storage';
 import { LANGUAGE_OPTIONS } from '../shared/constants';
-import { detectPageLang } from '../shared/lang-detect';
+import { detectPageLang, detectLangFromText } from '../shared/lang-detect';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
@@ -36,21 +36,39 @@ async function loadLanguageSettings(): Promise<void> {
   if (!settings.sourceLangLocked) {
     try {
       const tab = await getActiveTab();
+      console.log('[auto-detect] tab:', tab?.id, tab?.url);
       if (tab.id) {
         const results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: () => document.documentElement.lang,
         });
         const pageLang = results[0]?.result ?? null;
-        const detected = detectPageLang(pageLang);
+        console.log('[auto-detect] page lang:', pageLang);
+        let detected = detectPageLang(pageLang);
+
+        // Fallback: character-based detection when <html lang> is missing
+        if (!detected) {
+          const textResults = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => document.body.innerText.slice(0, 2000),
+          });
+          const bodyText = textResults[0]?.result ?? '';
+          console.log('[auto-detect] body text sample:', bodyText.slice(0, 80));
+          detected = detectLangFromText(bodyText);
+        }
+
+        console.log('[auto-detect] detected:', detected, '| current source:', settings.sourceLang);
         if (detected && detected !== settings.sourceLang) {
+          console.log('[auto-detect] updating source to:', detected);
           settings.sourceLang = detected;
           sourceLangEl.value = detected;
         }
       }
-    } catch {
-      // chrome:// page or restricted — silently skip
+    } catch (err) {
+      console.log('[auto-detect] error:', err);
     }
+  } else {
+    console.log('[auto-detect] locked, skipping');
   }
 
   settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
