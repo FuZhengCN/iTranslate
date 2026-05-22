@@ -4,37 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="settings.css" />
-  <title>__MSG_settingsTitle__</title>
+  <title>iTranslate Settings</title>
 </head>
 <body>
   <div class="container">
-    <h1>__MSG_settingsTitle__</h1>
+    <h1 id="settingsTitle">iTranslate Settings</h1>
 
     <section class="form-group">
-      <label for="apiEndpoint">__MSG_apiEndpoint__</label>
+      <label for="apiEndpoint" id="apiEndpointLabel">API Endpoint</label>
       <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/v1" />
-      <span class="hint">__MSG_apiEndpointHint__</span>
+      <span class="hint" id="apiEndpointHint">Any OpenAI-compatible API endpoint</span>
     </section>
 
     <section class="form-group">
-      <label for="apiKey">__MSG_apiKey__</label>
+      <label for="apiKey" id="apiKeyLabel">API Key</label>
       <input type="password" id="apiKey" placeholder="sk-..." />
-      <span class="hint">__MSG_apiKeyHint__</span>
+      <span class="hint" id="apiKeyHint">Stored locally in your browser</span>
     </section>
 
     <section class="form-group">
-      <label for="model">__MSG_model__</label>
+      <label for="model" id="modelLabel">Model</label>
       <input type="text" id="model" placeholder="deepseek-chat" />
     </section>
 
     <section class="form-group">
-      <label for="systemPrompt">__MSG_systemPrompt__ <span class="hint-inline">(__MSG_systemPromptEditable__)</span></label>
+      <label for="systemPrompt"><span id="systemPromptLabel">System Prompt</span> <span class="hint-inline" id="systemPromptEditable">(editable)</span></label>
       <textarea id="systemPrompt" rows="4" placeholder="You are a professional English-to-Chinese translator..."></textarea>
     </section>
 
     <div class="actions">
-      <button id="saveBtn" class="btn-primary">__MSG_save__</button>
-      <button id="testBtn" class="btn-secondary">__MSG_testConnection__</button>
+      <button id="saveBtn" class="btn-primary">Save</button>
+      <button id="testBtn" class="btn-secondary">Test Connection</button>
     </div>
 
     <div id="status" class="status hidden"></div>

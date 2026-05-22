@@ -3,6 +3,14 @@ import { DEFAULT_SETTINGS } from '../shared/constants';
 import type { Settings } from '../shared/types';
 import { t } from '../shared/i18n';
 
+const settingsTitleEl = document.getElementById('settingsTitle') as HTMLHeadingElement;
+const apiEndpointLabel = document.getElementById('apiEndpointLabel') as HTMLLabelElement;
+const apiEndpointHint = document.getElementById('apiEndpointHint') as HTMLSpanElement;
+const apiKeyLabel = document.getElementById('apiKeyLabel') as HTMLLabelElement;
+const apiKeyHint = document.getElementById('apiKeyHint') as HTMLSpanElement;
+const modelLabel = document.getElementById('modelLabel') as HTMLLabelElement;
+const systemPromptLabel = document.getElementById('systemPromptLabel') as HTMLSpanElement;
+const systemPromptEditable = document.getElementById('systemPromptEditable') as HTMLSpanElement;
 const apiEndpointEl = document.getElementById('apiEndpoint') as HTMLInputElement;
 const apiKeyEl = document.getElementById('apiKey') as HTMLInputElement;
 const modelEl = document.getElementById('model') as HTMLInputElement;
@@ -78,6 +86,19 @@ testBtn.addEventListener('click', async () => {
     showStatus(t('connectionError', [(err as Error).message]), 'error');
   }
 });
+
+// Set localized UI text
+document.title = t('settingsTitle');
+settingsTitleEl.textContent = t('settingsTitle');
+apiEndpointLabel.textContent = t('apiEndpoint');
+apiEndpointHint.textContent = t('apiEndpointHint');
+apiKeyLabel.textContent = t('apiKey');
+apiKeyHint.textContent = t('apiKeyHint');
+modelLabel.textContent = t('model');
+systemPromptLabel.textContent = t('systemPrompt');
+systemPromptEditable.textContent = t('systemPromptEditable');
+saveBtn.textContent = t('save');
+testBtn.textContent = t('testConnection');
 
 loadSettings();
 
