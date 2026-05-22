@@ -32,10 +32,15 @@ async function loadLanguageSettings(): Promise<void> {
   targetLangEl.value = settings.targetLang;
 }
 
+function generateSystemPrompt(sourceLang: string, targetLang: string): string {
+  return `You are a professional ${sourceLang}-to-${targetLang} translator. Translate the following text accurately while preserving the original meaning, tone, and formatting. Only output the ${targetLang} translation, nothing else.`;
+}
+
 async function saveLanguageSettings(): Promise<void> {
   const settings = await getSettings();
   settings.sourceLang = sourceLangEl.value;
   settings.targetLang = targetLangEl.value;
+  settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
   await saveSettings(settings);
 }
 
