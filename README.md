@@ -13,10 +13,12 @@
 
 ## 安装
 
-1. 下载 `iTranslate-vX.Y.Z.zip` 并解压到本地文件夹
+1. 从 [GitHub Releases](https://github.com/FuZhengCN/iTranslate/releases) 下载最新 `iTranslate-vX.Y.Z.zip` 并解压到本地文件夹
 2. 打开 Chrome/Edge 浏览器，地址栏输入 `chrome://extensions` 或 `edge://extensions`
 3. 开启右上角**开发者模式**
 4. 点击**加载解压缩的扩展**，选择解压后的文件夹
+
+> 也可从 [Gitee Releases](https://gitee.com/fuzheng0312/i-translate/releases) 下载。
 
 ## 配置
 
