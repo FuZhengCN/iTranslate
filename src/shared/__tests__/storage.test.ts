@@ -35,6 +35,7 @@ describe('storage', () => {
       systemPrompt: 'Custom prompt',
       sourceLang: 'Japanese',
       targetLang: 'Korean',
+      sourceLangLocked: false,
     });
     const settings = await getSettings();
     expect(settings.sourceLang).toBe('Japanese');

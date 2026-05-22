@@ -32,6 +32,7 @@ function getFormSettings(): Settings {
     systemPrompt: systemPromptEl.value.trim() || DEFAULT_SETTINGS.systemPrompt,
     sourceLang: '',
     targetLang: '',
+    sourceLangLocked: false,
   };
 }
 
