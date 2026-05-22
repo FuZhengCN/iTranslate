@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock retry.ts to avoid chrome.runtime.sendMessage dependency in unit tests
 vi.mock('../retry', () => ({
   sendToBgWithRetry: vi.fn().mockResolvedValue({
     success: true,
@@ -22,13 +21,8 @@ beforeEach(async () => {
   getBubblePosition = mod.getBubblePosition;
 });
 
-afterEach(() => {
-  document.body.innerHTML = '';
-});
-
 describe('isValidSelection', () => {
   it('returns false when there is no selection', () => {
-    // window.getSelection() returns a Selection with rangeCount=0 in jsdom
     expect(isValidSelection()).toBe(false);
   });
 });
