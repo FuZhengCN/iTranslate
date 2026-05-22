@@ -2,7 +2,6 @@ import { sendToBgWithRetry } from './retry';
 
 let currentBubble: HTMLElement | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-let isPinned = false;
 const DEBOUNCE_MS = 300;
 
 export function isValidSelection(): boolean {
@@ -37,8 +36,7 @@ export function getBubblePosition(rect: DOMRect): { top: number; left: number } 
   return { top, left };
 }
 
-function hideBubble(force = false): void {
-  if (isPinned && !force) return;
+function hideBubble(): void {
   if (currentBubble) {
     currentBubble.remove();
     currentBubble = null;
@@ -47,11 +45,10 @@ function hideBubble(force = false): void {
     clearTimeout(debounceTimer);
     debounceTimer = null;
   }
-  isPinned = false;
 }
 
 async function showBubble(rect: DOMRect, text: string): Promise<void> {
-  hideBubble(true);
+  hideBubble();
 
   // ── Container ──
   const bubble = document.createElement('div');
@@ -61,25 +58,29 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   const bar = document.createElement('div');
   bar.className = 'itranslate-bubble-header';
 
-  // ── Body (translation only) ──
+  // ── Body ──
   const body = document.createElement('div');
   body.className = 'itranslate-bubble-body';
-  const translation = document.createElement('div');
-  translation.className = 'itranslate-bubble-text';
-  translation.textContent = '翻译中…';
-  body.appendChild(translation);
+
+  // Loading: 3-dot animation (reuses global .itranslate-placeholder .itranslate-dot styles)
+  const placeholder = document.createElement('div');
+  placeholder.className = 'itranslate-placeholder';
+  placeholder.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
+  body.appendChild(placeholder);
 
   // ── Actions bar ──
   const actions = document.createElement('div');
   actions.className = 'itranslate-bubble-actions';
 
-  // Copy button
+  // Copy button (hidden during loading)
   const copyBtn = document.createElement('button');
   copyBtn.className = 'itranslate-bubble-btn';
   copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制';
+  copyBtn.style.display = 'none';
   copyBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    await navigator.clipboard.writeText(translation.textContent || '');
+    const translationEl = body.querySelector('.itranslate-bubble-text');
+    await navigator.clipboard.writeText(translationEl?.textContent || '');
     copyBtn.innerHTML = '已复制';
     copyBtn.style.color = '#059669';
     copyBtn.style.borderColor = '#a7f3d0';
@@ -90,23 +91,6 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
     }, 1500);
   });
 
-  // Pin button
-  const pinBtn = document.createElement('button');
-  pinBtn.className = 'itranslate-bubble-btn';
-  pinBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 11 12 5 6 11"/></svg> 固定';
-  pinBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    isPinned = !isPinned;
-    if (isPinned) {
-      pinBtn.classList.add('pinned');
-      pinBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 11 12 5 6 11"/></svg> 已固定';
-    } else {
-      pinBtn.classList.remove('pinned');
-      pinBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 11 12 5 6 11"/></svg> 固定';
-    }
-  });
-
-  // Spacer
   const spacer = document.createElement('span');
   spacer.style.flex = '1';
 
@@ -116,11 +100,10 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   closeBtn.textContent = '×';
   closeBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    hideBubble(true);
+    hideBubble();
   });
 
   actions.appendChild(copyBtn);
-  actions.appendChild(pinBtn);
   actions.appendChild(spacer);
   actions.appendChild(closeBtn);
 
@@ -144,14 +127,28 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
     });
 
     if (response?.success && response.results?.[0]) {
-      translation.textContent = response.results[0].translated;
+      // Replace loading dots with translation text
+      placeholder.remove();
+      const translationEl = document.createElement('div');
+      translationEl.className = 'itranslate-bubble-text';
+      translationEl.textContent = response.results[0].translated;
+      body.appendChild(translationEl);
+      copyBtn.style.display = '';
       console.log(`[iTranslate] 🔍 Selection translated: "${text.slice(0, 40)}" → "${response.results[0].translated.slice(0, 40)}"`);
     } else {
-      translation.textContent = '翻译失败';
+      placeholder.remove();
+      const errorEl = document.createElement('div');
+      errorEl.className = 'itranslate-bubble-text';
+      errorEl.textContent = '翻译失败';
+      body.appendChild(errorEl);
       console.warn('[iTranslate] 🔍 Selection translation failed:', response);
     }
   } catch (err) {
-    translation.textContent = '翻译失败';
+    placeholder.remove();
+    const errorEl = document.createElement('div');
+    errorEl.className = 'itranslate-bubble-text';
+    errorEl.textContent = '翻译失败';
+    body.appendChild(errorEl);
     console.warn('[iTranslate] 🔍 Selection translation error:', err);
   }
 }
@@ -173,13 +170,7 @@ function onMouseUp(e: MouseEvent): void {
 }
 
 function onKeyDown(e: KeyboardEvent): void {
-  if (e.key === 'Escape') hideBubble(true);
-}
-
-function onDocumentClick(e: MouseEvent): void {
-  if (currentBubble && !currentBubble.contains(e.target as Node) && !isPinned) {
-    hideBubble(true);
-  }
+  if (e.key === 'Escape') hideBubble();
 }
 
 let selectionEnabled = false;
@@ -188,7 +179,6 @@ export function initSelection(): void {
   selectionEnabled = true;
   document.addEventListener('mouseup', onMouseUp);
   document.addEventListener('keydown', onKeyDown);
-  document.addEventListener('click', onDocumentClick);
 }
 
 export function enableSelection(): void {
@@ -196,7 +186,6 @@ export function enableSelection(): void {
   selectionEnabled = true;
   document.addEventListener('mouseup', onMouseUp);
   document.addEventListener('keydown', onKeyDown);
-  document.addEventListener('click', onDocumentClick);
 }
 
 export function disableSelection(): void {
@@ -205,5 +194,4 @@ export function disableSelection(): void {
   hideBubble();
   document.removeEventListener('mouseup', onMouseUp);
   document.removeEventListener('keydown', onKeyDown);
-  document.removeEventListener('click', onDocumentClick);
 }
