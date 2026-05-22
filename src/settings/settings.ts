@@ -46,6 +46,7 @@ saveBtn.addEventListener('click', async () => {
   const current = await getSettings();
   settings.sourceLang = current.sourceLang;
   settings.targetLang = current.targetLang;
+  settings.sourceLangLocked = current.sourceLangLocked;
   await saveSettings(settings);
   showStatus('Settings saved.', 'success');
 });
