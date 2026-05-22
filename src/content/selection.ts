@@ -175,6 +175,10 @@ function onKeyDown(e: KeyboardEvent): void {
 
 let selectionEnabled = false;
 
+export function isSelectionEnabled(): boolean {
+  return selectionEnabled;
+}
+
 export function initSelection(): void {
   selectionEnabled = true;
   document.addEventListener('mouseup', onMouseUp);

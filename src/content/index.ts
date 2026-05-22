@@ -2,7 +2,7 @@ import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './extractor';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
-import { initSelection } from './selection';
+import { enableSelection, disableSelection, isSelectionEnabled } from './selection';
 
 let translateInProgress = false;
 let catchUpInProgress = false;
@@ -151,7 +151,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   if (message.action === 'getState') {
     const hasTranslations = document.querySelector('.itranslate-translation') !== null;
-    sendResponse({ isTranslated: hasTranslations });
+    sendResponse({ isTranslated: hasTranslations, selectionEnabled: isSelectionEnabled() });
     return true;
   }
   if (message.action === 'undoTranslation') {
@@ -160,6 +160,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ received: true });
     return true;
   }
+  if (message.action === 'toggleSelection') {
+    if (message.enabled) {
+      enableSelection();
+    } else {
+      disableSelection();
+    }
+    sendResponse({ received: true });
+    return true;
+  }
 });
 
-initSelection();

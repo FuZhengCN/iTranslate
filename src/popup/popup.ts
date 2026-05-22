@@ -6,6 +6,8 @@ import { t } from '../shared/i18n';
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
 const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
+const selectionToggle = document.getElementById('selectionToggle') as HTMLButtonElement;
+const selectionToggleText = document.getElementById('selectionToggleText') as HTMLSpanElement;
 const sourceLangEl = document.getElementById('sourceLang') as HTMLSelectElement;
 const targetLangEl = document.getElementById('targetLang') as HTMLSelectElement;
 const swapBtn = document.getElementById('swapBtn') as HTMLButtonElement;
@@ -110,6 +112,7 @@ async function syncState(): Promise<void> {
       isTranslated = true;
       translateBtn.textContent = t('undoTranslation');
     }
+    updateSelectionToggleUI(response?.selectionEnabled ?? false);
   } catch {
     // Content script not injected or not responding — stay with defaults
   }
@@ -120,6 +123,7 @@ appNameLabel.textContent = t('appName');
 settingsBtn.title = t('settings');
 swapBtn.title = t('swapLanguages');
 translateBtn.textContent = t('translatePage');
+selectionToggleText.textContent = t('selectionTranslate');
 clearCacheBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> ' + t('clearCache');
 
 populateLanguageSelects();
@@ -135,6 +139,32 @@ sourceLangEl.addEventListener('change', () => {
 
 targetLangEl.addEventListener('change', () => {
   saveLanguageSettings(false, true);
+});
+
+function updateSelectionToggleUI(enabled: boolean): void {
+  if (enabled) {
+    selectionToggle.classList.remove('off');
+  } else {
+    selectionToggle.classList.add('off');
+  }
+}
+
+selectionToggle.addEventListener('click', async () => {
+  const enabling = selectionToggle.classList.contains('off');
+  updateSelectionToggleUI(enabling);
+
+  try {
+    const tab = await getActiveTab();
+    if (tab.id) {
+      await chrome.tabs.sendMessage(tab.id, {
+        action: 'toggleSelection',
+        enabled: enabling,
+      });
+    }
+  } catch {
+    // Content script not loaded — revert
+    updateSelectionToggleUI(!enabling);
+  }
 });
 
 swapBtn.addEventListener('click', async () => {
