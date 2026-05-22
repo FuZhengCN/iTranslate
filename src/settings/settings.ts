@@ -1,6 +1,7 @@
 import { getSettings, saveSettings } from '../shared/storage';
 import { DEFAULT_SETTINGS } from '../shared/constants';
 import type { Settings } from '../shared/types';
+import { t } from '../shared/i18n';
 
 const apiEndpointEl = document.getElementById('apiEndpoint') as HTMLInputElement;
 const apiKeyEl = document.getElementById('apiKey') as HTMLInputElement;
@@ -40,7 +41,7 @@ function getFormSettings(): Settings {
 saveBtn.addEventListener('click', async () => {
   const settings = getFormSettings();
   if (!settings.apiKey) {
-    showStatus('API key is required.', 'error');
+    showStatus(t('apiKeyRequired'), 'error');
     return;
   }
   // Preserve language settings from storage (not managed on this page)
@@ -50,13 +51,13 @@ saveBtn.addEventListener('click', async () => {
   settings.sourceLangLocked = current.sourceLangLocked;
   settings.targetLangLocked = current.targetLangLocked;
   await saveSettings(settings);
-  showStatus('Settings saved.', 'success');
+  showStatus(t('settingsSaved'), 'success');
 });
 
 testBtn.addEventListener('click', async () => {
   const settings = getFormSettings();
   if (!settings.apiKey) {
-    showStatus('API key is required to test connection.', 'error');
+    showStatus(t('apiKeyRequiredForTest'), 'error');
     return;
   }
   const current = await getSettings();
@@ -69,12 +70,12 @@ testBtn.addEventListener('click', async () => {
   try {
     const response = await chrome.runtime.sendMessage({ action: 'testConnection' });
     if (response.success && response.connected) {
-      showStatus('Connection successful.', 'success');
+      showStatus(t('connectionSuccessful'), 'success');
     } else {
-      showStatus('Connection failed. Check your API key and endpoint.', 'error');
+      showStatus(t('connectionFailed'), 'error');
     }
   } catch (err) {
-    showStatus(`Connection error: ${(err as Error).message}`, 'error');
+    showStatus(t('connectionError', [(err as Error).message]), 'error');
   }
 });
 
