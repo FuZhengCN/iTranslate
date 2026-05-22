@@ -1,15 +1,16 @@
 import type { TranslationSegment, TranslationResult } from '../shared/types';
 import { cacheGetBulk, cacheSetBulk } from './cache';
 import { translateBatch } from './translator';
+import { getSettings } from '../shared/storage';
 
-function segmentKey(text: string): string {
+function segmentKey(text: string, targetLang: string): string {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  return 'seg_' + Math.abs(hash).toString(36) + '_' + text.length.toString(36);
+  return 'seg_' + Math.abs(hash).toString(36) + '_' + text.length.toString(36) + '_' + targetLang;
 }
 
 function sendProgress(tabId: number, completed: number, total: number): void {
@@ -24,8 +25,9 @@ export async function handleTranslate(
   segments: TranslationSegment[],
   tabId?: number
 ): Promise<{ results: TranslationResult[]; stats: { hits: number; misses: number } }> {
+  const settings = await getSettings();
   console.log(`[iTranslate] 🔍 Router: handling ${segments.length} segments`);
-  const keys = segments.map((s) => segmentKey(s.text));
+  const keys = segments.map((s) => segmentKey(s.text, settings.targetLang));
   const cacheMap = await cacheGetBulk(keys);
 
   console.log(`[iTranslate] 💾 Cache lookup: ${cacheMap.size}/${keys.length} keys found in IndexedDB`);

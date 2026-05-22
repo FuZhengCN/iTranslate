@@ -8,7 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install              # Install dependencies
-npm run build            # TypeScript check + Vite production build → dist/
+npm run build            # 构建号 z+1 → tsc → vite build → dist/
+npm run bump             # 手动递增构建号（build 已自动调用）
 npm run dev              # Vite dev server with HMR
 npm test                 # Run all tests (vitest run)
 npm run test:watch       # Run tests in watch mode (vitest)
@@ -16,6 +17,14 @@ npx vitest run --reporter=verbose  # Detailed output
 npx vitest run src/content/__tests__/renderer.test.ts  # Run single test file
 npx tsc --noEmit         # TypeScript check only (no emit)
 ```
+
+## Version Management
+
+版本格式 `MAJOR.MINOR.BUILD`（x.y.z），`package.json` 为唯一版本源。
+
+- **每次 `npm run build` 自动 z+1**（`scripts/bump-build.js`）
+- **`manifest.json` 版本号由 `vite.config.ts` 构建时注入**，源文件为占位符 `0.0.0`
+- 升 y（minor）或 x（major）时手动运行 `npm version minor` / `npm version major`，后续构建 z 继续累加
 
 ## Architecture
 

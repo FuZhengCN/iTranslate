@@ -89,7 +89,7 @@ git commit -m "feat: add English i18n messages"
 
 ```json
 {
-  "appName":                { "message": "灵译" },
+  "appName":                { "message": "通译" },
   "settings":               { "message": "设置" },
   "swapLanguages":          { "message": "交换语言" },
   "translatePage":          { "message": "翻译此页面" },
@@ -99,8 +99,8 @@ git commit -m "feat: add English i18n messages"
   "cacheCleared":           { "message": "缓存已清除" },
   "cannotTranslatePage":    { "message": "无法翻译此页面，请确认您正在浏览网页（非浏览器内部页面）。" },
   "failedToClearCache":     { "message": "清除缓存失败。" },
-  "version":                { "message": "灵译 v$VERSION$" },
-  "settingsTitle":          { "message": "灵译设置" },
+  "version":                { "message": "通译 v$VERSION$" },
+  "settingsTitle":          { "message": "通译设置" },
   "apiEndpoint":            { "message": "API 端点" },
   "apiEndpointHint":        { "message": "任意 OpenAI 兼容的 API 端点" },
   "apiKey":                 { "message": "API 密钥" },
@@ -116,9 +116,9 @@ git commit -m "feat: add English i18n messages"
   "connectionSuccessful":   { "message": "连接成功" },
   "connectionFailed":       { "message": "连接失败，请检查 API 密钥和端点" },
   "connectionError":        { "message": "连接错误：$1" },
-  "extName":                { "message": "灵译" },
+  "extName":                { "message": "通译" },
   "extDescription":         { "message": "使用 DeepSeek AI 的沉浸式双语翻译" },
-  "extDefaultTitle":        { "message": "灵译 — 翻译此页面" }
+  "extDefaultTitle":        { "message": "通译 — 翻译此页面" }
 }
 ```
 

@@ -68,7 +68,12 @@ export function renderPlaceholders(sourceElements: Element[]): void {
     const clone = el.cloneNode(false) as HTMLElement;
     clone.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
     clone.classList.add('itranslate-translation', 'itranslate-placeholder');
-    applyTextStyles(el, clone);
+    // 移除可能从源元素克隆来的隐藏样式，确保占位点可见
+    clone.style.display = '';
+    clone.style.visibility = '';
+    clone.style.overflow = 'visible';
+    clone.style.maxHeight = '';
+    clone.style.minHeight = '';
 
     el.insertAdjacentElement('afterend', clone);
     count++;

@@ -1,11 +1,12 @@
 {
   "name": "itranslate",
-  "version": "1.0.1",
+  "version": "1.0.10",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "bump": "node scripts/bump-build.js",
+    "build": "npm run bump && tsc && vite build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
