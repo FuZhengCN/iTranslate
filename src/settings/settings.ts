@@ -73,3 +73,9 @@ testBtn.addEventListener('click', async () => {
 });
 
 loadSettings();
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    loadSettings();
+  }
+});
