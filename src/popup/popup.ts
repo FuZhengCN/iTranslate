@@ -1,5 +1,6 @@
 import { getSettings, saveSettings } from '../shared/storage';
 import { LANGUAGE_OPTIONS } from '../shared/constants';
+import { detectPageLang } from '../shared/lang-detect';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
@@ -30,7 +31,28 @@ async function loadLanguageSettings(): Promise<void> {
   const settings = await getSettings();
   sourceLangEl.value = settings.sourceLang;
   targetLangEl.value = settings.targetLang;
-  // Sync system prompt with current language pair on load
+
+  // Auto-detect page language if user hasn't locked source manually
+  if (!settings.sourceLangLocked) {
+    try {
+      const tab = await getActiveTab();
+      if (tab.id) {
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => document.documentElement.lang,
+        });
+        const pageLang = results[0]?.result ?? null;
+        const detected = detectPageLang(pageLang);
+        if (detected && detected !== settings.sourceLang) {
+          settings.sourceLang = detected;
+          sourceLangEl.value = detected;
+        }
+      }
+    } catch {
+      // chrome:// page or restricted — silently skip
+    }
+  }
+
   settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
   await saveSettings(settings);
 }
@@ -72,7 +94,12 @@ populateLanguageSelects();
 loadLanguageSettings();
 syncState();
 
-sourceLangEl.addEventListener('change', () => {
+sourceLangEl.addEventListener('change', async () => {
+  const settings = await getSettings();
+  if (!settings.sourceLangLocked) {
+    settings.sourceLangLocked = true;
+    await saveSettings(settings);
+  }
   saveLanguageSettings();
 });
 
