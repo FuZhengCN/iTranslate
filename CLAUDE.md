@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**语言要求：所有回复、解释、注释、说明使用简体中文，代码关键字/标识符保留英文。**
+
 ## Build & Test Commands
 
 ```bash
@@ -9,7 +11,7 @@ npm install              # Install dependencies
 npm run build            # TypeScript check + Vite production build → dist/
 npm run dev              # Vite dev server with HMR
 npm test                 # Run all tests (vitest run)
-npx vitest run           # Same as above
+npm run test:watch       # Run tests in watch mode (vitest)
 npx vitest run --reporter=verbose  # Detailed output
 npx vitest run src/content/__tests__/renderer.test.ts  # Run single test file
 npx tsc --noEmit         # TypeScript check only (no emit)
@@ -25,7 +27,7 @@ This is a **Manifest V3 browser extension** (Chrome/Edge) for multilingual bilin
 |---------|-------|---------|
 | **Background** (service worker) | `src/background/index.ts` | Handles API calls to DeepSeek, manages IndexedDB cache, validates incoming messages |
 | **Content script** | `src/content/index.ts` | Injected into http/https pages. Extracts text blocks, sends to background for translation, renders results into DOM |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | Toolbar popup — translate/undo button, stats, cache clear. Syncs button state with page on open |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | Toolbar popup — translate/undo button, source/target language selects with swap, cache clear. Auto-detects source language from `<html lang>` and target language from `navigator.language` on open (respects lock flags when user has manually chosen). Syncs button state with page on open |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | Options page — source/target language pickers with swap button, API endpoint, API key, model name, auto-generated system prompt (editable), test connection |
 
 ### Message Catalog
@@ -79,8 +81,10 @@ Observer is disconnected during translation to prevent our own DOM mutations fro
 - **`src/content/renderer.ts`** — Two-phase render: `renderPlaceholders()` injects clones with 5-dot progress indicator; `renderTranslations()` replaces with real text. `findTextLeaf()` picks the descendant with longest text to get representative computed styles. `applyTextStyles()` copies color, fontSize, fontWeight, lineHeight from text leaf (not fontFamily — CSS sets `sans-serif` globally). Resets height constraints so translation can expand/contract. White text gets opacity=1. Clones via `cloneNode(false)`, inserted via `afterend`. Dedup checks `nextElementSibling`. `removeTranslations()` clears all `.itranslate-translation`.
 - **`src/content/toast.ts`** — Dead code (no longer imported). Previously showed a 5-dot progress toast; removed in favor of placeholder-only progress indication.
 - **`src/content/observer.ts`** — MutationObserver wrapper with debounce (default 1000ms). `startObserving(root, callback)` / `stopObserving()`. Watches `childList` + `subtree`. Callback now fires `catchUpNewContent()` (incremental), not full `translatePage()`.
-- **`src/shared/storage.ts`** — Wraps `chrome.storage.sync` for settings persistence. `getSettings()` merges saved values over defaults so new Settings fields (e.g. `sourceLang`, `targetLang`) get fallback values for users with old saved settings.
-- **`src/shared/constants.ts`** — `DEFAULT_SETTINGS` (sourceLang: English, targetLang: Chinese), `LANGUAGE_OPTIONS` (6 languages with label/value pairs), cache DB/store names, storage key.
+- **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`（所有 `zh*` 变体→`zh_CN`，其余→`en`）。翻译文件位于 `_locales/en/messages.json` 和 `_locales/zh_CN/messages.json`（各 30 条消息）。注意：`__MSG_*__` 占位符不能在 HTML 中使用（Vite/Crxjs dev server 会拦截），所有 UI 文本通过 JS `t()` 在初始化时设置，HTML 中保留英文回退文本。
+- **`src/shared/storage.ts`** — Wraps `chrome.storage.sync` for settings persistence. `getSettings()` merges saved values over defaults so new Settings fields (e.g. `sourceLang`, `targetLang`, `*Locked` flags) get fallback values for users with old saved settings.
+- **`src/shared/constants.ts`** — `DEFAULT_SETTINGS` (sourceLang: English, targetLang: Chinese, `sourceLangLocked`/`targetLangLocked` both false), `LANGUAGE_OPTIONS` (6 languages with label/value pairs), cache DB/store names, storage key.
+- **`src/shared/lang-detect.ts`** — Language detection utilities. `detectPageLang(tag)` maps BCP 47 language tags (e.g. `zh-CN`, `en`) to language names via `LANG_TAG_MAP` (zh/en/ja/ko/fr/de → Chinese/English/Japanese/Korean/French/German). `detectLangFromText(text)` scans Unicode script ranges (CJK, Hiragana, Katakana, Hangul) to detect language from body text, used as fallback when `<html lang>` is missing.
 
 ### Translation DOM Pattern
 
@@ -92,13 +96,6 @@ Unified purple gradient (#4f46e5 → #7c3aed): popup logo, buttons. Progress ind
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`). 28 tests across 5 files under `__tests__/` directories. Mock `chrome.*` APIs with `vi.stubGlobal('chrome', {...})` before dynamic imports. Cache tests include `original` field in entries. Storage tests verify defaults, merge, and backward compatibility for old settings.
-
-### Branches
-
-- `master` — original TreeWalker text-node approach
-- `cgtn-approach` — element-based extraction, text placeholder
-- `chunked-approach` — block-level grouping, batch chunking (≤30), noise filtering, progress dots, catch-up scan, undo support
-- `ui-update` — **current dev branch**: language selection UI (source/target dropdowns with swap), dynamic popup badge, auto-generated system prompt, generic provider-agnostic messaging
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。54 个测试分布在 7 个文件中（`__tests__/` 目录）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并、向后兼容和 `*Locked` 标志读写。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。
 
 Remote: `https://gitee.com/fuzheng0312/i-translate.git`.
