@@ -4,37 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="settings.css" />
-  <title>iTranslate Settings</title>
+  <title>__MSG_settingsTitle__</title>
 </head>
 <body>
   <div class="container">
-    <h1>iTranslate Settings</h1>
+    <h1>__MSG_settingsTitle__</h1>
 
     <section class="form-group">
-      <label for="apiEndpoint">API Endpoint</label>
+      <label for="apiEndpoint">__MSG_apiEndpoint__</label>
       <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/v1" />
-      <span class="hint">Any OpenAI-compatible API endpoint</span>
+      <span class="hint">__MSG_apiEndpointHint__</span>
     </section>
 
     <section class="form-group">
-      <label for="apiKey">API Key</label>
+      <label for="apiKey">__MSG_apiKey__</label>
       <input type="password" id="apiKey" placeholder="sk-..." />
-      <span class="hint">Stored locally in your browser</span>
+      <span class="hint">__MSG_apiKeyHint__</span>
     </section>
 
     <section class="form-group">
-      <label for="model">Model</label>
+      <label for="model">__MSG_model__</label>
       <input type="text" id="model" placeholder="deepseek-chat" />
     </section>
 
     <section class="form-group">
-      <label for="systemPrompt">System Prompt <span class="hint-inline">(editable)</span></label>
+      <label for="systemPrompt">__MSG_systemPrompt__ <span class="hint-inline">(__MSG_systemPromptEditable__)</span></label>
       <textarea id="systemPrompt" rows="4" placeholder="You are a professional English-to-Chinese translator..."></textarea>
     </section>
 
     <div class="actions">
-      <button id="saveBtn" class="btn-primary">Save</button>
-      <button id="testBtn" class="btn-secondary">Test Connection</button>
+      <button id="saveBtn" class="btn-primary">__MSG_save__</button>
+      <button id="testBtn" class="btn-secondary">__MSG_testConnection__</button>
     </div>
 
     <div id="status" class="status hidden"></div>
