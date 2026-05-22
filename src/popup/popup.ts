@@ -64,6 +64,15 @@ async function loadLanguageSettings(): Promise<void> {
     }
   }
 
+  // Auto-detect target language from browser UI language if user hasn't locked it
+  if (!settings.targetLangLocked) {
+    const detected = detectPageLang(navigator.language);
+    if (detected && detected !== settings.targetLang) {
+      settings.targetLang = detected;
+      targetLangEl.value = detected;
+    }
+  }
+
   settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
   await saveSettings(settings);
 }
@@ -72,11 +81,12 @@ function generateSystemPrompt(sourceLang: string, targetLang: string): string {
   return `You are a professional ${sourceLang}-to-${targetLang} translator. Translate the following text accurately while preserving the original meaning, tone, and formatting. Only output the ${targetLang} translation, nothing else.`;
 }
 
-async function saveLanguageSettings(lockSource = false): Promise<void> {
+async function saveLanguageSettings(lockSource = false, lockTarget = false): Promise<void> {
   const settings = await getSettings();
   settings.sourceLang = sourceLangEl.value;
   settings.targetLang = targetLangEl.value;
   if (lockSource) settings.sourceLangLocked = true;
+  if (lockTarget) settings.targetLangLocked = true;
   settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
   await saveSettings(settings);
 }
@@ -111,14 +121,14 @@ sourceLangEl.addEventListener('change', () => {
 });
 
 targetLangEl.addEventListener('change', () => {
-  saveLanguageSettings();
+  saveLanguageSettings(false, true);
 });
 
 swapBtn.addEventListener('click', async () => {
   const srcVal = sourceLangEl.value;
   sourceLangEl.value = targetLangEl.value;
   targetLangEl.value = srcVal;
-  await saveLanguageSettings();
+  await saveLanguageSettings(true, true);
 });
 
 async function ensureContentScript(tabId: number): Promise<void> {
