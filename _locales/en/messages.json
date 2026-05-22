@@ -27,6 +27,6 @@
   "connectionFailed":       { "message": "Connection failed. Check your API key and endpoint." },
   "connectionError":        { "message": "Connection error: $1" },
   "extName":                { "message": "iTranslate" },
-  "extDescription":         { "message": "Immersive bilingual translation using DeepSeek AI" },
+  "extDescription":         { "message": "Immersive bilingual translation using AI" },
   "extDefaultTitle":        { "message": "iTranslate — Translate this page" }
 }

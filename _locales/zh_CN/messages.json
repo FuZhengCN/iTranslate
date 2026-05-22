@@ -27,6 +27,6 @@
   "connectionFailed":       { "message": "连接失败，请检查 API 密钥和端点" },
   "connectionError":        { "message": "连接错误：$1" },
   "extName":                { "message": "灵译" },
-  "extDescription":         { "message": "使用 DeepSeek AI 的沉浸式双语翻译" },
+  "extDescription":         { "message": "使用 AI 的沉浸式双语翻译" },
   "extDefaultTitle":        { "message": "灵译 — 翻译此页面" }
 }
