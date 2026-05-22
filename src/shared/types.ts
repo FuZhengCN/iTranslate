@@ -23,4 +23,5 @@ export interface Settings {
   sourceLang: string;
   targetLang: string;
   sourceLangLocked: boolean;
+  targetLangLocked: boolean;
 }

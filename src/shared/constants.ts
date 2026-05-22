@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sourceLang: 'English',
   targetLang: 'Chinese',
   sourceLangLocked: false,
+  targetLangLocked: false,
 };
 
 export const CACHE_DB_NAME = 'itranslate-cache';

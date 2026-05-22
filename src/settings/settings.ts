@@ -33,6 +33,7 @@ function getFormSettings(): Settings {
     sourceLang: '',
     targetLang: '',
     sourceLangLocked: false,
+    targetLangLocked: false,
   };
 }
 

@@ -37,6 +37,7 @@ describe('storage', () => {
       sourceLang: 'Japanese',
       targetLang: 'Korean',
       sourceLangLocked: true,
+      targetLangLocked: true,
     });
     const settings = await getSettings();
     expect(settings.sourceLang).toBe('Japanese');
