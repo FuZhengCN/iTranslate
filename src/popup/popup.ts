@@ -87,6 +87,17 @@ swapBtn.addEventListener('click', async () => {
   await saveLanguageSettings();
 });
 
+async function ensureContentScript(tabId: number): Promise<void> {
+  const manifest = chrome.runtime.getManifest();
+  const csFiles = manifest.content_scripts?.[0]?.js;
+  if (csFiles && csFiles.length > 0) {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: csFiles,
+    });
+  }
+}
+
 translateBtn.addEventListener('click', async () => {
   errorDiv.classList.add('hidden');
 
@@ -99,11 +110,24 @@ translateBtn.addEventListener('click', async () => {
     if (!isTranslated) {
       translateBtn.disabled = true;
       translateBtn.textContent = 'Translating...';
-      await chrome.tabs.sendMessage(tab.id, { action: 'translatePage' });
+      try {
+        await chrome.tabs.sendMessage(tab.id, { action: 'translatePage' });
+      } catch {
+        // Content script may be stale after extension update — re-inject and retry
+        await ensureContentScript(tab.id!);
+        await chrome.tabs.sendMessage(tab.id, { action: 'translatePage' });
+      }
+      window.close();
     } else {
-      await chrome.tabs.sendMessage(tab.id, { action: 'undoTranslation' });
+      try {
+        await chrome.tabs.sendMessage(tab.id, { action: 'undoTranslation' });
+      } catch {
+        await ensureContentScript(tab.id!);
+        await chrome.tabs.sendMessage(tab.id, { action: 'undoTranslation' });
+      }
       isTranslated = false;
       translateBtn.textContent = 'Translate This Page';
+      window.close();
     }
   } catch (err) {
     errorDiv.textContent = 'Could not translate this page. Make sure you are on a webpage (not a browser internal page).';
