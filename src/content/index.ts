@@ -2,9 +2,12 @@ import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './extractor';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
+import { initSelection } from './selection';
 
 let translateInProgress = false;
 let catchUpInProgress = false;
+
+import { sendToBgWithRetry } from './retry';
 
 async function catchUpNewContent(): Promise<void> {
   if (catchUpInProgress) return;
@@ -33,7 +36,7 @@ async function catchUpNewContent(): Promise<void> {
     renderPlaceholders(newSourceElements);
 
     try {
-      const response = await chrome.runtime.sendMessage({
+      const response = await sendToBgWithRetry({
         action: 'translate',
         segments: newSegments,
       });
@@ -86,7 +89,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
     const tSend = performance.now();
     const TRANSLATE_TIMEOUT = 120_000; // 2 minutes — batches + retries can be slow
     const response = await Promise.race([
-      chrome.runtime.sendMessage({
+      sendToBgWithRetry({
         action: 'translate',
         segments: extraction.allSegments,
       }),
@@ -158,3 +161,5 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 });
+
+initSelection();

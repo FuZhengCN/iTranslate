@@ -99,3 +99,70 @@
 .itranslate-toast-dot.on {
   background: #fff;
 }
+
+/* ── Selection Translation Bubble ── */
+.itranslate-selection-bubble {
+  all: initial;
+  position: fixed;
+  z-index: 99998;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  animation: itranslate-bubble-in 0.15s ease-out;
+}
+
+@keyframes itranslate-bubble-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.itranslate-bubble-header {
+  height: 4px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+}
+
+.itranslate-bubble-original {
+  padding: 10px 14px 4px;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.itranslate-bubble-translation {
+  padding: 4px 14px 14px;
+  font-size: 14px;
+  color: #1a1a2e;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.itranslate-bubble-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  line-height: 1;
+  padding: 0;
+}
+
+.itranslate-bubble-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}

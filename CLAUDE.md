@@ -71,7 +71,8 @@ Popup click → content script
   ├─ removeTranslations()    // 清理上次结果
   ├─ extractSegments()       // 遍历 body DOM，按块级祖先分组文本
   ├─ renderPlaceholders()    // 注入带 3 点进度指示器的克隆元素
-  ├─ chrome.runtime.sendMessage({ action: 'translate', segments })
+  ├─ sendToBgWithRetry({ action: 'translate', segments })
+  │     │                    // 自动重试 3 次（间隔 600ms），应对 SW 冷启动竞态
   │     ↓
   │   background router
   │     ├─ cacheGetBulk()    // IndexedDB 查找，带原文校验防哈希碰撞
@@ -87,6 +88,8 @@ Popup click → content script
 
 翻译期间断开 Observer，防止自身 DOM 变更触发重译。追扫（catch-up）补偿 Observer 离线期间加载的新内容。Observer 仅在追扫完成后重连，避免追扫的 DOM 变更触发翻译循环。
 
+**Content → Background 重试机制：** `sendToBgWithRetry()` 包装 `chrome.runtime.sendMessage`。MV3 Service Worker 空闲终止后重新唤醒存在竞态：消息到达时 `onMessage` 监听器可能尚未注册，导致 "Receiving end does not exist" 错误。重试 3 次（间隔 600ms）给 SW 足够的启动时间。仅对连接类错误重试，其它错误直接抛出。
+
 ### Key Modules
 
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
@@ -94,8 +97,8 @@ Popup click → content script
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
 - **`src/content/extractor.ts`** — 从 `document.body` 全页提取文本块。遍历所有元素，筛选有直接文本节点的元素，按最近块级祖先（`P/DIV/LI/H1-H6` 等）分组。按语种设最低字符数：CJK ≥12 字，拉丁 ≥20 字。CJK 检测（`isCJK`）覆盖汉字、平假名、片假名、CJK 标点。过滤噪音（时间戳、日期、纯数字）。跳过带 `itranslate-translation` 类或匹配 `SKIP_CLASS_NAMES`/ARIA 角色的元素。
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
-- **`src/content/toast.ts`** — 死代码（不再被引用）。以前显示 5 点进度条，已移除改用占位符进度指示。可安全删除。
-- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree`。回调现在触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
+- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree`。回调触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
+- **`src/content/toast.ts`** — 死代码，不再被任何模块引用，可安全删除。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段（如 `sourceLang`、`targetLang`、`*Locked`）对旧用户自动获得默认值。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese、`sourceLangLocked`/`targetLangLocked` 均为 false）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
