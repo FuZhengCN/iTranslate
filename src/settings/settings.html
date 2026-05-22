@@ -11,21 +11,6 @@
     <h1>iTranslate Settings</h1>
 
     <section class="form-group">
-      <label>Translation Direction</label>
-      <div class="lang-row">
-        <div class="lang-col">
-          <span class="hint">Source</span>
-          <select id="sourceLang" class="lang-select"></select>
-        </div>
-        <button id="swapBtn" class="swap-btn" title="Swap languages">⇄</button>
-        <div class="lang-col">
-          <span class="hint">Target</span>
-          <select id="targetLang" class="lang-select"></select>
-        </div>
-      </div>
-    </section>
-
-    <section class="form-group">
       <label for="apiEndpoint">API Endpoint</label>
       <input type="text" id="apiEndpoint" placeholder="https://api.deepseek.com/v1" />
       <span class="hint">Any OpenAI-compatible API endpoint</span>
@@ -43,7 +28,7 @@
     </section>
 
     <section class="form-group">
-      <label for="systemPrompt">System Prompt <span class="hint-inline">(auto-generated, editable)</span></label>
+      <label for="systemPrompt">System Prompt <span class="hint-inline">(editable)</span></label>
       <textarea id="systemPrompt" rows="4" placeholder="You are a professional English-to-Chinese translator..."></textarea>
     </section>
 
