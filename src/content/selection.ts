@@ -181,13 +181,31 @@ export function isSelectionEnabled(): boolean {
 
 export function initSelection(): void {
   selectionEnabled = true;
+  injectSelectionStyle();
   document.addEventListener('mouseup', onMouseUp);
   document.addEventListener('keydown', onKeyDown);
+}
+
+let selectionStyle: HTMLStyleElement | null = null;
+
+function injectSelectionStyle(): void {
+  if (selectionStyle) return;
+  selectionStyle = document.createElement('style');
+  selectionStyle.textContent = '::selection{background:rgba(124,58,237,0.18)}::-moz-selection{background:rgba(124,58,237,0.18)}';
+  document.head.appendChild(selectionStyle);
+}
+
+function removeSelectionStyle(): void {
+  if (selectionStyle) {
+    selectionStyle.remove();
+    selectionStyle = null;
+  }
 }
 
 export function enableSelection(): void {
   if (selectionEnabled) return;
   selectionEnabled = true;
+  injectSelectionStyle();
   document.addEventListener('mouseup', onMouseUp);
   document.addEventListener('keydown', onKeyDown);
 }
@@ -196,6 +214,7 @@ export function disableSelection(): void {
   if (!selectionEnabled) return;
   selectionEnabled = false;
   hideBubble();
+  removeSelectionStyle();
   document.removeEventListener('mouseup', onMouseUp);
   document.removeEventListener('keydown', onKeyDown);
 }
