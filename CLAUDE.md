@@ -70,7 +70,7 @@ Popup click → content script
   ├─ stopObserving()         // 停止 MutationObserver，防止重入
   ├─ removeTranslations()    // 清理上次结果
   ├─ extractSegments()       // 遍历 body DOM，按块级祖先分组文本
-  ├─ renderPlaceholders()    // 注入带 5 点进度指示器的克隆元素
+  ├─ renderPlaceholders()    // 注入带 3 点进度指示器的克隆元素
   ├─ chrome.runtime.sendMessage({ action: 'translate', segments })
   │     ↓
   │   background router
@@ -90,10 +90,10 @@ Popup click → content script
 ### Key Modules
 
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
-- **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text)`（djb2 hash + 文本长度）。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
-- **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存检查后和每批完成后发送进度消息。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。
+- **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
+- **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
 - **`src/content/extractor.ts`** — 从 `document.body` 全页提取文本块。遍历所有元素，筛选有直接文本节点的元素，按最近块级祖先（`P/DIV/LI/H1-H6` 等）分组。按语种设最低字符数：CJK ≥12 字，拉丁 ≥20 字。CJK 检测（`isCJK`）覆盖汉字、平假名、片假名、CJK 标点。过滤噪音（时间戳、日期、纯数字）。跳过带 `itranslate-translation` 类或匹配 `SKIP_CLASS_NAMES`/ARIA 角色的元素。
-- **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入带 5 点进度指示器的克隆元素；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
+- **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
 - **`src/content/toast.ts`** — 死代码（不再被引用）。以前显示 5 点进度条，已移除改用占位符进度指示。可安全删除。
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree`。回调现在触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
@@ -103,11 +103,11 @@ Popup click → content script
 
 ### Translation DOM Pattern
 
-原始元素保持不变。翻译是块级祖先元素的**浅克隆**（相同标签、类、属性），通过 `insertAdjacentElement('afterend', clone)` 插入其后。CSS 类 `itranslate-translation` 标记所有翻译元素（`opacity: 0.85`，`font-family: sans-serif`）。`.itranslate-placeholder` 类显示 5 点进度指示器，翻译完成后移除。
+原始元素保持不变。翻译是块级祖先元素的**浅克隆**（相同标签、类、属性），通过 `insertAdjacentElement('afterend', clone)` 插入其后。CSS 类 `itranslate-translation` 标记所有翻译元素（`opacity: 0.85`，`font-family: sans-serif`）。`.itranslate-placeholder` 类显示 3 点进度指示器，翻译完成后移除。
 
 ### Visual Design
 
-统一紫色渐变（#4f46e5 → #7c3aed）：popup logo、按钮。进度指示器：半透明背景上 5 个白色圆点依次亮起。翻译字体：`sans-serif`（浏览器默认，语言无关）。翻译透明度：0.85，与原文形成视觉区分。无 toast 通知栏。
+统一紫色渐变（#4f46e5 → #7c3aed）：popup logo、按钮。进度指示器：半透明背景上 3 个圆点依次亮起。翻译字体：`sans-serif`（浏览器默认，语言无关）。翻译透明度：0.85，与原文形成视觉区分。无 toast 通知栏。
 
 ### Test Strategy
 
