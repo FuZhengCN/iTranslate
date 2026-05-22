@@ -156,7 +156,10 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   }
 }
 
-function onMouseUp(): void {
+function onMouseUp(e: MouseEvent): void {
+  // Ignore clicks inside the bubble (user interacting with buttons)
+  if (currentBubble && currentBubble.contains(e.target as Node)) return;
+
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     if (!isValidSelection()) return;
