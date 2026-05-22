@@ -19,6 +19,7 @@
   "systemPrompt":           { "message": "系统提示" },
   "systemPromptEditable":   { "message": "可编辑" },
   "save":                   { "message": "保存" },
+  "selectionTranslate":     { "message": "划词翻译" },
   "testConnection":         { "message": "测试连接" },
   "apiKeyRequired":         { "message": "需要填写 API 密钥" },
   "settingsSaved":          { "message": "设置已保存" },

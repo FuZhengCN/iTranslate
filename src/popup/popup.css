@@ -159,6 +159,65 @@ body {
 
 .error.hidden { display: none; }
 
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  background: #f8f7fc;
+  border-radius: 8px;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7c3aed;
+  opacity: 0.8;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-radius: 11px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.toggle-switch.off {
+  background: #cbd5e0;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 20px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.toggle-switch.off::after {
+  left: 2px;
+}
+
 /* Footer */
 .footer {
   display: flex;

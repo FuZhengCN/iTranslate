@@ -19,6 +19,7 @@
   "systemPrompt":           { "message": "System Prompt" },
   "systemPromptEditable":   { "message": "editable" },
   "save":                   { "message": "Save" },
+  "selectionTranslate":     { "message": "Selection Translate" },
   "testConnection":         { "message": "Test Connection" },
   "apiKeyRequired":         { "message": "API key is required." },
   "settingsSaved":          { "message": "Settings saved." },
