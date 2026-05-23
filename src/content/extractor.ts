@@ -64,6 +64,11 @@ export function extractRawSegments(root: Element = document.body): RawSegment[] 
   for (const el of allElements) {
     if (!hasDirectText(el)) continue;
     if (isSkippable(el)) continue;
+    // 跳过 CSS 隐藏元素（display:none 及其祖先），减少无效 token 消耗
+    if ((el as HTMLElement).offsetParent === null) {
+      skippedLeaf++;
+      continue;
+    }
 
     const text = el.textContent?.trim();
     if (!text || text.length <= MIN_LEAF_CHARS) {
