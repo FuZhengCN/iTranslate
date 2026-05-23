@@ -73,7 +73,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
     if (extraction.allSegments.length === 0) {
       console.log('[iTranslate] No translatable content found');
       const toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;pointer-events:none;';
+      toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--itranslate-surface-inverse);color:var(--itranslate-surface-white);padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;pointer-events:none;';
       toast.textContent = 'No translatable content found on this page.';
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
