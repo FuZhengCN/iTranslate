@@ -70,14 +70,15 @@ function runDebug(): void {
   visualize(result, rawSegments);
 }
 
-// MV3 隔离世界桥接：页面 postMessage → content script 处理
-window.addEventListener('message', (e) => {
-  if (e.source !== window) return;
-  if (e.data?.type === 'itranslate-filter-v2-run') runDebug();
-  if (e.data?.type === 'itranslate-filter-v2-clear') clearVisuals();
-});
+// 通过 <script> 标签注入到页面上下文，用户可直接在控制台调用
+// 若页面 CSP 阻止则静默失败，备选：控制台下拉框切到扩展上下文
+document.addEventListener('itranslate-filter-v2-run', () => runDebug());
+document.addEventListener('itranslate-filter-v2-clear', () => clearVisuals());
 
-// 请求 background 向页面主世界注入 API 壳（仅浏览器环境）
-if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-  chrome.runtime.sendMessage({ action: 'injectBridge' }).catch(() => {});
-}
+const s = document.createElement('script');
+s.textContent =
+  'window.__itranslateFilterV2={' +
+  'run(){document.dispatchEvent(new CustomEvent("itranslate-filter-v2-run"))},' +
+  'clear(){document.dispatchEvent(new CustomEvent("itranslate-filter-v2-clear"))}' +
+  '};';
+document.head.appendChild(s);

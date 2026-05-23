@@ -9,7 +9,7 @@
   "cacheCleared":           { "message": "Cache Cleared!" },
   "cannotTranslatePage":    { "message": "Could not translate this page. Make sure you are on a webpage (not a browser internal page)." },
   "failedToClearCache":     { "message": "Failed to clear cache." },
-  "version":                { "message": "iTranslate v$1" },
+  "version":                { "message": "v$1" },
   "settingsTitle":          { "message": "iTranslate Settings" },
   "apiEndpoint":            { "message": "API Endpoint" },
   "apiEndpointHint":        { "message": "Any OpenAI-compatible API endpoint" },

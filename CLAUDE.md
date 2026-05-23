@@ -70,7 +70,7 @@ Background 校验翻译请求：segments 必须是数组且 ≤5000 项，每项
 Popup click → content script
   ├─ stopObserving()         // 停止 MutationObserver，防止重入
   ├─ removeTranslations()    // 清理上次结果
-  ├─ extractSegments()       // 遍历 body DOM，按块级祖先分组文本
+  ├─ extractSegments()       // extractRawSegments() 遍历 body DOM + activeFilter.filter() 过滤
   ├─ renderPlaceholders()    // 注入带 3 点进度指示器的克隆元素
   ├─ sendToBgWithRetry({ action: 'translate', segments })
   │     │                    // 自动重试 3 次（间隔 600ms），应对 SW 冷启动竞态
@@ -98,9 +98,13 @@ Popup click → content script
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
-- **`src/content/extractor.ts`** — 从 `document.body` 全页提取文本块。遍历所有元素，筛选有直接文本节点的元素，按最近块级祖先（`P/DIV/LI/H1-H6` 等）分组。按语种设最低字符数：CJK ≥12 字，拉丁 ≥20 字。CJK 检测（`isCJK`）覆盖汉字、平假名、片假名、CJK 标点。过滤噪音（时间戳、日期、纯数字）。跳过带 `itranslate-translation` 类或匹配 `SKIP_CLASS_NAMES`/ARIA 角色的元素。
+- **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素（`display:none`）通过 `offsetParent === null` 跳过**，减少无效 API 消耗。保留向后兼容的 `extractSegments()` 函数，内部调用 `extractRawSegments()` + 活跃 `SegmentFilter`。
+- **`src/content/filters/` — 标准过滤器模块**。`SegmentFilter` 接口定义在 `types.ts`（`{ name, filter(segments: RawSegment[]): FilterResult }`），第三方实现此接口即可接入。`registry.ts` 提供 `registerFilter()` / `setActiveFilter()` / `getActiveFilter()` 纯内存注册机制。内建两个实现：
+  - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链检查 `SKIP_CLASS_NAMES`（`\b` 词边界防误匹配，含 `ad`/`footer`/`nav`/`sidebar`/`avatar`/`byline`/`publishTime`/`addMore`/`view-more` 等 30 个关键词）。标题（H1-H6）直接保留不做字符数限制。非标题块 <5 字符跳过。噪音模式含相对时间 `/\\d+\\s+(second|minute|hour|day|week|month|year)s?\\s+ago/i`。
+  - **`default-filter`** — 旧 CJK/Latin 字符数阈值（CJK ≥12，Latin ≥20），兼容原行为。
+  - **`debug-visualization.ts`** — 调试可视化（独立 dev 入口）。绿色/红色高亮标注保留/过滤元素，通过 `window.__itranslateFilterV2` 暴露。
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
-- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree`。回调触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
+- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree` + `attributes`（`attributeFilter: ['class', 'style']`），捕获 CSS 类名切换导致的隐藏/显示变化。回调触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
 - **`src/content/toast.ts`** — 死代码，不再被任何模块引用，可安全删除。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段（如 `sourceLang`、`targetLang`、`*Locked`）对旧用户自动获得默认值。
@@ -117,6 +121,6 @@ Popup click → content script
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。58 个测试分布在 8 个文件中（`__tests__/` 目录）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并、向后兼容和 `*Locked` 标志读写。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。66 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并、向后兼容和 `*Locked` 标志读写。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
 
 Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `github` → GitHub (`https://github.com/FuZhengCN/iTranslate.git`).

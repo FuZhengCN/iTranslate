@@ -3,7 +3,7 @@
 import type { SegmentFilter, FilterResult, RawSegment, SkippedRecord } from './types';
 
 // 额外结构过滤：叶子元素或其祖先匹配跳过类名（extractor 只检查元素自身）
-const SKIP_CLASS_NAMES = /(header|footer|nav|sidebar|comment|menu|widget|advert|banner|social|share-btn|related|trending|recommend|avatar|byline|publishTime|time-hidden|property-name)/i;
+const SKIP_CLASS_NAMES = /\b(?:header|footer|nav|sidebar|comment|menu|widget|widgets|ad|advert|advertisement|banner|social|share-btn|related|trending|recommend|recommended|avatar|byline|publishTime|time-hidden|property-name|addMore|view-more|load-more|read-more)\b/i;
 
 const SKIP_TAGS = new Set([
   'SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME',

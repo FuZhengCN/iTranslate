@@ -3,7 +3,7 @@ import type { TranslationSegment } from '../shared/types';
 import { getActiveFilter } from './filters/registry';
 
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME', 'CODE', 'PRE', 'KBD', 'BR', 'HR', 'IMG', 'INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'VIDEO', 'AUDIO', 'CANVAS']);
-const SKIP_CLASS_NAMES = /(header|footer|nav|sidebar|comment|menu|widget|advert|banner|social|share-btn|related|trending|recommend)/i;
+const SKIP_CLASS_NAMES = /\b(?:header|footer|nav|sidebar|comment|menu|widget|widgets|ad|advert|advertisement|banner|social|share-btn|related|trending|recommend|recommended|avatar|byline|publishTime|time-hidden|property-name|addMore|view-more|load-more|read-more)\b/i;
 
 const BLOCK_TAGS = new Set([
   'P', 'DIV', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',

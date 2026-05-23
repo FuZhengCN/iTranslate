@@ -77,7 +77,7 @@ describe('structured-filter', () => {
 
   it('结构过滤：导航/侧栏类名容器', () => {
     const result = structuredFilter.filter([
-      makeSegWithClass('Home', 'navigation'),
+      makeSegWithClass('Home Navigation', 'nav'),
       makeSegWithClass('Related Links', 'sidebar'),
       makeSeg('Main content text that is definitely long enough.', false),
     ]);
@@ -85,6 +85,8 @@ describe('structured-filter', () => {
     expect(result.kept[0].text).toContain('Main content');
     const structural = result.skipped.filter((r) => r.reason === 'structural');
     expect(structural).toHaveLength(2);
+    expect(structural[0].reason).toBe('structural');
+    expect(structural[1].reason).toBe('structural');
   });
 
   it('已翻译元素由 extractor 层处理（filter 层不重复检查 itranslate-translation）', () => {
