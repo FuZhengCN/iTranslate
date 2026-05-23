@@ -1,5 +1,5 @@
 import type { TranslationSegment } from '../shared/types';
-import { extractSegments } from './extractor';
+import { extractSegments } from './filters';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
 import { startObserving, stopObserving } from './observer';
 import { enableSelection, disableSelection, isSelectionEnabled } from './selection';
@@ -8,7 +8,6 @@ let translateInProgress = false;
 let catchUpInProgress = false;
 
 import { sendToBgWithRetry } from './retry';
-import './filter-v2';
 
 async function catchUpNewContent(): Promise<void> {
   if (catchUpInProgress) return;

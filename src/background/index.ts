@@ -43,6 +43,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'injectBridge') {
+    const tabId = _sender.tab?.id;
+    if (tabId != null) {
+      chrome.scripting.executeScript({
+        target: { tabId },
+        world: 'MAIN',
+        func: () => {
+          (window as any).__itranslateFilterV2 = {
+            run() { window.postMessage({ type: 'itranslate-filter-v2-run' }, '*'); },
+            clear() { window.postMessage({ type: 'itranslate-filter-v2-clear' }, '*'); },
+          };
+        },
+      }).catch((err: Error) => console.warn('[iTranslate] bridge injection failed:', err));
+    }
+    sendResponse({ received: true });
+    return false;
+  }
+
   if (message.action === 'testConnection') {
     getSettings()
       .then((settings) => testConnection(settings))
