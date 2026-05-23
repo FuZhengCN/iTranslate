@@ -19,10 +19,13 @@ export { structuredFilter } from './structured-filter';
 export type { SegmentFilter, FilterResult, RawSegment, SkippedRecord, SkipReason } from './types';
 
 function toExtractionResult(result: { kept: { id: string; text: string; blockElement: Element }[] }): ExtractionResult {
-  return {
-    sourceElements: result.kept.map(s => s.blockElement),
-    allSegments: result.kept.map(s => ({ id: s.id, text: s.text })),
-  };
+  const sourceElements: Element[] = [];
+  const allSegments: { id: string; text: string }[] = [];
+  for (let i = 0; i < result.kept.length; i++) {
+    sourceElements.push(result.kept[i].blockElement);
+    allSegments.push({ id: `seg_${i}`, text: result.kept[i].text });
+  }
+  return { sourceElements, allSegments };
 }
 
 export function extractSegments(): ExtractionResult {
