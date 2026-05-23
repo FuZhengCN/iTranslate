@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#5A9DBF"/>
+      <stop offset="50%" style="stop-color:#6BAECF"/>
+      <stop offset="100%" style="stop-color:#94C8E0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="560" fill="url(#bg)"/>
+  <!-- 背景冰山几何 -->
+  <polygon points="1100,560 1240,200 1400,560" fill="#ffffff" opacity="0.05"/>
+  <polygon points="900,560 1000,280 1140,560" fill="#ffffff" opacity="0.07"/>
+  <polygon points="0,560 160,300 300,560" fill="#ffffff" opacity="0.06"/>
+  <!-- 图标 -->
+  <rect x="100" y="100" width="200" height="200" rx="38" fill="#F5F3EF" opacity="0.12"/>
+  <rect x="106" y="106" width="188" height="188" rx="33" fill="url(#bg)"/>
+  <path d="M112,180 Q146,150 176,180 Q200,200 216,180" stroke="#F5F3EF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M104,216 Q144,246 184,216 Q208,198 218,224" stroke="#F5F3EF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.50"/>
+  <!-- 标题 -->
+  <text x="360" y="200" font-family="sans-serif" font-size="80" font-weight="700" fill="#ffffff">通译 iTranslate</text>
+  <text x="360" y="258" font-family="sans-serif" font-size="28" font-weight="400" fill="#ffffff" opacity="0.75">AI 大模型驱动的沉浸式双语网页翻译</text>
+  <!-- 要点 -->
+  <text x="360" y="330" font-family="sans-serif" font-size="20" fill="#ffffff" opacity="0.85">沉浸式双语对照 · 6 种语言互译 · 划词翻译 · 本地缓存 · 自定义 AI 后端 · 零数据收集</text>
+  <!-- 底部栏 -->
+  <rect x="100" y="430" width="1200" height="2" rx="1" fill="#ffffff" opacity="0.12"/>
+  <text x="1400" y="500" font-family="sans-serif" font-size="16" fill="#ffffff" opacity="0.40" text-anchor="end">Chrome 浏览器扩展 · Manifest V3</text>
+</svg>

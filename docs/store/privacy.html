@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐私政策 · Privacy Policy — 通译 iTranslate</title>
+<style>
+  :root {
+    --bg: #F5F3EF; --text: #2A3038; --muted: #5A6270;
+    --glacier: #6BAECF; --card: #ffffff; --border: #D9E4EA;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; padding: 40px 24px; }
+  .container { max-width: 720px; margin: 0 auto; background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 48px 40px; }
+  h1 { font-size: 26px; margin-bottom: 8px; }
+  .update { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 19px; margin: 32px 0 10px; color: var(--glacier); }
+  p { margin-bottom: 12px; font-size: 14px; }
+  ul { margin-bottom: 12px; padding-left: 20px; }
+  li { font-size: 14px; margin-bottom: 6px; }
+  code { font-size: 13px; background: #f0eeea; padding: 1px 5px; border-radius: 3px; }
+  strong { color: var(--text); }
+  a { color: var(--glacier); }
+
+  .divider { border: none; border-top: 2px solid var(--border); margin: 40px 0; }
+  .lang-label { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--glacier); background: #E8F4F8; padding: 2px 10px; border-radius: 10px; margin-bottom: 16px; }
+
+  @media (max-width: 640px) {
+    .container { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ═══════════════════════════ 中文 ═══════════════════════════ -->
+<span class="lang-label">中文</span>
+<h1>隐私政策</h1>
+<p class="update">最后更新：2026-05-23</p>
+
+<p>本隐私政策适用于 <strong>通译（iTranslate）</strong> 浏览器扩展（以下简称"本扩展"）。我们高度重视您的隐私，特此说明本扩展如何处理您的数据。</p>
+
+<h2>1. 数据收集与存储</h2>
+<p>本扩展收集和存储以下数据：</p>
+<ul>
+  <li><strong>API 配置信息</strong>（API 端点地址、API 密钥、模型名称）：存储在浏览器本地 <code>chrome.storage.sync</code> 中，仅用于调用您指定的 AI 翻译服务。</li>
+  <li><strong>翻译缓存</strong>（原文 + 译文）：存储在浏览器本地 IndexedDB 中，用于避免重复翻译相同内容，减少 API 消耗。</li>
+  <li><strong>用户语言偏好</strong>（源语言、目标语言选择）：存储在浏览器本地 <code>chrome.storage.sync</code> 中，用于记住您的翻译偏好。</li>
+</ul>
+<p><strong>所有数据均存储在您的浏览器本地。本扩展开发者不拥有任何服务器，不收集、不上传、不存储您的任何个人数据或翻译内容。</strong></p>
+
+<h2>2. 数据传输</h2>
+<p>当您触发翻译功能时，网页中的文本内容会被发送到<strong>您自行配置的第三方 AI API 服务</strong>（如 DeepSeek、OpenAI 等）以获取翻译结果。本扩展开发者不参与、不中转、不记录此数据传输过程。您对所使用的第三方 API 服务的隐私政策承担了解责任。</p>
+
+<h2>3. 页面访问权限</h2>
+<p>本扩展请求以下权限：</p>
+<ul>
+  <li><strong><code>activeTab</code></strong>：仅当您主动点击扩展图标触发翻译时，才能访问当前标签页的网页内容，不会在后台静默读取页面。</li>
+  <li><strong><code>storage</code></strong>：用于在浏览器本地存储 API 配置和翻译缓存。</li>
+  <li><strong><code>scripting</code></strong>：用于向网页注入翻译功能所需的脚本和样式。</li>
+  <li><strong>主机权限（<code>http://*/*</code>、<code>https://*/*</code>）</strong>：使翻译功能可在任意网页上运行。</li>
+</ul>
+
+<h2>4. 第三方服务</h2>
+<p>本扩展依赖您配置的第三方 AI API 服务完成翻译。本扩展本身不包含任何第三方分析、广告或跟踪代码。除了您指定的 API 端点外，不会向任何其他服务器发送请求。</p>
+
+<h2>5. 数据安全</h2>
+<p>您的 API 密钥存储在浏览器本地存储中，不会离开您的设备（除发送至您指定的 API 服务进行身份验证外）。建议您妥善保管 API 密钥，不要与他人共享。</p>
+
+<h2>6. 用户权利</h2>
+<p>您可以随时：</p>
+<ul>
+  <li>在扩展设置中修改或删除 API 配置</li>
+  <li>通过"清除缓存"按钮删除所有本地翻译缓存</li>
+  <li>卸载扩展以完全清除所有本地存储的数据</li>
+</ul>
+
+<h2>7. 政策更新</h2>
+<p>本隐私政策可能不时更新。更新后的政策将随扩展新版本发布。继续使用本扩展即表示您同意更新后的隐私政策。</p>
+
+<h2>8. 联系方式</h2>
+<p>如有隐私相关问题，请通过以下渠道联系：</p>
+<ul>
+  <li>GitHub Issues：<a href="https://github.com/FuZhengCN/iTranslate/issues">github.com/FuZhengCN/iTranslate/issues</a></li>
+  <li>Gitee Issues：<a href="https://gitee.com/fuzheng0312/i-translate/issues">gitee.com/fuzheng0312/i-translate/issues</a></li>
+</ul>
+
+<!-- ═══════════════════════════ English ═══════════════════════════ -->
+<hr class="divider">
+
+<span class="lang-label">English</span>
+<h1>Privacy Policy</h1>
+<p class="update">Last updated: May 23, 2026</p>
+
+<p>This Privacy Policy applies to the <strong>iTranslate (通译)</strong> browser extension (hereinafter "the Extension"). We take your privacy seriously and explain here how the Extension handles your data.</p>
+
+<h2>1. Data Collection & Storage</h2>
+<p>The Extension collects and stores the following data:</p>
+<ul>
+  <li><strong>API Configuration</strong> (endpoint URL, API key, model name): stored locally in <code>chrome.storage.sync</code>, used solely to call your designated AI translation service.</li>
+  <li><strong>Translation Cache</strong> (source text + translated text): stored locally in IndexedDB to avoid re-translating identical content and reduce API consumption.</li>
+  <li><strong>Language Preferences</strong> (source language, target language): stored locally in <code>chrome.storage.sync</code> to remember your translation preferences.</li>
+</ul>
+<p><strong>All data is stored locally in your browser. The Extension developer does not own any servers and does not collect, upload, or store any of your personal data or translation content.</strong></p>
+
+<h2>2. Data Transmission</h2>
+<p>When you trigger translation, text content from the webpage is sent to <strong>the third-party AI API service you have configured</strong> (such as DeepSeek, OpenAI, etc.) to obtain translation results. The Extension developer does not participate in, relay, or log this data transmission. You are responsible for understanding the privacy policies of the third-party API services you use.</p>
+
+<h2>3. Page Access Permissions</h2>
+<p>The Extension requests the following permissions:</p>
+<ul>
+  <li><strong><code>activeTab</code></strong>: Accesses the current tab's content only when you actively click the extension icon to trigger translation. Does not silently read pages in the background.</li>
+  <li><strong><code>storage</code></strong>: Used to store API configuration and translation cache locally in the browser.</li>
+  <li><strong><code>scripting</code></strong>: Used to inject translation scripts and styles into web pages.</li>
+  <li><strong>Host permissions (<code>http://*/*</code>, <code>https://*/*</code>)</strong>: Enables the translation feature to work on any web page.</li>
+</ul>
+
+<h2>4. Third-Party Services</h2>
+<p>The Extension relies on the third-party AI API service you configure to perform translations. The Extension itself contains no third-party analytics, advertising, or tracking code. No requests are sent to any server other than the API endpoint you specify.</p>
+
+<h2>5. Data Security</h2>
+<p>Your API key is stored in your browser's local storage and does not leave your device (except when sent to your designated API service for authentication). We recommend keeping your API key secure and not sharing it with others.</p>
+
+<h2>6. User Rights</h2>
+<p>You may at any time:</p>
+<ul>
+  <li>Modify or delete API configuration in the extension settings</li>
+  <li>Delete all local translation cache via the "Clear Cache" button</li>
+  <li>Uninstall the Extension to completely remove all locally stored data</li>
+</ul>
+
+<h2>7. Policy Updates</h2>
+<p>This Privacy Policy may be updated from time to time. Updated policies will be published with new versions of the Extension. Continued use of the Extension constitutes acceptance of the updated Privacy Policy.</p>
+
+<h2>8. Contact</h2>
+<p>For privacy-related inquiries, please contact us via:</p>
+<ul>
+  <li>GitHub Issues: <a href="https://github.com/FuZhengCN/iTranslate/issues">github.com/FuZhengCN/iTranslate/issues</a></li>
+  <li>Gitee Issues: <a href="https://gitee.com/fuzheng0312/i-translate/issues">gitee.com/fuzheng0312/i-translate/issues</a></li>
+</ul>
+
+</div>
+</body>
+</html>

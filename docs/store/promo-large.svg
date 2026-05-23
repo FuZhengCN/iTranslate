@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="680" viewBox="0 0 920 680">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BAECF"/>
+      <stop offset="100%" style="stop-color:#94C8E0"/>
+    </linearGradient>
+  </defs>
+  <rect width="920" height="680" fill="url(#bg)"/>
+  <!-- 冰山装饰 -->
+  <polygon points="560,680 680,280 800,680" fill="#ffffff" opacity="0.06"/>
+  <polygon points="700,680 820,200 920,680" fill="#ffffff" opacity="0.04"/>
+  <polygon points="0,680 120,320 240,680" fill="#ffffff" opacity="0.08"/>
+  <!-- 大图标 -->
+  <rect x="80" y="130" width="256" height="256" rx="48" fill="#F5F3EF" opacity="0.12"/>
+  <rect x="88" y="138" width="240" height="240" rx="42" fill="url(#bg)"/>
+  <path d="M140,230 Q180,190 220,230 Q250,260 275,230" stroke="#F5F3EF" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M128,275 Q180,315 230,275 Q260,250 278,285" stroke="#F5F3EF" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.50"/>
+  <!-- 标题区 -->
+  <text x="400" y="240" font-family="sans-serif" font-size="72" font-weight="700" fill="#ffffff">通译 iTranslate</text>
+  <text x="400" y="300" font-family="sans-serif" font-size="24" font-weight="400" fill="#ffffff" opacity="0.75">基于 AI 大模型的沉浸式双语网页翻译扩展</text>
+  <!-- 功能要点 -->
+  <text x="400" y="370" font-family="sans-serif" font-size="18" fill="#ffffff" opacity="0.85">● 译文嵌入原文下方，不破坏页面布局</text>
+  <text x="400" y="406" font-family="sans-serif" font-size="18" fill="#ffffff" opacity="0.85">● 支持中 / 英 / 日 / 韩 / 法 / 德 6 种语言互译</text>
+  <text x="400" y="442" font-family="sans-serif" font-size="18" fill="#ffffff" opacity="0.85">● 划词翻译 · 本地缓存 · 自定义 AI 后端</text>
+  <text x="400" y="478" font-family="sans-serif" font-size="18" fill="#ffffff" opacity="0.85">● 所有数据本地存储，零隐私顾虑</text>
+  <!-- 底部标签 -->
+  <rect x="400" y="520" width="130" height="32" rx="16" fill="#ffffff" opacity="0.18"/>
+  <text x="465" y="541" font-family="sans-serif" font-size="15" font-weight="500" fill="#ffffff" text-anchor="middle">Manifest V3</text>
+  <rect x="545" y="520" width="130" height="32" rx="16" fill="#ffffff" opacity="0.18"/>
+  <text x="610" y="541" font-family="sans-serif" font-size="15" font-weight="500" fill="#ffffff" text-anchor="middle">6 种语言</text>
+  <rect x="690" y="520" width="130" height="32" rx="16" fill="#ffffff" opacity="0.18"/>
+  <text x="755" y="541" font-family="sans-serif" font-size="15" font-weight="500" fill="#ffffff" text-anchor="middle">本地缓存</text>
+</svg>
