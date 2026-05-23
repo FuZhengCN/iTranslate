@@ -8,6 +8,7 @@ let translateInProgress = false;
 let catchUpInProgress = false;
 
 import { sendToBgWithRetry } from './retry';
+import './filter-v2';
 
 async function catchUpNewContent(): Promise<void> {
   if (catchUpInProgress) return;

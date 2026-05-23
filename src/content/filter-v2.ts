@@ -151,3 +151,62 @@ export function filterSegments(root: Element): FilterResult {
 
   return { kept, keptElements, skipped };
 }
+
+// --- Visualization (debug only) ---
+
+const KEPT_CLASS = 'itranslate-filter-v2-kept';
+const SKIPPED_CLASS = 'itranslate-filter-v2-skipped';
+
+function injectVisualStyles(): void {
+  if (document.getElementById('itranslate-filter-v2-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'itranslate-filter-v2-styles';
+  style.textContent = `
+    .${KEPT_CLASS} {
+      outline: 2px solid rgba(34,197,94,0.7) !important;
+      background: rgba(34,197,94,0.08) !important;
+    }
+    .${SKIPPED_CLASS} {
+      outline: 2px solid rgba(239,68,68,0.7) !important;
+      background: rgba(239,68,68,0.08) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function visualize(result: FilterResult): void {
+  injectVisualStyles();
+  for (const el of result.keptElements) {
+    el.classList.add(KEPT_CLASS);
+  }
+  for (const record of result.skipped) {
+    record.element.classList.add(SKIPPED_CLASS);
+  }
+}
+
+function clearVisuals(): void {
+  for (const el of document.querySelectorAll(`.${KEPT_CLASS}`)) {
+    el.classList.remove(KEPT_CLASS);
+  }
+  for (const el of document.querySelectorAll(`.${SKIPPED_CLASS}`)) {
+    el.classList.remove(SKIPPED_CLASS);
+  }
+  const styleTag = document.getElementById('itranslate-filter-v2-styles');
+  styleTag?.remove();
+}
+
+function runDebug(): void {
+  clearVisuals();
+  const result = filterSegments(document.body);
+  console.log(
+    `[filter-v2] kept=${result.kept.length}, skipped=${result.skipped.length}`,
+    result
+  );
+  visualize(result);
+}
+
+// Expose to window (content script only)
+(window as any).__itranslateFilterV2 = {
+  run: runDebug,
+  clear: clearVisuals,
+};
