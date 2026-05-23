@@ -21,7 +21,8 @@ export function startObserving(root: Element, onNewContent: Callback, debounceMs
     childList: true,
     subtree: true,
     characterData: false,
-    attributes: false,
+    attributes: true,
+    attributeFilter: ['class', 'style'],
   });
 }
 
