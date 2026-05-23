@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>泡泡按钮调试</title>
+<style>
+:root {
+  --itranslate-surface-white: #ffffff;
+  --itranslate-surface-hover: #EDEAE6;
+  --itranslate-brand-100: #E8F4F8;
+  --itranslate-brand-200: #B8DCEB;
+  --itranslate-brand-purple: #6BAECF;
+  --itranslate-close-color: #9BA8B5;
+  --itranslate-text-icon: #5A6270;
+  --itranslate-border-primary: #D9E4EA;
+  --itranslate-brand-bg-soft: #F5F3EF;
+  --itranslate-shadow-bubble: 0 8px 32px rgba(0, 0, 0, .10), 0 0 0 1px rgba(0, 0, 0, .04);
+  --itranslate-gradient-accent: linear-gradient(90deg, #6BAECF, #62B8D9);
+}
+body { font-family: -apple-system, sans-serif; padding: 40px; background: #f0f0f0; }
+
+.itranslate-selection-bubble {
+  all: initial;
+  position: relative;
+  width: 320px;
+  background: var(--itranslate-surface-white);
+  border-radius: 12px;
+  box-shadow: var(--itranslate-shadow-bubble);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  margin: 20px;
+}
+.itranslate-bubble-header { height: 4px; background: var(--itranslate-gradient-accent); }
+.itranslate-bubble-body { padding: 14px 16px 10px; }
+.itranslate-bubble-text { font-size: 15px; color: #2A3038; line-height: 1.6; font-weight: 500; user-select: text; }
+.itranslate-bubble-actions { display: flex; gap: 6px; padding: 0 16px 12px; align-items: center; }
+
+.itranslate-bubble-btn {
+  height: 28px; padding: 0 10px;
+  border: 1px solid var(--itranslate-border-primary);
+  background: var(--itranslate-surface-white);
+  border-radius: 6px; font-size: 11px;
+  color: var(--itranslate-text-icon); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: all .12s; user-select: none; outline: none;
+}
+.itranslate-bubble-btn:hover {
+  background: var(--itranslate-brand-bg-soft);
+  border-color: var(--itranslate-brand-200);
+  color: var(--itranslate-brand-purple);
+}
+.itranslate-bubble-btn:active { background: var(--itranslate-brand-100); }
+.itranslate-bubble-btn:focus-visible { outline: 2px solid var(--itranslate-brand-200); outline-offset: 1px; }
+
+.itranslate-bubble-close {
+  width: 28px; height: 28px;
+  border: none; background: none;
+  font-size: 16px; color: var(--itranslate-close-color);
+  cursor: pointer; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; outline: none;
+}
+.itranslate-bubble-close:hover {
+  background: var(--itranslate-surface-hover);
+  color: var(--itranslate-text-icon);
+}
+.itranslate-bubble-close:active {
+  background: var(--itranslate-brand-100);
+  color: var(--itranslate-brand-purple);
+}
+.itranslate-bubble-close:focus-visible {
+  outline: 2px solid var(--itranslate-brand-200);
+  outline-offset: 1px;
+}
+
+h2 { margin: 20px 20px 8px; font-size: 14px; color: #666; }
+</style>
+</head>
+<body>
+
+<h2>泡泡完整 DOM（和 content.js 生成的完全一致）</h2>
+<div class="itranslate-selection-bubble" id="bubble1">
+  <div class="itranslate-bubble-header"></div>
+  <div class="itranslate-bubble-body">
+    <div class="itranslate-bubble-text">This is the translated text that appears in the selection bubble.</div>
+  </div>
+  <div class="itranslate-bubble-actions">
+    <button class="itranslate-bubble-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制
+    </button>
+    <span style="flex:1"></span>
+    <button class="itranslate-bubble-close">×</button>
+  </div>
+</div>
+
+<h2>独立关闭按钮（无 bubble 包裹）</h2>
+<div style="display:flex;gap:8px;margin:20px;">
+  <button class="itranslate-bubble-close">×</button>
+  <button class="itranslate-bubble-close" style="background:#fff">× (white bg)</button>
+</div>
+
+</body>
+</html>

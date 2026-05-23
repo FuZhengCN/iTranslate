@@ -1,3 +1,13 @@
+console.log('[iTranslate] 📋 Content script loaded');
+
+// CSS 内联导入（避免独立 CSS 文件，Vite ?inline 返回字符串）
+import themeCss from '../shared/theme.css?inline';
+import stylesCss from './styles.css?inline';
+const style = document.createElement('style');
+style.textContent = themeCss + stylesCss;
+document.head.appendChild(style);
+console.log('[iTranslate] 📋 CSS injected');
+
 import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './filters';
 import { removeTranslations, renderPlaceholders, renderTranslations } from './renderer';
@@ -161,12 +171,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
   if (message.action === 'toggleSelection') {
+    console.log(`[iTranslate] 📋 toggleSelection received: enabled=${message.enabled}`);
     if (message.enabled) {
       enableSelection();
+      console.log('[iTranslate] 📋 enableSelection() called');
     } else {
       disableSelection();
+      console.log('[iTranslate] 📋 disableSelection() called');
     }
     sendResponse({ received: true });
+    return true;
+  }
+  if (message.action === 'ping') {
+    console.log('[iTranslate] 📋 ping received — responding pong');
+    sendResponse({ pong: true });
     return true;
   }
 });

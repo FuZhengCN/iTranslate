@@ -21,7 +21,7 @@ describe('extractor', () => {
     expect(result.sourceElements.length).toBe(2);
   });
 
-  it('skips blocks with very short combined text', () => {
+  it('短文本非标题块不再被过滤', () => {
     document.body.innerHTML = `
       <main>
         <div><span>Open</span></div>
@@ -31,10 +31,8 @@ describe('extractor', () => {
     `;
 
     const result = extractSegments();
-    // Short label blocks should be skipped; only the long paragraph stays
-    // structured-filter: MIN_NON_HEADING_CHARS=5 filters out "Open"/"Site" (4 chars each)
-    expect(result.allSegments.length).toBe(1);
-    expect(result.allSegments[0].text).toContain('Machine learning');
+    // 移除 MIN_NON_HEADING_CHARS 后，所有块都会被保留
+    expect(result.allSegments.length).toBe(3);
   });
 
   it('merges multiple text elements inside the same block', () => {

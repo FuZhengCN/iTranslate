@@ -29,5 +29,8 @@
   "connectionError":        { "message": "Connection error: $1" },
   "extName":                { "message": "iTranslate" },
   "extDescription":         { "message": "Immersive bilingual translation using AI" },
-  "extDefaultTitle":        { "message": "iTranslate — Translate this page" }
+  "extDefaultTitle":        { "message": "iTranslate — Translate this page" },
+  "copy":                   { "message": "Copy" },
+  "copied":                 { "message": "Copied" },
+  "translationFailed":      { "message": "Translation failed" }
 }

@@ -1,3 +1,8 @@
+/* ═══════════════════════════════════════════════════════════
+   Content Script Styles (注入到宿主页面)
+   依赖 src/shared/theme.css 先于本文件注入
+   ═══════════════════════════════════════════════════════════ */
+
 .itranslate-translation {
   opacity: 0.85;
   font-family: sans-serif;
@@ -14,7 +19,7 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: #c4b5fd;
+  background: var(--itranslate-brand-200);
   border-radius: 50%;
   animation: itranslate-bounce 0.8s infinite ease-in-out;
 }
@@ -45,8 +50,8 @@
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  color: #fff;
+  background: var(--itranslate-gradient-brand);
+  color: var(--itranslate-text-on-brand);
   padding: 10px 24px;
   border-radius: 24px;
   font-size: 14px;
@@ -56,7 +61,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 24px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 24px var(--itranslate-accent-shadow);
   animation: itranslate-toast-in 0.3s ease-out;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -92,12 +97,12 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--itranslate-toast-dot-bg);
   transition: background 0.25s ease;
 }
 
 .itranslate-toast-dot.on {
-  background: #fff;
+  background: var(--itranslate-text-on-brand);
 }
 
 /* ── Selection Translation Bubble ── */
@@ -107,12 +112,14 @@
   z-index: 99998;
   width: 320px;
   max-width: calc(100vw - 16px);
-  background: #fff;
+  background: var(--itranslate-surface-white);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.04);
+  box-shadow: var(--itranslate-shadow-bubble);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
   animation: itranslate-bubble-in 0.2s ease-out;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @keyframes itranslate-bubble-in {
@@ -120,37 +127,39 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.itranslate-bubble-header {
+.itranslate-selection-bubble .itranslate-bubble-header {
   height: 4px;
-  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  background: var(--itranslate-gradient-accent);
 }
 
-.itranslate-bubble-body {
+.itranslate-selection-bubble .itranslate-bubble-body {
   padding: 14px 16px 10px;
 }
 
-.itranslate-bubble-text {
+.itranslate-selection-bubble .itranslate-bubble-text {
   font-size: 15px;
-  color: #334155;
+  color: var(--itranslate-text-translated);
   line-height: 1.6;
   font-weight: 500;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
-.itranslate-bubble-actions {
+.itranslate-selection-bubble .itranslate-bubble-actions {
   display: flex;
   gap: 6px;
   padding: 0 16px 12px;
   align-items: center;
 }
 
-.itranslate-bubble-btn {
+.itranslate-selection-bubble .itranslate-bubble-btn {
   height: 28px;
   padding: 0 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--itranslate-border-primary);
+  background: var(--itranslate-surface-white);
   border-radius: 6px;
   font-size: 11px;
-  color: #666;
+  color: var(--itranslate-text-icon);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -158,34 +167,51 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   transition: all 0.12s;
   user-select: none;
+  outline: none;
 }
 
 .itranslate-bubble-btn:hover {
-  background: #f8f7fc;
-  border-color: #c4b5fd;
-  color: #7c3aed;
+  background: var(--itranslate-brand-bg-soft);
+  border-color: var(--itranslate-brand-200);
+  color: var(--itranslate-brand-purple);
 }
 
 .itranslate-bubble-btn:active {
-  background: #ede9fe;
+  background: var(--itranslate-brand-100);
 }
 
-.itranslate-bubble-close {
+.itranslate-bubble-btn:focus-visible {
+  outline: 2px solid var(--itranslate-brand-200);
+  outline-offset: 1px;
+}
+
+.itranslate-selection-bubble .itranslate-bubble-close {
   width: 28px;
   height: 28px;
   border: none;
   background: none;
   font-size: 16px;
-  color: #bbb;
+  color: var(--itranslate-close-color);
   cursor: pointer;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  outline: none;
 }
 
 .itranslate-bubble-close:hover {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--itranslate-surface-hover);
+  color: var(--itranslate-text-icon);
+}
+
+.itranslate-bubble-close:active {
+  background: var(--itranslate-brand-100);
+  color: var(--itranslate-brand-purple);
+}
+
+.itranslate-bubble-close:focus-visible {
+  outline: 2px solid var(--itranslate-brand-200);
+  outline-offset: 1px;
 }

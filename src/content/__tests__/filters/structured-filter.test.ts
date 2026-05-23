@@ -34,14 +34,13 @@ describe('structured-filter', () => {
     expect(result.kept).toHaveLength(2);
   });
 
-  it('过滤非标题短于5字符的独立块', () => {
+  it('非标题短文本不再按字符数过滤', () => {
     const result = structuredFilter.filter([
       makeSeg('Home', false),
       makeSeg('News', false),
       makeSeg('The quick brown fox jumps over the lazy dog and more text.', false),
     ]);
-    expect(result.kept).toHaveLength(1);
-    expect(result.kept[0].text).toContain('quick brown fox');
+    expect(result.kept).toHaveLength(3);
   });
 
   it('过滤噪音模式（时间戳、日期、纯数字、相对时间）', () => {
@@ -110,13 +109,13 @@ describe('structured-filter', () => {
 
   it('skipped 记录包含 segmentId、text、reason', () => {
     const result = structuredFilter.filter([
-      makeSeg('Go', false),
+      makeSeg('12345', false),
       makeSeg('A complete sentence that is long enough for translation testing.', false),
     ]);
     expect(result.skipped.length).toBeGreaterThanOrEqual(1);
-    const record = result.skipped.find((r) => r.text === 'Go');
+    const record = result.skipped.find((r) => r.text === '12345');
     expect(record).toBeDefined();
-    expect(record!.reason).toBe('too-short-non-heading');
+    expect(record!.reason).toBe('noise-pattern');
     expect(record!.segmentId).toBeDefined();
   });
 });

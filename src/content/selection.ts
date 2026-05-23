@@ -1,4 +1,5 @@
 import { sendToBgWithRetry } from './retry';
+import { t } from '../shared/i18n';
 
 let currentBubble: HTMLElement | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -54,7 +55,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   const bubble = document.createElement('div');
   bubble.className = 'itranslate-selection-bubble itranslate-translation';
 
-  // ── Purple bar ──
+  // ── Header bar ──
   const bar = document.createElement('div');
   bar.className = 'itranslate-bubble-header';
 
@@ -75,17 +76,18 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   // Copy button (hidden during loading)
   const copyBtn = document.createElement('button');
   copyBtn.className = 'itranslate-bubble-btn';
-  copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制';
+  const copyIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ';
+  copyBtn.innerHTML = copyIcon + t('copy');
   copyBtn.style.display = 'none';
   copyBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     const translationEl = body.querySelector('.itranslate-bubble-text');
     await navigator.clipboard.writeText(translationEl?.textContent || '');
-    copyBtn.innerHTML = '已复制';
-    copyBtn.style.color = '#059669';
-    copyBtn.style.borderColor = '#a7f3d0';
+    copyBtn.innerHTML = t('copied');
+    copyBtn.style.color = 'var(--itranslate-copy-success-text)';
+    copyBtn.style.borderColor = 'var(--itranslate-copy-success-border)';
     setTimeout(() => {
-      copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制';
+      copyBtn.innerHTML = copyIcon + t('copy');
       copyBtn.style.color = '';
       copyBtn.style.borderColor = '';
     }, 1500);
@@ -139,7 +141,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
       placeholder.remove();
       const errorEl = document.createElement('div');
       errorEl.className = 'itranslate-bubble-text';
-      errorEl.textContent = '翻译失败';
+      errorEl.textContent = t('translationFailed');
       body.appendChild(errorEl);
       console.warn('[iTranslate] 🔍 Selection translation failed:', response);
     }
@@ -147,7 +149,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
     placeholder.remove();
     const errorEl = document.createElement('div');
     errorEl.className = 'itranslate-bubble-text';
-    errorEl.textContent = '翻译失败';
+    errorEl.textContent = t('translationFailed');
     body.appendChild(errorEl);
     console.warn('[iTranslate] 🔍 Selection translation error:', err);
   }
@@ -155,15 +157,22 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
 
 function onMouseUp(e: MouseEvent): void {
   // Ignore clicks inside the bubble (user interacting with buttons)
-  if (currentBubble && currentBubble.contains(e.target as Node)) return;
+  if (currentBubble && currentBubble.contains(e.target as Node)) {
+    console.log('[iTranslate] 🔍 onMouseUp: click inside bubble, ignoring');
+    return;
+  }
 
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    if (!isValidSelection()) return;
+    if (!isValidSelection()) {
+      console.log('[iTranslate] 🔍 onMouseUp: no valid selection after debounce');
+      return;
+    }
 
     const sel = window.getSelection()!;
     const text = sel.toString().trim();
     const rect = sel.getRangeAt(0).getBoundingClientRect();
+    console.log(`[iTranslate] 🔍 onMouseUp: selection detected — "${text.slice(0, 50)}" (${text.length} chars)`);
 
     showBubble(rect, text);
   }, DEBOUNCE_MS);
@@ -179,19 +188,14 @@ export function isSelectionEnabled(): boolean {
   return selectionEnabled;
 }
 
-export function initSelection(): void {
-  selectionEnabled = true;
-  injectSelectionStyle();
-  document.addEventListener('mouseup', onMouseUp);
-  document.addEventListener('keydown', onKeyDown);
-}
+// initSelection() removed — use enableSelection() instead
 
 let selectionStyle: HTMLStyleElement | null = null;
 
 function injectSelectionStyle(): void {
   if (selectionStyle) return;
   selectionStyle = document.createElement('style');
-  selectionStyle.textContent = '::selection{background:rgba(124,58,237,0.18)}::-moz-selection{background:rgba(124,58,237,0.18)}';
+  selectionStyle.textContent = '::selection{background:var(--itranslate-accent-selection)} ::-moz-selection{background:var(--itranslate-accent-selection)}';
   document.head.appendChild(selectionStyle);
 }
 
@@ -203,18 +207,28 @@ function removeSelectionStyle(): void {
 }
 
 export function enableSelection(): void {
-  if (selectionEnabled) return;
+  if (selectionEnabled) {
+    console.log('[iTranslate] 🔍 enableSelection: already enabled, skipping');
+    return;
+  }
   selectionEnabled = true;
+  console.log('[iTranslate] 🔍 enableSelection: injecting selection style + adding listeners');
   injectSelectionStyle();
   document.addEventListener('mouseup', onMouseUp);
   document.addEventListener('keydown', onKeyDown);
+  console.log('[iTranslate] 🔍 enableSelection: done — selectionEnabled=true, listeners attached');
 }
 
 export function disableSelection(): void {
-  if (!selectionEnabled) return;
+  if (!selectionEnabled) {
+    console.log('[iTranslate] 🔍 disableSelection: already disabled, skipping');
+    return;
+  }
   selectionEnabled = false;
+  console.log('[iTranslate] 🔍 disableSelection: removing bubble, style, and listeners');
   hideBubble();
   removeSelectionStyle();
   document.removeEventListener('mouseup', onMouseUp);
   document.removeEventListener('keydown', onKeyDown);
+  console.log('[iTranslate] 🔍 disableSelection: done — selectionEnabled=false');
 }

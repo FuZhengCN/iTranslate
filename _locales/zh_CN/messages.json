@@ -29,5 +29,8 @@
   "connectionError":        { "message": "连接错误：$1" },
   "extName":                { "message": "通译" },
   "extDescription":         { "message": "使用 AI 的沉浸式双语翻译" },
-  "extDefaultTitle":        { "message": "通译 — 翻译此页面" }
+  "extDefaultTitle":        { "message": "通译 — 翻译此页面" },
+  "copy":                   { "message": "复制" },
+  "copied":                 { "message": "已复制" },
+  "translationFailed":      { "message": "翻译失败" }
 }

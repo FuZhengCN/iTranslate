@@ -19,12 +19,12 @@ function injectVisualStyles(): void {
   style.id = 'itranslate-filter-v2-styles';
   style.textContent = `
     .${KEPT_CLASS} {
-      outline: 2px solid rgba(34,197,94,0.7) !important;
-      background: rgba(34,197,94,0.08) !important;
+      outline: 2px solid var(--itranslate-debug-kept-outline) !important;
+      background: var(--itranslate-debug-kept-bg) !important;
     }
     .${SKIPPED_CLASS} {
-      outline: 2px solid rgba(239,68,68,0.7) !important;
-      background: rgba(239,68,68,0.08) !important;
+      outline: 2px solid var(--itranslate-debug-skipped-outline) !important;
+      background: var(--itranslate-debug-skipped-bg) !important;
     }
   `;
   document.head.appendChild(style);

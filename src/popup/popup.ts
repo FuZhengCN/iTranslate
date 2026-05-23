@@ -151,18 +151,25 @@ function updateSelectionToggleUI(enabled: boolean): void {
 
 selectionToggle.addEventListener('click', async () => {
   const enabling = selectionToggle.classList.contains('off');
+  console.log(`[iTranslate] 🔘 Selection toggle clicked: ${enabling ? 'ENABLE' : 'DISABLE'}`);
   updateSelectionToggleUI(enabling);
 
   try {
     const tab = await getActiveTab();
-    if (tab.id) {
-      await chrome.tabs.sendMessage(tab.id, {
-        action: 'toggleSelection',
-        enabled: enabling,
-      });
+    if (!tab.id) {
+      console.log('[iTranslate] 🔘 No active tab, aborting');
+      return;
     }
-  } catch {
-    // Content script not loaded — revert
+    console.log(`[iTranslate] 🔘 Tab ID: ${tab.id}, URL: ${tab.url}`);
+    await ensureContentScript(tab.id);
+    console.log(`[iTranslate] 🔘 Content script ready, sending toggleSelection (enabled=${enabling})`);
+    await chrome.tabs.sendMessage(tab.id, {
+      action: 'toggleSelection',
+      enabled: enabling,
+    });
+    console.log(`[iTranslate] 🔘 toggleSelection message sent successfully`);
+  } catch (err) {
+    console.error(`[iTranslate] 🔘 toggleSelection failed:`, err);
     updateSelectionToggleUI(!enabling);
   }
 });
@@ -175,14 +182,36 @@ swapBtn.addEventListener('click', async () => {
 });
 
 async function ensureContentScript(tabId: number): Promise<void> {
-  const manifest = chrome.runtime.getManifest();
-  const csFiles = manifest.content_scripts?.[0]?.js;
-  if (csFiles && csFiles.length > 0) {
+  console.log(`[iTranslate] 🔘 ensureContentScript: checking if content script is loaded...`);
+  try {
+    await chrome.tabs.sendMessage(tabId, { action: 'ping' });
+    console.log(`[iTranslate] 🔘 ensureContentScript: ping OK — already loaded`);
+    return;
+  } catch {
+    console.log(`[iTranslate] 🔘 ensureContentScript: ping failed — injecting content script`);
+  }
+  try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: csFiles,
+      files: ['assets/content.js'],
     });
+    console.log(`[iTranslate] 🔘 ensureContentScript: content.js injected, verifying with ping...`);
+  } catch (err) {
+    console.error(`[iTranslate] 🔘 ensureContentScript: injection failed`, err);
+    throw err;
   }
+  // 注入后重试验证（最多 5 次，每次 100ms），应对竞态
+  for (let i = 0; i < 5; i++) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { action: 'ping' });
+      console.log(`[iTranslate] 🔘 ensureContentScript: post-injection ping OK (attempt ${i + 1})`);
+      return;
+    } catch {
+      console.log(`[iTranslate] 🔘 ensureContentScript: post-injection ping failed (attempt ${i + 1}/5), retrying...`);
+      await new Promise(r => setTimeout(r, 100));
+    }
+  }
+  throw new Error('Content script injected but ping still failing after 5 attempts');
 }
 
 translateBtn.addEventListener('click', async () => {

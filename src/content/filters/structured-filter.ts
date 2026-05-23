@@ -37,8 +37,6 @@ function isNoiseText(text: string): boolean {
   return NOISE_PATTERNS.some((p) => p.test(text));
 }
 
-const MIN_NON_HEADING_CHARS = 5;
-
 export const structuredFilter: SegmentFilter = {
   name: 'structured-filter',
 
@@ -62,12 +60,6 @@ export const structuredFilter: SegmentFilter = {
       // 标题豁免
       if (seg.isHeading) {
         kept.push(seg);
-        continue;
-      }
-
-      // 非标题字符数兜底
-      if (seg.text.length < MIN_NON_HEADING_CHARS) {
-        skipped.push({ segmentId: seg.id, text: seg.text, reason: 'too-short-non-heading' });
         continue;
       }
 

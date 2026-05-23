@@ -4,12 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **语言要求：所有回复、解释、注释、说明使用简体中文，代码关键字/标识符保留英文。**
 
+## 铁律
+
+1. **根因驱动**：必须定位到问题的根本原因再动手修改。禁止在未找到根因的情况下猜测性修改代码。每个修改必须能解释"为什么"。
+2. **三轮止损**：同一个问题如果在三个对话轮次内仍未解决，必须停下来回到问题起点，从第一性原理重新分析，不可继续沿用之前的思路惯性。
+3. **极简修改**：能少写一行代码就绝不多写。优先用最精简的方式解决问题，禁止引入不必要的抽象、额外文件或依赖。
+4. **专注问题**：改问题时只改问题本身，禁止顺手重构、格式化、优化无关代码。重构需要先征得明确同意。
+
 ## Build & Test Commands
 
 ```bash
 npm install              # Install dependencies
-npm run build            # 构建号 z+1 → tsc → vite build → dist/
-npm run bump             # 手动递增构建号（build 已自动调用）
+npm run build            # tsc + vite build（不变更版本号，日常调试用）
+npm run release          # bump(z+1) → build → 生成 zip（发布用）
 npm run dev              # Vite dev server with HMR
 npm test                 # Run all tests (vitest run)
 npm run test:watch       # Run tests in watch mode (vitest)
@@ -18,30 +25,37 @@ npx vitest run src/content/__tests__/renderer.test.ts  # Run single test file
 npx tsc --noEmit         # TypeScript check only (no emit)
 ```
 
+`npm run build` 执行两步构建：crx 主构建 → `vite.content.config.ts` 将内容脚本构建为 IIFE 格式（`dist/assets/content.js`），供 `chrome.scripting.executeScript` 注入。**不改变版本号**。
+
+`npm run release` 在 build 基础上自动递增构建号并生成 `iTranslate-vX.Y.Z.zip`，版本号从 `package.json` 读取，保证三者一致。
+
 ## Version Management
 
 版本格式 `MAJOR.MINOR.BUILD`（x.y.z），`package.json` 为唯一版本源。
 
-- **每次 `npm run build` 自动 z+1**（`scripts/bump-build.js`）
+- **`npm run build`**：仅编译构建，**不改变版本号**（日常调试用）
+- **`npm run release`**：bump(z+1) → build → 自动生成 `iTranslate-vX.Y.Z.zip`
 - **`manifest.json` 版本号由 `vite.config.ts` 构建时注入**，源文件为占位符 `0.0.0`
-- 升 y（minor）或 x（major）时手动运行 `npm version minor` / `npm version major`，后续构建 z 继续累加
+- 升 y（minor）或 x（major）时手动运行 `npm version minor` / `npm version major`，后续 release 时 z 继续累加
 
 ## Architecture
 
 **Manifest V3 浏览器扩展**（Chrome/Edge），多语种双语翻译（默认英→中）。TypeScript 编写，Vite + `@crxjs/vite-plugin` 构建。
 
+**权限策略：** `manifest.json` 仅声明 `storage`、`activeTab`、`scripting` 三项权限，无 `host_permissions`、无 `content_scripts`。内容脚本（`assets/content.js`）由 Popup 通过 `ensureContentScript()` 按需注入，遵守 Chrome Web Store 最小权限原则。
+
 **扩展加载方式：**
 - 开发：`npm run dev` 启动 Vite dev server，Chrome 加载**源码目录**（项目根目录，非 `dist/`）
 - 生产：`npm run build`，Chrome 加载 `dist/` 目录
 
-**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 31 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
+**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 34 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
 
 ### Extension Contexts (4 isolated execution environments)
 
 | Context | Entry | 用途 |
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
-| **Content script** | `src/content/index.ts` | 注入 http/https 页面。提取文本块，发送到 background 翻译，结果渲染到 DOM |
+| **Content script** | `src/content/index.ts` | Popup 通过 `scripting.executeScript` 按需注入（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签 |
 | **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，清除缓存，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言（若用户手动选择过则尊重锁定标志）。打开时同步按钮状态和划词翻译开关状态 |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接 |
 
@@ -57,6 +71,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 | `translationProgress` | background → content | （未使用，handler 已移除） |
 | `translate` | content → background | 请求翻译文本段 → 返回结果 |
 | `toggleSelection` | popup → content | 启用/禁用划词翻译 |
+| `ping` | popup → content | 检测内容脚本是否已注入（`ensureContentScript` 用） |
 | `clearCache` | popup → background | 清空 IndexedDB 缓存 |
 | `testConnection` | settings → background | 验证 API key/endpoint 可用 |
 
@@ -91,10 +106,17 @@ Popup click → content script
 
 **Content → Background 重试机制：** `sendToBgWithRetry()` 包装 `chrome.runtime.sendMessage`。MV3 Service Worker 空闲终止后重新唤醒存在竞态：消息到达时 `onMessage` 监听器可能尚未注册，导致 "Receiving end does not exist" 错误。重试 3 次（间隔 600ms）给 SW 足够的启动时间。仅对连接类错误重试，其它错误直接抛出。
 
+**内容脚本注入机制：** Popup 通过 `ensureContentScript(tabId)` 按需注入：
+1. 发送 `ping` 消息探测 → 若响应则已注入，跳过
+2. 未响应 → `chrome.scripting.executeScript` 注入 `assets/content.js`
+3. 注入后重试 ping（最多 5 次 / 100ms 间隔）确认监听器就绪
+
+内容脚本为 IIFE 格式（`vite.content.config.ts` 单独构建），因 `executeScript` 不支持 ESM `import` 语句。CSS（`theme.css` + `styles.css`）通过 `?inline` 导入为字符串，注入时创建 `<style>` 标签插入页面。
+
 ### Key Modules
 
 - **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。仅对 "Receiving end does not exist" / "Could not establish connection" 类错误重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。
-- **`src/content/selection.ts`** — 划词翻译。`initSelection()` 注册 document mouseup 监听器，用户选中文字后 300ms 防抖弹出翻译气泡。气泡复用 Background translate 消息链路（含缓存），仅展示译文（无原文），加载时复用全页翻译的 3 点动画。`enableSelection()` 注入 `::selection` 高亮背景（`var(--itranslate-accent-selection)`）提示划词翻译已开启。仅 × / Esc 可关闭泡泡。包含复制到剪贴板功能。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
+- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后 300ms 防抖弹出翻译气泡。气泡复用 Background translate 消息链路（含缓存），仅展示译文（无原文），加载时复用全页翻译的 3 点动画。注入 `::selection` 高亮背景提示划词翻译已开启。仅 × / Esc 可关闭泡泡。包含复制到剪贴板功能，按钮文字通过 `t()` i18n 支持中英双语。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
@@ -107,7 +129,7 @@ Popup click → content script
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree` + `attributes`（`attributeFilter: ['class', 'style']`），捕获 CSS 类名切换导致的隐藏/显示变化。回调触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
 - **`src/content/toast.ts`** — 死代码，不再被任何模块引用，可安全删除。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
-- **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 33 个 `--itranslate-*` 变量（品牌色、渐变、表面、文字、边框、语义色、阴影）。popup/settings 通过 `@import` 引入，content script 通过 `manifest.json` 的 `content_scripts.css` 注入。修改变量值即可全局切换主题，无需改动任何 CSS/TS 代码。
+- **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 33 个 `--itranslate-*` 变量。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段（如 `sourceLang`、`targetLang`、`*Locked`）对旧用户自动获得默认值。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese、`sourceLangLocked`/`targetLangLocked` 均为 false）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
@@ -130,7 +152,7 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Visual Design & Theming
 
-**主题系统：** `src/shared/theme.css` 集中定义 33 个 `--itranslate-*` CSS 变量（品牌色、渐变、表面、文字、边框、语义色），3 个上下文中通过 `@import` 或 manifest CSS 注入的方式引用。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
+**主题系统：** `src/shared/theme.css` 集中定义 33 个 `--itranslate-*` CSS 变量。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
 
 **组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深），气泡顶条水平微渐变。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡：白底、12px 圆角、渐变顶条、深炭灰译文，加载中复用三点动画。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
 
