@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BAECF"/>
+      <stop offset="100%" style="stop-color:#94C8E0"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#g)"/>
+  <polygon points="30,100 64,38 98,100" fill="#F5F3EF" opacity="0.92"/>
+  <polygon points="8,100 38,56 62,100" fill="#F5F3EF" opacity="0.55"/>
+  <polygon points="70,100 100,52 124,100" fill="#F5F3EF" opacity="0.55"/>
+  <circle cx="100" cy="28" r="14" fill="#ffffff" opacity="0.94"/>
+  <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="17" font-weight="700" fill="#6BAECF">译</text>
+</svg>

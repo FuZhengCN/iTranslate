@@ -94,19 +94,20 @@ Popup click → content script
 ### Key Modules
 
 - **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。仅对 "Receiving end does not exist" / "Could not establish connection" 类错误重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。
-- **`src/content/selection.ts`** — 划词翻译。`initSelection()` 注册 document mouseup 监听器，用户选中文字后 300ms 防抖弹出翻译气泡。气泡复用 Background translate 消息链路（含缓存），仅展示译文（无原文），加载时复用全页翻译的 3 点动画。`enableSelection()` 注入 `::selection` 淡紫色背景（`rgba(124,58,237,0.18)`）提示划词翻译已开启。仅 × / Esc 可关闭泡泡。包含复制到剪贴板功能。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
+- **`src/content/selection.ts`** — 划词翻译。`initSelection()` 注册 document mouseup 监听器，用户选中文字后 300ms 防抖弹出翻译气泡。气泡复用 Background translate 消息链路（含缓存），仅展示译文（无原文），加载时复用全页翻译的 3 点动画。`enableSelection()` 注入 `::selection` 高亮背景（`var(--itranslate-accent-selection)`）提示划词翻译已开启。仅 × / Esc 可关闭泡泡。包含复制到剪贴板功能。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
-- **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素（`display:none`）通过 `offsetParent === null` 跳过**，减少无效 API 消耗。保留向后兼容的 `extractSegments()` 函数，内部调用 `extractRawSegments()` + 活跃 `SegmentFilter`。
-- **`src/content/filters/` — 标准过滤器模块**。`SegmentFilter` 接口定义在 `types.ts`（`{ name, filter(segments: RawSegment[]): FilterResult }`），第三方实现此接口即可接入。`registry.ts` 提供 `registerFilter()` / `setActiveFilter()` / `getActiveFilter()` 纯内存注册机制。内建两个实现：
-  - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链检查 `SKIP_CLASS_NAMES`（`\b` 词边界防误匹配，含 `ad`/`footer`/`nav`/`sidebar`/`avatar`/`byline`/`publishTime`/`addMore`/`view-more` 等 30 个关键词）。标题（H1-H6）直接保留不做字符数限制。非标题块 <5 字符跳过。噪音模式含相对时间 `/\\d+\\s+(second|minute|hour|day|week|month|year)s?\\s+ago/i`。
+- **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素（`display:none`）通过 `offsetParent === null` 跳过**，减少无效 API 消耗。文件内 `extractSegments()` 为向后兼容死代码，活跃入口在 `filters/index.ts`。
+- **`src/content/filters/` — 标准过滤器模块**。`SegmentFilter` 接口定义在 `types.ts`（`{ name, filter(segments: RawSegment[]): FilterResult }`），第三方实现此接口即可接入。`registry.ts` 提供 `registerFilter()` / `setActiveFilter()` / `getActiveFilter()` 纯内存注册机制。`index.ts` 为 barrel 入口，自动注册内建过滤器并默认激活 `structured-filter`，同时导出 `extractSegments()`（内部调用 `extractRawSegments()` + 活跃过滤器）。内建两个实现：
+  - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链检查 `SKIP_CLASS_NAMES`（`\b` 词边界防误匹配，含 `ad`/`footer`/`nav`/`sidebar`/`avatar`/`byline`/`publishTime`/`addMore`/`view-more` 等 30 个关键词）。标题（H1-H6）直接保留不做字符数限制。非标题无字符数阈值。噪音模式过滤纯数字、时间戳（`HH:MM`、`DD-Mon-YYYY`）、"COMING UP"、相对时间（`/\d+\s+(second|minute|hour|day|week|month|year)s?\s+ago/i`）。
   - **`default-filter`** — 旧 CJK/Latin 字符数阈值（CJK ≥12，Latin ≥20），兼容原行为。
   - **`debug-visualization.ts`** — 调试可视化（独立 dev 入口）。绿色/红色高亮标注保留/过滤元素，通过 `window.__itranslateFilterV2` 暴露。
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree` + `attributes`（`attributeFilter: ['class', 'style']`），捕获 CSS 类名切换导致的隐藏/显示变化。回调触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
 - **`src/content/toast.ts`** — 死代码，不再被任何模块引用，可安全删除。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
+- **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 33 个 `--itranslate-*` 变量（品牌色、渐变、表面、文字、边框、语义色、阴影）。popup/settings 通过 `@import` 引入，content script 通过 `manifest.json` 的 `content_scripts.css` 注入。修改变量值即可全局切换主题，无需改动任何 CSS/TS 代码。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段（如 `sourceLang`、`targetLang`、`*Locked`）对旧用户自动获得默认值。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese、`sourceLangLocked`/`targetLangLocked` 均为 false）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
@@ -115,9 +116,23 @@ Popup click → content script
 
 原始元素保持不变。翻译是块级祖先元素的**浅克隆**（相同标签、类、属性），通过 `insertAdjacentElement('afterend', clone)` 插入其后。CSS 类 `itranslate-translation` 标记所有翻译元素（`opacity: 0.85`，`font-family: sans-serif`）。`.itranslate-placeholder` 类显示 3 点进度指示器，翻译完成后移除。
 
-### Visual Design
+### Icons
 
-统一紫色渐变（#4f46e5 → #7c3aed）：popup logo、按钮、泡泡顶条、开关滑块。进度指示器：半透明背景上 3 个圆点依次亮起（全页翻译占位点样式，`itranslate-dot` 类）。划词翻译泡泡：白底、12px 圆角、紫色渐变顶条、石板灰译文 `#334155`，加载中复用三点动画。翻译字体：`sans-serif`（浏览器默认，语言无关）。翻译透明度：0.85，与原文形成视觉区分。无 toast 通知栏。
+**源文件：** `icons/icon.svg`（128×128 SVG），构建时复制到 `dist/icons/`。PNG 生成：
+
+```bash
+npx sharp-cli@latest -i icons/icon.svg -o icons/icon128.png
+npx sharp-cli@latest -i icons/icon128.png -o icons/icon48.png resize 48 48
+npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
+```
+
+`manifest.json` 引用 `icons/icon{16,48,128}.png`。备选方案：`icon-v1-layered.svg`（层叠冰山+译）、`icon-v3-lineart.svg`（线条速写+译）、`icon-v7-arcs.svg`（原版双弧线冰川色）。切换时覆盖 `icon.svg` 并重新生成 PNG + build。
+
+### Visual Design & Theming
+
+**主题系统：** `src/shared/theme.css` 集中定义 33 个 `--itranslate-*` CSS 变量（品牌色、渐变、表面、文字、边框、语义色），3 个上下文中通过 `@import` 或 manifest CSS 注入的方式引用。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
+
+**组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深），气泡顶条水平微渐变。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡：白底、12px 圆角、渐变顶条、深炭灰译文，加载中复用三点动画。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
 
 ### Test Strategy
 

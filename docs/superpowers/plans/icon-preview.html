@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iTranslate 图标方案对比 - 冰山主题</title>
+<style>
+  :root {
+    --bg: #F5F3EF; --text: #2A3038; --muted: #9BA8B5;
+    --glacier-light: #94C8E0; --glacier: #6BAECF;
+    --card-bg: #ffffff; --border: #D9E4EA;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 40px 24px; }
+  h1 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .subtitle { text-align: center; color: var(--muted); margin-bottom: 40px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 960px; margin: 0 auto; }
+  .card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.10); }
+  .card.selected { border: 2.5px solid var(--glacier); box-shadow: 0 0 0 4px rgba(107,174,207,0.18); }
+  .preview-area { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 32px 24px; background: linear-gradient(135deg, #f9f8f6 0%, #f0eeea 100%); }
+  .preview-area svg { border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .icon-lg { width: 96px; height: 96px; }
+  .icon-sm { width: 32px; height: 32px; border-radius: 7px; }
+  .info { padding: 20px; }
+  .info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .info .desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .actions { text-align: center; margin-top: 40px; }
+  .btn { display: inline-block; padding: 12px 32px; background: var(--glacier); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .btn:hover { background: #5A9DBF; }
+  .choice-hint { text-align: center; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  @media (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>iTranslate 图标方案</h1>
+<p class="subtitle">极地冰川主题 · 抽象冰山设计 · 点击卡片选中</p>
+
+<div class="grid" id="grid">
+
+  <!-- ============ 方案 1：经典层叠冰山 ============ -->
+  <div class="card" data-id="1" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#6BAECF"/>
+            <stop offset="100%" style="stop-color:#94C8E0"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g1)"/>
+        <polygon points="30,100 64,38 98,100" fill="#F5F3EF" opacity="0.92"/>
+        <polygon points="8,100 38,56 62,100" fill="#F5F3EF" opacity="0.55"/>
+        <polygon points="70,100 100,52 124,100" fill="#F5F3EF" opacity="0.55"/>
+        <!-- 对角线右上角白色圆圈 + 译 -->
+        <circle cx="100" cy="28" r="14" fill="#ffffff" opacity="0.94"/>
+        <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="17" font-weight="700" fill="#6BAECF">译</text>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g1)"/>
+        <polygon points="30,100 64,38 98,100" fill="#F5F3EF" opacity="0.92"/>
+        <polygon points="8,100 38,56 62,100" fill="#F5F3EF" opacity="0.55"/>
+        <polygon points="70,100 100,52 124,100" fill="#F5F3EF" opacity="0.55"/>
+        <circle cx="100" cy="28" r="16" fill="#ffffff" opacity="0.94"/>
+        <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="20" font-weight="700" fill="#6BAECF">译</text>
+      </svg>
+    </div>
+    <div class="info"><h3>方案一 · 经典层叠</h3><p class="desc">三座冰山前后错落，主峰突出。对角线右上角白色圆圈内嵌「译」字，直接传达翻译功能属性。</p></div>
+  </div>
+
+  <!-- ============ 方案 2：几何解构冰山 ============ -->
+  <div class="card" data-id="2" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94C8E0"/>
+            <stop offset="100%" style="stop-color:#6BAECF"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g2)"/>
+        <polygon points="64,30 98,100 30,100" fill="#F5F3EF" opacity="0.85"/>
+        <polygon points="64,30 47,100 30,100" fill="#ffffff" opacity="0.15"/>
+        <polygon points="64,30 98,100 82,100" fill="#2A3038" opacity="0.08"/>
+        <polygon points="12,100 34,64 52,100" fill="#F5F3EF" opacity="0.35"/>
+        <polygon points="84,100 106,70 120,100" fill="#F5F3EF" opacity="0.35"/>
+        <circle cx="100" cy="28" r="14" fill="#ffffff" opacity="0.94"/>
+        <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="17" font-weight="700" fill="#6BAECF">译</text>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g2)"/>
+        <polygon points="64,30 98,100 30,100" fill="#F5F3EF" opacity="0.85"/>
+        <polygon points="64,30 47,100 30,100" fill="#ffffff" opacity="0.15"/>
+        <polygon points="64,30 98,100 82,100" fill="#2A3038" opacity="0.08"/>
+        <polygon points="12,100 34,64 52,100" fill="#F5F3EF" opacity="0.35"/>
+        <polygon points="84,100 106,70 120,100" fill="#F5F3EF" opacity="0.35"/>
+        <circle cx="100" cy="28" r="16" fill="#ffffff" opacity="0.94"/>
+        <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="20" font-weight="700" fill="#6BAECF">译</text>
+      </svg>
+    </div>
+    <div class="info"><h3>方案二 · 几何解构</h3><p class="desc">单座主峰分左右光影面，制造晶体切割感。微妙的明暗变化让平面几何有了立体层次。</p></div>
+  </div>
+
+  <!-- ============ 方案 3：线条速写冰山 ============ -->
+  <div class="card" data-id="3" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94C8E0"/>
+            <stop offset="100%" style="stop-color:#6BAECF"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g3)"/>
+        <polygon points="34,96 64,40 94,96" fill="none" stroke="#F5F3EF" stroke-width="3.5" stroke-linejoin="round"/>
+        <line x1="64" y1="40" x2="64" y2="96" stroke="#F5F3EF" stroke-width="1.2" opacity="0.25"/>
+        <line x1="49" y1="68" x2="79" y2="68" stroke="#F5F3EF" stroke-width="1.2" opacity="0.25"/>
+        <polygon points="10,96 34,56 52,96" fill="none" stroke="#F5F3EF" stroke-width="2.5" stroke-linejoin="round" opacity="0.45"/>
+        <polygon points="80,96 104,64 118,96" fill="none" stroke="#F5F3EF" stroke-width="2.5" stroke-linejoin="round" opacity="0.35"/>
+        <line x1="14" y1="96" x2="116" y2="96" stroke="#F5F3EF" stroke-width="1.5" opacity="0.15"/>
+        <circle cx="100" cy="28" r="14" fill="#ffffff" opacity="0.94"/>
+        <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="17" font-weight="700" fill="#6BAECF">译</text>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g3)"/>
+        <polygon points="34,96 64,40 94,96" fill="none" stroke="#F5F3EF" stroke-width="6" stroke-linejoin="round"/>
+        <line x1="64" y1="40" x2="64" y2="96" stroke="#F5F3EF" stroke-width="2" opacity="0.25"/>
+        <line x1="49" y1="68" x2="79" y2="68" stroke="#F5F3EF" stroke-width="2" opacity="0.25"/>
+        <polygon points="10,96 34,56 52,96" fill="none" stroke="#F5F3EF" stroke-width="4.5" stroke-linejoin="round" opacity="0.45"/>
+        <polygon points="80,96 104,64 118,96" fill="none" stroke="#F5F3EF" stroke-width="4.5" stroke-linejoin="round" opacity="0.35"/>
+        <line x1="14" y1="96" x2="116" y2="96" stroke="#F5F3EF" stroke-width="2.5" opacity="0.15"/>
+        <circle cx="100" cy="28" r="16" fill="#ffffff" opacity="0.94"/>
+        <text x="100" y="28" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="20" font-weight="700" fill="#6BAECF">译</text>
+      </svg>
+    </div>
+    <div class="info"><h3>方案三 · 线条速写</h3><p class="desc">描边线条风格，仅用轮廓勾勒冰山。内部冰纹横竖交错增添细节，轻盈优雅不厚重。</p></div>
+  </div>
+
+  <!-- ============ 方案 4：极简单峰 ============ -->
+  <div class="card" data-id="4" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94C8E0"/>
+            <stop offset="100%" style="stop-color:#6BAECF"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g4)"/>
+        <polygon points="22,104 64,36 106,104" fill="#F5F3EF" opacity="0.90"/>
+        <circle cx="90" cy="50" r="2" fill="#ffffff" opacity="0.30"/>
+        <circle cx="102" cy="56" r="1.5" fill="#ffffff" opacity="0.22"/>
+        <circle cx="84" cy="58" r="1.2" fill="#ffffff" opacity="0.18"/>
+        <rect x="22" y="104" width="84" height="4" rx="1" fill="#ffffff" opacity="0.10"/>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g4)"/>
+        <polygon points="22,104 64,36 106,104" fill="#F5F3EF" opacity="0.90"/>
+        <circle cx="90" cy="50" r="2" fill="#ffffff" opacity="0.30"/>
+        <circle cx="102" cy="56" r="1.5" fill="#ffffff" opacity="0.22"/>
+        <circle cx="84" cy="58" r="1.2" fill="#ffffff" opacity="0.18"/>
+        <rect x="22" y="104" width="84" height="4" rx="1" fill="#ffffff" opacity="0.10"/>
+      </svg>
+    </div>
+    <div class="info"><h3>方案四 · 极简单峰</h3><p class="desc">一座纯粹的大三角冰山居中，撒几点星光。语言翻译的极简符号，16px 下最为清晰有力。</p></div>
+  </div>
+
+  <!-- ============ 方案 5：重叠晶面冰山 ============ -->
+  <div class="card" data-id="5" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g5" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94C8E0"/>
+            <stop offset="100%" style="stop-color:#6BAECF"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g5)"/>
+        <polygon points="18,106 64,72 110,106" fill="#F5F3EF" opacity="0.35"/>
+        <polygon points="28,100 64,52 100,100" fill="#F5F3EF" opacity="0.55"/>
+        <polygon points="40,94 64,42 88,94" fill="#F5F3EF" opacity="0.90"/>
+        <circle cx="64" cy="32" r="3" fill="#ffffff" opacity="0.50"/>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g5)"/>
+        <polygon points="18,106 64,72 110,106" fill="#F5F3EF" opacity="0.35"/>
+        <polygon points="28,100 64,52 100,100" fill="#F5F3EF" opacity="0.55"/>
+        <polygon points="40,94 64,42 88,94" fill="#F5F3EF" opacity="0.90"/>
+        <circle cx="64" cy="32" r="3" fill="#ffffff" opacity="0.50"/>
+      </svg>
+    </div>
+    <div class="info"><h3>方案五 · 重叠晶面</h3><p class="desc">三层透明度递进的三角形自下而上堆叠，形成从深到浅的纵深感。顶部星光点亮"翻译"的灵光。</p></div>
+  </div>
+
+  <!-- ============ 方案 6：菱晶冰山 ============ -->
+  <div class="card" data-id="6" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g6" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94C8E0"/>
+            <stop offset="100%" style="stop-color:#6BAECF"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g6)"/>
+        <polygon points="64,22 104,66 64,110 24,66" fill="#F5F3EF" opacity="0.90"/>
+        <polygon points="64,42 84,66 64,90 44,66" fill="#6BAECF" opacity="0.30"/>
+        <polygon points="14,78 24,66 14,56" fill="#F5F3EF" opacity="0.30"/>
+        <polygon points="114,78 104,66 114,56" fill="#F5F3EF" opacity="0.30"/>
+        <rect x="34" y="108" width="60" height="4" rx="2" fill="#F5F3EF" opacity="0.18"/>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g6)"/>
+        <polygon points="64,22 104,66 64,110 24,66" fill="#F5F3EF" opacity="0.90"/>
+        <polygon points="64,42 84,66 64,90 44,66" fill="#6BAECF" opacity="0.30"/>
+        <polygon points="14,78 24,66 14,56" fill="#F5F3EF" opacity="0.30"/>
+        <polygon points="114,78 104,66 114,56" fill="#F5F3EF" opacity="0.30"/>
+        <rect x="34" y="108" width="60" height="4" rx="2" fill="#F5F3EF" opacity="0.18"/>
+      </svg>
+    </div>
+    <div class="info"><h3>方案六 · 菱晶冰山</h3><p class="desc">菱形替代三角，比传统冰山更独特现代。内核小菱形呼应冰晶结构，左右碎片增加平衡感。</p></div>
+  </div>
+
+  <!-- ============ 方案 7：原版翻译弧线（冰川色调） ============ -->
+  <div class="card" data-id="7" onclick="select(this)">
+    <div class="preview-area">
+      <svg width="96" height="96" viewBox="0 0 128 128" class="icon-lg">
+        <defs>
+          <linearGradient id="g7" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94C8E0"/>
+            <stop offset="100%" style="stop-color:#6BAECF"/>
+          </linearGradient>
+        </defs>
+        <rect width="128" height="128" rx="24" fill="url(#g7)"/>
+        <path d="M22 44 Q50 28 78 44 Q98 56 112 44" stroke="#F5F3EF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.9"/>
+        <path d="M16 70 Q48 90 80 70 Q100 58 116 74" stroke="#F5F3EF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.50"/>
+      </svg>
+      <svg width="32" height="32" viewBox="0 0 128 128" class="icon-sm">
+        <rect width="128" height="128" rx="24" fill="url(#g7)"/>
+        <path d="M22 44 Q50 28 78 44 Q98 56 112 44" stroke="#F5F3EF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>
+        <path d="M16 70 Q48 90 80 70 Q100 58 116 74" stroke="#F5F3EF" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.50"/>
+      </svg>
+    </div>
+    <div class="info"><h3>方案七 · 原版弧线（冰川色）</h3><p class="desc">沿用旧版双弧线翻译符号，背景改为冰川蓝渐变 + 米白弧线。保留原有设计语言，仅换色调。</p></div>
+  </div>
+
+</div>
+
+<div class="actions">
+  <button class="btn" onclick="confirmChoice()">确认选择</button>
+</div>
+<div class="choice-hint" id="hint">↑ 点击卡片选中，然后点击确认（默认方案四）</div>
+
+<script>
+  let selected = '4';
+  function select(card) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selected = card.dataset.id;
+    document.getElementById('hint').textContent = '已选中方案' + {'1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'七'}[selected] + '，点击确认选择';
+  }
+  document.querySelector('[data-id="1"]').classList.add('selected');
+  function confirmChoice() {
+    const names = {'1':'经典层叠','2':'几何解构','3':'线条速写','4':'极简单峰','5':'重叠晶面','6':'菱晶冰山','7':'原版弧线'};
+    document.getElementById('hint').textContent = '✅ 已选择方案' + {'1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'七'}[selected] + ' · ' + names[selected];
+    document.getElementById('hint').style.color = '#6BAECF';
+    document.getElementById('hint').style.fontWeight = '600';
+  }
+</script>
+
+</body>
+</html>
