@@ -1,4 +1,6 @@
+import type { RawSegment } from './filters/types';
 import type { TranslationSegment } from '../shared/types';
+import { getActiveFilter } from './filters/registry';
 
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME', 'CODE', 'PRE', 'KBD', 'BR', 'HR', 'IMG', 'INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'VIDEO', 'AUDIO', 'CANVAS']);
 const SKIP_CLASS_NAMES = /(header|footer|nav|sidebar|comment|menu|widget|advert|banner|social|share-btn|related|trending|recommend)/i;
@@ -8,41 +10,10 @@ const BLOCK_TAGS = new Set([
   'BLOCKQUOTE', 'PRE', 'SECTION', 'TD', 'TH', 'DD', 'DT', 'FIGCAPTION',
 ]);
 
-// Minimum combined character count per block before it's worth translating.
-// CJK text is denser than Latin — same information fits in far fewer chars.
-const MIN_BLOCK_CHARS_CJK = 12;
-const MIN_BLOCK_CHARS_LATIN = 20;
+const HEADING_TAGS = new Set(['H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 
-function isCJK(code: number): boolean {
-  return (code >= 0x4E00 && code <= 0x9FFF)
-      || (code >= 0x3400 && code <= 0x4DBF)
-      || (code >= 0xF900 && code <= 0xFAFF)
-      || (code >= 0x3000 && code <= 0x303F)  // Symbols & Punctuation
-      || (code >= 0x3040 && code <= 0x309F)  // Hiragana
-      || (code >= 0x30A0 && code <= 0x30FF); // Katakana
-}
-
-/** Quick language detection on the first 40 chars of a block. */
-function isCJKBlock(text: string): boolean {
-  const sample = text.length <= 40 ? text : text.slice(0, 40);
-  let cjkCount = 0;
-  for (const ch of sample) {
-    if (isCJK(ch.codePointAt(0) ?? 0)) cjkCount++;
-  }
-  return (cjkCount / sample.length) > 0.3;
-}
-
-// Patterns that indicate noise — blocks matching ONLY these are skipped
-const NOISE_PATTERNS = [
-  /^\d+$/,                          // Pure digits: "1", "NaN"
-  /^\d{1,2}:\d{2}$/,               // Timestamps: "00:14"
-  /^\d{1,2}-[A-Z][a-z]{2}-\d{4}$/, // Dates: "20-May-2026"
-  /^COMING UP$/,                     // Status labels
-];
-
-function isNoiseText(text: string): boolean {
-  return NOISE_PATTERNS.some((p) => p.test(text));
-}
+// 叶子级最小字符数：≤3 视为纯噪音，不进入分组（如果 block 祖先为标题则豁免）
+const MIN_LEAF_CHARS = 3;
 
 function isSkippable(el: Element): boolean {
   const tag = el.tagName;
@@ -84,58 +55,67 @@ export interface ExtractionResult {
   allSegments: TranslationSegment[];
 }
 
-export function extractSegments(): ExtractionResult {
-  const root = findContentRoot();
+// 纯 DOM 提取，产出生段（不做内容过滤）
+export function extractRawSegments(root: Element = document.body): RawSegment[] {
   const allElements = root.querySelectorAll('*');
-
-  // Collect leaf text elements, grouped by block ancestor
-  const blockTexts = new Map<Element, string[]>();
+  const blockTexts = new Map<Element, { texts: string[]; leafElements: Element[] }>();
+  let skippedLeaf = 0;
 
   for (const el of allElements) {
     if (!hasDirectText(el)) continue;
     if (isSkippable(el)) continue;
 
     const text = el.textContent?.trim();
-    if (!text || text.length <= 3) continue;
-    if (isNoiseText(text)) continue;
+    if (!text || text.length <= MIN_LEAF_CHARS) {
+      // 标题豁免：标题元素（或其块级祖先为标题）的短文本不丢弃
+      if (!HEADING_TAGS.has(el.tagName) && !HEADING_TAGS.has(findBlockAncestor(el).tagName)) {
+        skippedLeaf++;
+        continue;
+      }
+    }
 
     const block = findBlockAncestor(el);
     const existing = blockTexts.get(block);
     if (existing) {
-      existing.push(text);
+      existing.texts.push(text);
+      existing.leafElements.push(el);
     } else {
-      blockTexts.set(block, [text]);
+      blockTexts.set(block, { texts: [text], leafElements: [el] });
     }
   }
 
-  // Build segments — one per block
+  const segments: RawSegment[] = [];
+  for (const [block, data] of blockTexts) {
+    const merged = data.texts.join('\n');
+    const id = `seg_${segments.length}`;
+    segments.push({
+      id,
+      text: merged,
+      blockElement: block,
+      isHeading: HEADING_TAGS.has(block.tagName),
+      leafElements: data.leafElements,
+    });
+  }
+
+  console.log(`[iTranslate] 📄 Extracted ${segments.length} raw blocks from ${allElements.length} elements (${skippedLeaf} too-short-leaf filtered)`);
+  return segments;
+}
+
+// 向后兼容：使用活跃过滤器
+export function extractSegments(): ExtractionResult {
+  const rawSegments = extractRawSegments();
+  const filter = getActiveFilter();
+  const result = filter.filter(rawSegments);
+
   const sourceElements: Element[] = [];
   const allSegments: TranslationSegment[] = [];
-  let skippedShort = 0;
-  let skippedNoise = 0;
 
-  for (const [block, texts] of blockTexts) {
-    const meaningful = texts.filter((t) => !isNoiseText(t));
-    if (meaningful.length === 0) {
-      skippedNoise++;
-      continue;
-    }
-
-    const merged = meaningful.join('\n');
-
-    const minChars = isCJKBlock(merged) ? MIN_BLOCK_CHARS_CJK : MIN_BLOCK_CHARS_LATIN;
-    if (merged.length < minChars) {
-      skippedShort++;
-      console.log(`[iTranslate] ⏭  Skipped (too short: ${merged.length} chars, min ${minChars}): "${merged.slice(0, 60)}"`);
-      continue;
-    }
-
-    const id = `seg_${allSegments.length}`;
-    sourceElements.push(block);
-    allSegments.push({ id, text: merged });
-    console.log(`[iTranslate] 📄 Segment #${allSegments.length - 1} (${merged.length} chars): "${merged.slice(0, 80)}${merged.length > 80 ? '…' : ''}"`);
+  for (const seg of result.kept) {
+    sourceElements.push(seg.blockElement);
+    allSegments.push({ id: seg.id, text: seg.text });
   }
 
-  console.log(`[iTranslate] ✅ Extracted ${sourceElements.length} blocks from ${allElements.length} elements (${skippedShort} too-short, ${skippedNoise} noise filtered, ${blockTexts.size} total blocks)`);
+  const skipped = result.skipped.length;
+  console.log(`[iTranslate] ✅ Extracted ${sourceElements.length} blocks (${skipped} filtered, ${rawSegments.length} raw blocks)`);
   return { sourceElements, allSegments };
 }

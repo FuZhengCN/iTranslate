@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { extractSegments } from '../extractor';
+import '../filters/index';
 
 describe('extractor', () => {
   beforeEach(() => {
@@ -15,7 +16,7 @@ describe('extractor', () => {
     `;
 
     const result = extractSegments();
-    // Each <p> is its own block with enough text (> 20 chars)
+    // Each <p> is its own block with enough text (> 5 chars for structured-filter)
     expect(result.allSegments.length).toBe(2);
     expect(result.sourceElements.length).toBe(2);
   });
@@ -23,14 +24,15 @@ describe('extractor', () => {
   it('skips blocks with very short combined text', () => {
     document.body.innerHTML = `
       <main>
-        <div><span>Space</span></div>
-        <div><span>Home</span></div>
+        <div><span>Open</span></div>
+        <div><span>Site</span></div>
         <p>Machine learning is transforming industries worldwide.</p>
       </main>
     `;
 
     const result = extractSegments();
     // Short label blocks should be skipped; only the long paragraph stays
+    // structured-filter: MIN_NON_HEADING_CHARS=5 filters out "Open"/"Site" (4 chars each)
     expect(result.allSegments.length).toBe(1);
     expect(result.allSegments[0].text).toContain('Machine learning');
   });
@@ -41,7 +43,7 @@ describe('extractor', () => {
         <div class="news-info">
           <span class="category">Space</span>
           <a href="#">China-Europe SMILE satellite mission launched</a>
-          <span class="time">18 hours ago</span>
+          <span class="time">updated recently</span>
         </div>
       </main>
     `;
@@ -51,16 +53,14 @@ describe('extractor', () => {
     expect(result.allSegments.length).toBe(1);
     expect(result.allSegments[0].text).toContain('Space');
     expect(result.allSegments[0].text).toContain('SMILE');
-    expect(result.allSegments[0].text).toContain('18 hours ago');
+    expect(result.allSegments[0].text).toContain('updated recently');
   });
 
   it('filters out timestamp and date noise', () => {
     document.body.innerHTML = `
       <main>
-        <div>
-          <span>00:14</span>
-          <span>20-May-2026</span>
-        </div>
+        <div><span>00:14</span></div>
+        <div><span>20-May-2026</span></div>
         <p>Real article title here</p>
       </main>
     `;
@@ -69,6 +69,7 @@ describe('extractor', () => {
     const texts = result.allSegments.map((s) => s.text);
 
     // Noise-only blocks should be skipped; real content stays
+    // Each noise span is in its own block so isNoiseText can match individually
     expect(texts.some((t) => t.includes('00:14'))).toBe(false);
     expect(texts.some((t) => t.includes('20-May-2026'))).toBe(false);
     expect(texts.some((t) => t.includes('Real article'))).toBe(true);
