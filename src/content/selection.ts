@@ -2,8 +2,7 @@ import { sendToBgWithRetry } from './retry';
 import { t } from '../shared/i18n';
 
 let currentBubble: HTMLElement | null = null;
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-const DEBOUNCE_MS = 300;
+let currentBall: HTMLElement | null = null;
 
 export function isValidSelection(): boolean {
   const sel = window.getSelection();
@@ -42,10 +41,58 @@ function hideBubble(): void {
     currentBubble.remove();
     currentBubble = null;
   }
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-    debounceTimer = null;
+  // Clear text selection so ball doesn't reappear
+  window.getSelection()?.removeAllRanges();
+  removeBall();
+}
+
+function removeBall(): void {
+  if (currentBall) {
+    currentBall.remove();
+    currentBall = null;
   }
+}
+
+function positionBall(rect: DOMRect): { top: number; left: number } {
+  const BALL_SIZE = 12;
+  const GAP = 2;
+
+  let top = rect.top - BALL_SIZE - GAP;
+  let left = rect.right + GAP;
+
+  // Vertical boundary: don't go above viewport
+  if (top < GAP) top = rect.bottom + GAP;
+
+  // Horizontal boundary: don't go past right edge
+  if (left + BALL_SIZE > window.innerWidth - GAP) {
+    left = rect.left - BALL_SIZE - GAP;
+  }
+
+  return { top, left };
+}
+
+function createBall(rect: DOMRect): HTMLElement {
+  removeBall();
+
+  const ball = document.createElement('div');
+  ball.className = 'itranslate-selection-ball';
+  const pos = positionBall(rect);
+  ball.style.top = `${pos.top}px`;
+  ball.style.left = `${pos.left}px`;
+  ball.dataset.label = t('appName');
+
+  ball.addEventListener('mouseenter', () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const text = sel.toString().trim();
+    if (!text) return;
+    removeBall();
+    showBubble(rect, text);
+  });
+
+  document.body.appendChild(ball);
+  currentBall = ball;
+  return ball;
 }
 
 async function showBubble(rect: DOMRect, text: string): Promise<void> {
@@ -156,30 +203,40 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
 }
 
 function onMouseUp(e: MouseEvent): void {
-  // Ignore clicks inside the bubble (user interacting with buttons)
+  // Ignore clicks inside the bubble
   if (currentBubble && currentBubble.contains(e.target as Node)) {
-    console.log('[iTranslate] 🔍 onMouseUp: click inside bubble, ignoring');
     return;
   }
 
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
+  // Defer to next tick so getSelection reflects the completed selection
+  setTimeout(() => {
     if (!isValidSelection()) {
-      console.log('[iTranslate] 🔍 onMouseUp: no valid selection after debounce');
+      removeBall();
       return;
     }
 
     const sel = window.getSelection()!;
-    const text = sel.toString().trim();
     const rect = sel.getRangeAt(0).getBoundingClientRect();
-    console.log(`[iTranslate] 🔍 onMouseUp: selection detected — "${text.slice(0, 50)}" (${text.length} chars)`);
-
-    showBubble(rect, text);
-  }, DEBOUNCE_MS);
+    console.log(`[iTranslate] 🔍 Selection detected — "${sel.toString().trim().slice(0, 50)}"`);
+    createBall(rect);
+  }, 0);
 }
 
 function onKeyDown(e: KeyboardEvent): void {
   if (e.key === 'Escape') hideBubble();
+}
+
+function onSelectionChange(): void {
+  if (!selectionEnabled) return;
+  if (!isValidSelection() && currentBall) {
+    removeBall();
+  }
+}
+
+function onScroll(): void {
+  if (currentBall) {
+    removeBall();
+  }
 }
 
 let selectionEnabled = false;
@@ -216,6 +273,8 @@ export function enableSelection(): void {
   injectSelectionStyle();
   document.addEventListener('mouseup', onMouseUp);
   document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('selectionchange', onSelectionChange);
+  window.addEventListener('scroll', onScroll, { passive: true });
   console.log('[iTranslate] 🔍 enableSelection: done — selectionEnabled=true, listeners attached');
 }
 
@@ -225,10 +284,13 @@ export function disableSelection(): void {
     return;
   }
   selectionEnabled = false;
-  console.log('[iTranslate] 🔍 disableSelection: removing bubble, style, and listeners');
+  console.log('[iTranslate] 🔍 disableSelection: removing bubble, ball, style, and listeners');
   hideBubble();
+  removeBall();
   removeSelectionStyle();
   document.removeEventListener('mouseup', onMouseUp);
   document.removeEventListener('keydown', onKeyDown);
+  document.removeEventListener('selectionchange', onSelectionChange);
+  window.removeEventListener('scroll', onScroll);
   console.log('[iTranslate] 🔍 disableSelection: done — selectionEnabled=false');
 }
