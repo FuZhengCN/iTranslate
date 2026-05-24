@@ -51,7 +51,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 - 开发：`npm run dev` 启动 Vite dev server，Chrome 加载**源码目录**（项目根目录，非 `dist/`）
 - 生产：`npm run build`，Chrome 加载 `dist/` 目录
 
-**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 34 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
+**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 35 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
 
 ### Extension Contexts (4 isolated execution environments)
 
@@ -119,7 +119,7 @@ Popup click → content script
 ### Key Modules
 
 - **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。仅对 "Receiving end does not exist" / "Could not establish connection" 类错误重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。
-- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后 300ms 防抖弹出翻译气泡。气泡复用 Background translate 消息链路（含缓存），仅展示译文（无原文），加载时复用全页翻译的 3 点动画。注入 `::selection` 高亮背景提示划词翻译已开启。仅 × / Esc 可关闭泡泡。包含复制到剪贴板功能，按钮文字通过 `t()` i18n 支持中英双语。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
+- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 0.55s 膨胀动画后触发翻译，避免每次选中都自动调用 API。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。气泡复用 Background translate 消息链路（含缓存）。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区，气泡弹出时保留选中状态。气泡支持拖拽移动（顶条品牌名区域为拖拽手柄）。注入 `::selection` 高亮背景提示划词翻译已开启。包含复制到剪贴板功能，按钮文字通过 `t()` i18n 支持中英双语。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
@@ -157,10 +157,10 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 **主题系统：** `src/shared/theme.css` 集中定义 33 个 `--itranslate-*` CSS 变量。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
 
-**组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深），气泡顶条水平微渐变。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡：白底、12px 圆角、渐变顶条、深炭灰译文，加载中复用三点动画。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
+**组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深）。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡（`itranslate-selection-bubble`）：极地冰川主题 — 米白渐变底（`#FCFBF9`→`#F5F3EF`）、14px 圆角、冰川蓝微边框、4px 三色渐变顶条；Header 左侧"通译"品牌名兼拖拽手柄；原文折叠 3 行渐变淡出；译文上方细分割线；复制按钮胶囊形（`border-radius: 14px`）、关闭按钮正圆形。划词触发小球（`itranslate-selection-ball`）：12px 冰川蓝圆点，悬停 `translateY(-12px) scale(2)` 膨胀弹跳动画 + 光环扩散 0.55s spring 缓动，`::after` 通过 `attr(data-label)` 显示"译"/"Tr"。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。66 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并、向后兼容和 `*Locked` 标志读写。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。70 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并、向后兼容和 `*Locked` 标志读写。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
 
 Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `github` → GitHub (`https://github.com/FuZhengCN/iTranslate.git`).
