@@ -123,15 +123,13 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   const bar = document.createElement('div');
   bar.className = 'itranslate-bubble-bar';
 
-  // ── Header: dots row (drag handle + loading indicator) ──
+  // ── Header: brand name (drag handle) ──
   const header = document.createElement('div');
   header.className = 'itranslate-bubble-header';
-  const dots = [1, 2, 3].map(() => {
-    const d = document.createElement('span');
-    d.className = 'itranslate-bubble-dot loading';
-    header.appendChild(d);
-    return d;
-  });
+  const brand = document.createElement('span');
+  brand.className = 'itranslate-bubble-brand';
+  brand.textContent = t('appName');
+  header.appendChild(brand);
 
   // ── Body ──
   const body = document.createElement('div');
@@ -142,6 +140,12 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   origEl.className = 'itranslate-bubble-original';
   origEl.textContent = text;
   body.appendChild(origEl);
+
+  // Loading placeholder in translation area
+  const placeholder = document.createElement('div');
+  placeholder.className = 'itranslate-placeholder';
+  placeholder.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
+  body.appendChild(placeholder);
 
   // ── Actions bar ──
   const actions = document.createElement('div');
@@ -219,7 +223,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
     });
 
     // Stop loading animation
-    dots.forEach(d => d.classList.remove('loading'));
+    placeholder.remove();
 
     if (response?.success && response.results?.[0]) {
       const translationEl = document.createElement('div');
@@ -236,7 +240,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
       console.warn('[iTranslate] 🔍 Selection translation failed:', response);
     }
   } catch (err) {
-    dots.forEach(d => d.classList.remove('loading'));
+    placeholder.remove();
     const errorEl = document.createElement('div');
     errorEl.className = 'itranslate-bubble-translation';
     errorEl.textContent = t('translationFailed');
