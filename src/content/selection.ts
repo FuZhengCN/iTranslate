@@ -4,6 +4,7 @@ import { t } from '../shared/i18n';
 let currentBubble: HTMLElement | null = null;
 let currentBall: HTMLElement | null = null;
 let ballHoverTimer: ReturnType<typeof setTimeout> | null = null;
+let dragState: { el: HTMLElement; startX: number; startY: number; startLeft: number; startTop: number } | null = null;
 
 export function isValidSelection(): boolean {
   const sel = window.getSelection();
@@ -42,6 +43,7 @@ function hideBubble(clearSelection = false): void {
     currentBubble.remove();
     currentBubble = null;
   }
+  dragState = null;
   if (clearSelection) {
     window.getSelection()?.removeAllRanges();
   }
@@ -183,6 +185,18 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
 
   currentBubble = bubble;
 
+  // ── Drag to reposition ──
+  bar.addEventListener('mousedown', (e) => {
+    dragState = {
+      el: bubble,
+      startX: e.clientX,
+      startY: e.clientY,
+      startLeft: bubble.offsetLeft,
+      startTop: bubble.offsetTop,
+    };
+    e.preventDefault();
+  });
+
   // ── Translation request ──
   try {
     const response = await sendToBgWithRetry({
@@ -257,6 +271,16 @@ function onSelectionChange(): void {
   // ball, which would prevent mouseenter from firing.
 }
 
+function onDragMove(e: MouseEvent): void {
+  if (!dragState) return;
+  dragState.el.style.left = `${dragState.startLeft + e.clientX - dragState.startX}px`;
+  dragState.el.style.top = `${dragState.startTop + e.clientY - dragState.startY}px`;
+}
+
+function onDragEnd(): void {
+  dragState = null;
+}
+
 function onScroll(): void {
   if (currentBall) {
     removeBall();
@@ -299,6 +323,8 @@ export function enableSelection(): void {
   document.addEventListener('keydown', onKeyDown);
   document.addEventListener('selectionchange', onSelectionChange);
   window.addEventListener('scroll', onScroll, { passive: true });
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup', onDragEnd);
   console.log('[iTranslate] 🔍 enableSelection: done — selectionEnabled=true, listeners attached');
 }
 
@@ -316,5 +342,7 @@ export function disableSelection(): void {
   document.removeEventListener('keydown', onKeyDown);
   document.removeEventListener('selectionchange', onSelectionChange);
   window.removeEventListener('scroll', onScroll);
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup', onDragEnd);
   console.log('[iTranslate] 🔍 disableSelection: done — selectionEnabled=false');
 }

@@ -131,8 +131,14 @@
 }
 
 .itranslate-selection-bubble .itranslate-bubble-header {
-  height: 4px;
+  height: 20px;
   background: var(--itranslate-gradient-accent);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.itranslate-selection-bubble .itranslate-bubble-header:active {
+  cursor: grabbing;
 }
 
 .itranslate-selection-bubble .itranslate-bubble-body {
