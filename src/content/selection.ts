@@ -119,19 +119,29 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   const bubble = document.createElement('div');
   bubble.className = 'itranslate-selection-bubble itranslate-translation';
 
-  // ── Header bar ──
+  // ── Bar: 4px gradient line ──
   const bar = document.createElement('div');
-  bar.className = 'itranslate-bubble-header';
+  bar.className = 'itranslate-bubble-bar';
+
+  // ── Header: dots row (drag handle + loading indicator) ──
+  const header = document.createElement('div');
+  header.className = 'itranslate-bubble-header';
+  const dots = [1, 2, 3].map(() => {
+    const d = document.createElement('span');
+    d.className = 'itranslate-bubble-dot loading';
+    header.appendChild(d);
+    return d;
+  });
 
   // ── Body ──
   const body = document.createElement('div');
   body.className = 'itranslate-bubble-body';
 
-  // Loading: 3-dot animation (reuses global .itranslate-placeholder .itranslate-dot styles)
-  const placeholder = document.createElement('div');
-  placeholder.className = 'itranslate-placeholder';
-  placeholder.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
-  body.appendChild(placeholder);
+  // Original text (collapsed with gradient fade for long text)
+  const origEl = document.createElement('div');
+  origEl.className = 'itranslate-bubble-original';
+  origEl.textContent = text;
+  body.appendChild(origEl);
 
   // ── Actions bar ──
   const actions = document.createElement('div');
@@ -145,7 +155,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   copyBtn.style.display = 'none';
   copyBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    const translationEl = body.querySelector('.itranslate-bubble-text');
+    const translationEl = body.querySelector('.itranslate-bubble-translation');
     await navigator.clipboard.writeText(translationEl?.textContent || '');
     copyBtn.innerHTML = t('copied');
     copyBtn.style.color = 'var(--itranslate-copy-success-text)';
@@ -157,9 +167,6 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
     }, 1500);
   });
 
-  const spacer = document.createElement('span');
-  spacer.style.flex = '1';
-
   // Close button
   const closeBtn = document.createElement('button');
   closeBtn.className = 'itranslate-bubble-close';
@@ -170,11 +177,11 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   });
 
   actions.appendChild(copyBtn);
-  actions.appendChild(spacer);
   actions.appendChild(closeBtn);
 
   // ── Assemble ──
   bubble.appendChild(bar);
+  bubble.appendChild(header);
   bubble.appendChild(body);
   bubble.appendChild(actions);
   document.body.appendChild(bubble);
@@ -185,8 +192,13 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
 
   currentBubble = bubble;
 
-  // ── Drag to reposition ──
-  bar.addEventListener('mousedown', (e) => {
+  // Check if original text overflows and needs fade gradient
+  if (origEl.scrollHeight > origEl.clientHeight) {
+    origEl.classList.add('faded');
+  }
+
+  // ── Drag to reposition (header as handle) ──
+  header.addEventListener('mousedown', (e) => {
     dragState = {
       el: bubble,
       startX: e.clientX,
@@ -204,27 +216,27 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
       segments: [{ id: 'sel_0', text }],
     });
 
+    // Stop loading animation
+    dots.forEach(d => d.classList.remove('loading'));
+
     if (response?.success && response.results?.[0]) {
-      // Replace loading dots with translation text
-      placeholder.remove();
       const translationEl = document.createElement('div');
-      translationEl.className = 'itranslate-bubble-text';
+      translationEl.className = 'itranslate-bubble-translation';
       translationEl.textContent = response.results[0].translated;
       body.appendChild(translationEl);
       copyBtn.style.display = '';
       console.log(`[iTranslate] 🔍 Selection translated: "${text.slice(0, 40)}" → "${response.results[0].translated.slice(0, 40)}"`);
     } else {
-      placeholder.remove();
       const errorEl = document.createElement('div');
-      errorEl.className = 'itranslate-bubble-text';
+      errorEl.className = 'itranslate-bubble-translation';
       errorEl.textContent = t('translationFailed');
       body.appendChild(errorEl);
       console.warn('[iTranslate] 🔍 Selection translation failed:', response);
     }
   } catch (err) {
-    placeholder.remove();
+    dots.forEach(d => d.classList.remove('loading'));
     const errorEl = document.createElement('div');
-    errorEl.className = 'itranslate-bubble-text';
+    errorEl.className = 'itranslate-bubble-translation';
     errorEl.textContent = t('translationFailed');
     body.appendChild(errorEl);
     console.warn('[iTranslate] 🔍 Selection translation error:', err);
