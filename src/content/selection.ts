@@ -215,6 +215,13 @@ function onMouseUp(e: MouseEvent): void {
       return;
     }
 
+    // Close any existing bubble from a previous selection (don't use hideBubble
+    // as it would clear the current selection via removeAllRanges)
+    if (currentBubble) {
+      currentBubble.remove();
+      currentBubble = null;
+    }
+
     const sel = window.getSelection()!;
     const rect = sel.getRangeAt(0).getBoundingClientRect();
     console.log(`[iTranslate] 🔍 Selection detected — "${sel.toString().trim().slice(0, 50)}"`);
