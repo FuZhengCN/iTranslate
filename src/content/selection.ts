@@ -104,7 +104,7 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
         ? sel.getRangeAt(0).getBoundingClientRect()
         : rect;
       showBubble(currentRect, text);
-    }, 250);
+    }, 550);
   });
 
   document.body.appendChild(ball);
