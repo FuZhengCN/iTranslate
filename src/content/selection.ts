@@ -37,13 +37,14 @@ export function getBubblePosition(rect: DOMRect): { top: number; left: number } 
   return { top, left };
 }
 
-function hideBubble(): void {
+function hideBubble(clearSelection = false): void {
   if (currentBubble) {
     currentBubble.remove();
     currentBubble = null;
   }
-  // Clear text selection so ball doesn't reappear
-  window.getSelection()?.removeAllRanges();
+  if (clearSelection) {
+    window.getSelection()?.removeAllRanges();
+  }
   removeBall();
 }
 
@@ -163,7 +164,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   closeBtn.textContent = '×';
   closeBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    hideBubble();
+    hideBubble(true);
   });
 
   actions.appendChild(copyBtn);
@@ -246,7 +247,7 @@ function onMouseUp(e: MouseEvent): void {
 }
 
 function onKeyDown(e: KeyboardEvent): void {
-  if (e.key === 'Escape') hideBubble();
+  if (e.key === 'Escape') hideBubble(true);
 }
 
 function onSelectionChange(): void {
@@ -261,7 +262,7 @@ function onScroll(): void {
     removeBall();
   }
   if (currentBubble) {
-    hideBubble();
+    hideBubble(true);
   }
 }
 
@@ -311,7 +312,7 @@ export function disableSelection(): void {
   }
   selectionEnabled = false;
   console.log('[iTranslate] 🔍 disableSelection: removing bubble, ball, style, and listeners');
-  hideBubble();
+  hideBubble(true);
   removeBall();
   removeSelectionStyle();
   document.removeEventListener('mouseup', onMouseUp);
