@@ -67,6 +67,8 @@ function positionBall(rect: DOMRect): { top: number; left: number } {
   if (left + BALL_SIZE > window.innerWidth - GAP) {
     left = rect.left - BALL_SIZE - GAP;
   }
+  // Final clamp: don't go past left edge (fallback for full-width selections)
+  if (left < GAP) left = GAP;
 
   return { top, left };
 }
@@ -87,7 +89,9 @@ function createBall(rect: DOMRect): HTMLElement {
     const text = sel.toString().trim();
     if (!text) return;
     removeBall();
-    showBubble(rect, text);
+    // Re-fetch rect at hover time to avoid stale position from layout shifts
+    const currentRect = sel.getRangeAt(0).getBoundingClientRect();
+    showBubble(currentRect, text);
   });
 
   document.body.appendChild(ball);
@@ -210,6 +214,7 @@ function onMouseUp(e: MouseEvent): void {
 
   // Defer to next tick so getSelection reflects the completed selection
   setTimeout(() => {
+    if (!selectionEnabled) return;
     if (!isValidSelection()) {
       removeBall();
       return;
@@ -243,6 +248,9 @@ function onSelectionChange(): void {
 function onScroll(): void {
   if (currentBall) {
     removeBall();
+  }
+  if (currentBubble) {
+    hideBubble();
   }
 }
 
