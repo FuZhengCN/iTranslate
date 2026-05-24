@@ -16,7 +16,7 @@ export function isValidSelection(): boolean {
 
 export function getBubblePosition(rect: DOMRect): { top: number; left: number } {
   const GAP = 8;
-  const bubbleWidth = 320;
+  const bubbleWidth = 380;
   const bubbleMaxHeight = 200;
 
   // Default: below selection, horizontally centered (viewport-relative for position:fixed)

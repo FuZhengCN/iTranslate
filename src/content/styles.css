@@ -110,8 +110,8 @@
   all: initial;
   position: fixed;
   z-index: 99998;
-  width: 320px;
-  max-width: calc(100vw - 16px);
+  width: 380px;
+  max-width: calc(100vw - 24px);
   max-height: 320px;
   background: var(--itranslate-surface-white);
   border-radius: 12px;
