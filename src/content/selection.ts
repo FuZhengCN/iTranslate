@@ -86,7 +86,7 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
   const pos = positionBall(rect);
   ball.style.top = `${pos.top}px`;
   ball.style.left = `${pos.left}px`;
-  ball.dataset.label = t('appName');
+  ball.dataset.label = t('ballLabel');
 
   ball.addEventListener('mouseenter', () => {
     if (ballHoverTimer) return;

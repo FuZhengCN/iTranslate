@@ -32,5 +32,6 @@
   "extDefaultTitle":        { "message": "通译 — 翻译此页面" },
   "copy":                   { "message": "复制" },
   "copied":                 { "message": "已复制" },
-  "translationFailed":      { "message": "翻译失败" }
+  "translationFailed":      { "message": "翻译失败" },
+  "ballLabel":              { "message": "译" }
 }

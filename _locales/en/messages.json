@@ -32,5 +32,6 @@
   "extDefaultTitle":        { "message": "iTranslate — Translate this page" },
   "copy":                   { "message": "Copy" },
   "copied":                 { "message": "Copied" },
-  "translationFailed":      { "message": "Translation failed" }
+  "translationFailed":      { "message": "Translation failed" },
+  "ballLabel":              { "message": "Tr" }
 }
