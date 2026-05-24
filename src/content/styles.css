@@ -215,3 +215,39 @@
   outline: 2px solid var(--itranslate-brand-200);
   outline-offset: 1px;
 }
+
+/* ── Selection Trigger Ball ── */
+.itranslate-selection-ball {
+  all: initial;
+  position: fixed;
+  z-index: 99997;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--itranslate-gradient-accent);
+  box-shadow: 0 1px 4px var(--itranslate-accent-shadow);
+  cursor: pointer;
+  transition: width 0.2s ease, height 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itranslate-selection-ball::after {
+  content: attr(data-label);
+  opacity: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  transition: opacity 0.15s ease;
+}
+
+.itranslate-selection-ball:hover {
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 0 0 6px rgba(107, 174, 207, 0.2), 0 2px 8px rgba(107, 174, 207, 0.5);
+}
+
+.itranslate-selection-ball:hover::after {
+  opacity: 1;
+}
