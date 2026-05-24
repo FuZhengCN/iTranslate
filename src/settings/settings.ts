@@ -17,6 +17,7 @@ const modelEl = document.getElementById('model') as HTMLInputElement;
 const systemPromptEl = document.getElementById('systemPrompt') as HTMLTextAreaElement;
 const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement;
 const testBtn = document.getElementById('testBtn') as HTMLButtonElement;
+const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
 const statusDiv = document.getElementById('status') as HTMLDivElement;
 
 async function loadSettings(): Promise<void> {
@@ -87,6 +88,15 @@ testBtn.addEventListener('click', async () => {
   }
 });
 
+clearCacheBtn.addEventListener('click', async () => {
+  try {
+    await chrome.runtime.sendMessage({ action: 'clearCache' });
+    showStatus(t('cacheCleared'), 'success');
+  } catch {
+    showStatus(t('failedToClearCache'), 'error');
+  }
+});
+
 // Set localized UI text
 document.title = t('settingsTitle');
 settingsTitleEl.textContent = t('settingsTitle');
@@ -99,6 +109,7 @@ systemPromptLabel.textContent = t('systemPrompt');
 systemPromptEditable.textContent = t('systemPromptEditable');
 saveBtn.textContent = t('save');
 testBtn.textContent = t('testConnection');
+clearCacheBtn.textContent = t('clearCache');
 
 loadSettings();
 

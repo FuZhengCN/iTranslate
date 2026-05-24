@@ -122,33 +122,6 @@ body {
 .btn-primary:hover { background: var(--itranslate-gradient-brand-hover); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Actions */
-.actions { display: flex; gap: 8px; margin-bottom: 8px; }
-
-.btn-secondary {
-  flex: 1;
-  padding: 6px 8px;
-  background: var(--itranslate-surface-white);
-  border: 1px solid var(--itranslate-border-primary);
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: var(--itranslate-text-secondary);
-  font-family: inherit;
-}
-
-.btn-secondary:hover {
-  background: var(--itranslate-brand-bg-soft);
-}
-
-.btn-secondary svg {
-  flex-shrink: 0;
-}
-
 /* Error */
 .error {
   padding: 8px 12px;

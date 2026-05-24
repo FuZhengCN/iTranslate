@@ -5,7 +5,6 @@ import { t } from '../shared/i18n';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
-const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
 const selectionToggle = document.getElementById('selectionToggle') as HTMLButtonElement;
 const selectionToggleText = document.getElementById('selectionToggleText') as HTMLSpanElement;
 const sourceLangEl = document.getElementById('sourceLang') as HTMLSelectElement;
@@ -124,7 +123,6 @@ settingsBtn.title = t('settings');
 swapBtn.title = t('swapLanguages');
 translateBtn.textContent = t('translatePage');
 selectionToggleText.textContent = t('selectionTranslate');
-clearCacheBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> ' + t('clearCache');
 
 populateLanguageSelects();
 loadLanguageSettings();
@@ -256,19 +254,6 @@ translateBtn.addEventListener('click', async () => {
 
 settingsBtn.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
-});
-
-clearCacheBtn.addEventListener('click', async () => {
-  try {
-    await chrome.runtime.sendMessage({ action: 'clearCache' });
-    clearCacheBtn.textContent = t('cacheCleared');
-    setTimeout(() => {
-      clearCacheBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> ' + t('clearCache');
-    }, 1500);
-  } catch (err) {
-    errorDiv.textContent = t('failedToClearCache');
-    errorDiv.classList.remove('hidden');
-  }
 });
 
 chrome.runtime.onMessage.addListener((message, sender) => {
