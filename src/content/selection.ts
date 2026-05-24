@@ -3,6 +3,7 @@ import { t } from '../shared/i18n';
 
 let currentBubble: HTMLElement | null = null;
 let currentBall: HTMLElement | null = null;
+let ballHoverTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function isValidSelection(): boolean {
   const sel = window.getSelection();
@@ -47,6 +48,10 @@ function hideBubble(): void {
 }
 
 function removeBall(): void {
+  if (ballHoverTimer) {
+    clearTimeout(ballHoverTimer);
+    ballHoverTimer = null;
+  }
   if (currentBall) {
     currentBall.remove();
     currentBall = null;
@@ -84,14 +89,19 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
   ball.dataset.label = t('appName');
 
   ball.addEventListener('mouseenter', () => {
-    removeBall();
-    // Re-fetch rect at hover time to avoid stale position from layout shifts,
-    // but use captured text since selection may have been cleared by the browser
-    const sel = window.getSelection();
-    const currentRect = (sel && sel.rangeCount > 0)
-      ? sel.getRangeAt(0).getBoundingClientRect()
-      : rect;
-    showBubble(currentRect, text);
+    if (ballHoverTimer) return;
+    // Delay translation so the CSS hover animation (ball enlarge + glow + label)
+    // has time to play before the ball is removed
+    ballHoverTimer = setTimeout(() => {
+      ballHoverTimer = null;
+      if (!currentBall) return; // ball was removed by another event (scroll, etc.)
+      removeBall();
+      const sel = window.getSelection();
+      const currentRect = (sel && sel.rangeCount > 0)
+        ? sel.getRangeAt(0).getBoundingClientRect()
+        : rect;
+      showBubble(currentRect, text);
+    }, 250);
   });
 
   document.body.appendChild(ball);
