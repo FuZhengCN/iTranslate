@@ -73,7 +73,7 @@ function positionBall(rect: DOMRect): { top: number; left: number } {
   return { top, left };
 }
 
-function createBall(rect: DOMRect): HTMLElement {
+function createBall(rect: DOMRect, text: string): HTMLElement {
   removeBall();
 
   const ball = document.createElement('div');
@@ -84,13 +84,13 @@ function createBall(rect: DOMRect): HTMLElement {
   ball.dataset.label = t('appName');
 
   ball.addEventListener('mouseenter', () => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    const text = sel.toString().trim();
-    if (!text) return;
     removeBall();
-    // Re-fetch rect at hover time to avoid stale position from layout shifts
-    const currentRect = sel.getRangeAt(0).getBoundingClientRect();
+    // Re-fetch rect at hover time to avoid stale position from layout shifts,
+    // but use captured text since selection may have been cleared by the browser
+    const sel = window.getSelection();
+    const currentRect = (sel && sel.rangeCount > 0)
+      ? sel.getRangeAt(0).getBoundingClientRect()
+      : rect;
     showBubble(currentRect, text);
   });
 
@@ -228,9 +228,10 @@ function onMouseUp(e: MouseEvent): void {
     }
 
     const sel = window.getSelection()!;
+    const text = sel.toString().trim();
     const rect = sel.getRangeAt(0).getBoundingClientRect();
-    console.log(`[iTranslate] 🔍 Selection detected — "${sel.toString().trim().slice(0, 50)}"`);
-    createBall(rect);
+    console.log(`[iTranslate] 🔍 Selection detected — "${text.slice(0, 50)}"`);
+    createBall(rect, text);
   }, 0);
 }
 
@@ -239,10 +240,10 @@ function onKeyDown(e: KeyboardEvent): void {
 }
 
 function onSelectionChange(): void {
-  if (!selectionEnabled) return;
-  if (!isValidSelection() && currentBall) {
-    removeBall();
-  }
+  // Ball is cleaned up by mouseup (click elsewhere → invalid selection → removeBall),
+  // scroll (removeBall), keydown (Escape → hideBubble), or mouseenter (showBubble).
+  // Don't remove ball here — browser may clear selection when mouse approaches the
+  // ball, which would prevent mouseenter from firing.
 }
 
 function onScroll(): void {

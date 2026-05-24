@@ -102,11 +102,10 @@ describe('selection ball creation on mouseup', () => {
   });
 });
 
-describe('selection ball removal on selectionchange', () => {
-  it('removes ball when selection is cleared', async () => {
+describe('selection ball lifecycle', () => {
+  it('keeps ball when selection is cleared via selectionchange', async () => {
     enableSelection();
 
-    // Create a selection first
     const range = document.createRange();
     const textNode = document.getElementById('main')!.firstChild!;
     range.setStart(textNode, 0);
@@ -118,9 +117,32 @@ describe('selection ball removal on selectionchange', () => {
 
     expect(document.querySelector('.itranslate-selection-ball')).not.toBeNull();
 
-    // Clear selection — trigger selectionchange
+    // Clear selection — ball should persist (browser may clear selection
+    // when mouse approaches the ball; we don't want to lose the ball)
     window.getSelection()!.removeAllRanges();
     document.dispatchEvent(new Event('selectionchange', { bubbles: true }));
+
+    expect(document.querySelector('.itranslate-selection-ball')).not.toBeNull();
+  });
+
+  it('removes ball when user clicks elsewhere (mouseup without selection)', async () => {
+    enableSelection();
+
+    const range = document.createRange();
+    const textNode = document.getElementById('main')!.firstChild!;
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 5);
+    window.getSelection()!.addRange(range);
+
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 10));
+
+    expect(document.querySelector('.itranslate-selection-ball')).not.toBeNull();
+
+    // Click elsewhere — clear selection and fire mouseup
+    window.getSelection()!.removeAllRanges();
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 10));
 
     expect(document.querySelector('.itranslate-selection-ball')).toBeNull();
   });
