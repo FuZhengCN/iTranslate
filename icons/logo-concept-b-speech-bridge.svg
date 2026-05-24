@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#94C8E0"/>
+      <stop offset="100%" style="stop-color:#6BAECF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: squircle -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Rear speech bubble (right/bottom language) -->
+  <rect x="46" y="28" width="68" height="72" rx="22"
+        fill="#F5F3EF" opacity="0.38"/>
+
+  <!-- Front speech bubble (left/top language) -->
+  <rect x="14" y="28" width="68" height="72" rx="22"
+        fill="#F5F3EF" opacity="0.88"/>
+
+  <!-- Speech bubble tail (front) -->
+  <polygon points="82,74 96,88 78,86" fill="#F5F3EF" opacity="0.88"/>
+
+  <!-- Horizontal divider lines suggesting text/translation -->
+  <line x1="34" y1="48" x2="64" y2="48" stroke="#6BAECF" stroke-width="3" stroke-linecap="round" opacity="0.35"/>
+  <line x1="34" y1="58" x2="58" y2="58" stroke="#6BAECF" stroke-width="3" stroke-linecap="round" opacity="0.25"/>
+  <line x1="34" y1="68" x2="62" y2="68" stroke="#6BAECF" stroke-width="3" stroke-linecap="round" opacity="0.20"/>
+
+  <!-- Arrow connecting the two bubbles (translation bridge) -->
+  <path d="M 82 64 Q 96 64 100 56" stroke="#F5F3EF" stroke-width="2.5"
+        fill="none" stroke-linecap="round" opacity="0.6"/>
+  <polygon points="100,52 104,58 98,58" fill="#F5F3EF" opacity="0.6"/>
+</svg>

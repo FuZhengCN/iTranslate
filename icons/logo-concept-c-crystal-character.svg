@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#94C8E0"/>
+      <stop offset="100%" style="stop-color:#6BAECF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: squircle -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Rear document (upper-right offset) -->
+  <rect x="38" y="20" width="70" height="82" rx="20"
+        fill="#F5F3EF" opacity="0.35"/>
+
+  <!-- Front document (lower-left offset, centered with text) -->
+  <rect x="20" y="30" width="74" height="80" rx="20"
+        fill="#F5F3EF" opacity="0.88"/>
+
+  <!-- Character "译" — centered on front rect -->
+  <text x="57" y="88"
+        text-anchor="middle"
+        font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans SC, sans-serif"
+        font-weight="750"
+        font-size="54"
+        fill="#2A3038">译</text>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#94C8E0"/>
+      <stop offset="100%" style="stop-color:#6BAECF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: squircle -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Upper arc: convex up (smile) -->
+  <path d="M 14 56 Q 38 24 64 26 Q 90 24 114 56"
+        stroke="#F5F3EF" stroke-width="6" fill="none"
+        stroke-linecap="round" opacity="0.92"/>
+
+  <!-- Lower arc: convex down (frown) — mirrored -->
+  <path d="M 14 72 Q 38 104 64 102 Q 90 104 114 72"
+        stroke="#F5F3EF" stroke-width="6" fill="none"
+        stroke-linecap="round" opacity="0.55"/>
+
+  <!-- Center accent dot: ice crystal focal point -->
+  <circle cx="64" cy="64" r="4.5" fill="#F5F3EF" opacity="0.85"/>
+</svg>

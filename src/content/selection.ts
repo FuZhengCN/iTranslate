@@ -197,8 +197,8 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
     origEl.classList.add('faded');
   }
 
-  // ── Drag to reposition (header as handle) ──
-  header.addEventListener('mousedown', (e) => {
+  // ── Drag to reposition (bar + header = 28px combined drag area) ──
+  const onDragStart = (e: MouseEvent) => {
     dragState = {
       el: bubble,
       startX: e.clientX,
@@ -207,7 +207,9 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
       startTop: bubble.offsetTop,
     };
     e.preventDefault();
-  });
+  };
+  bar.addEventListener('mousedown', onDragStart);
+  header.addEventListener('mousedown', onDragStart);
 
   // ── Translation request ──
   try {

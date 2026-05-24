@@ -37,6 +37,9 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 - **`npm run release`**：bump(z+1) → build → 自动生成 `iTranslate-vX.Y.Z.zip`
 - **`manifest.json` 版本号由 `vite.config.ts` 构建时注入**，源文件为占位符 `0.0.0`
 - 升 y（minor）或 x（major）时手动运行 `npm version minor` / `npm version major`，后续 release 时 z 继续累加
+- `npm run release` 完成后，需手动创建 GitHub / Gitee Release 并上传 zip：
+  - GitHub：https://github.com/FuZhengCN/iTranslate/releases/new
+  - Gitee：https://gitee.com/fuzheng0312/i-translate/releases/new
 
 ## Architecture
 
