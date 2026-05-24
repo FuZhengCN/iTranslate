@@ -261,9 +261,6 @@ function onScroll(): void {
   if (currentBall) {
     removeBall();
   }
-  if (currentBubble) {
-    hideBubble(true);
-  }
 }
 
 let selectionEnabled = false;
