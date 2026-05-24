@@ -59,8 +59,8 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
 | **Content script** | `src/content/index.ts` | Popup 通过 `scripting.executeScript` 按需注入（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签 |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，清除缓存，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言（若用户手动选择过则尊重锁定标志）。打开时同步按钮状态和划词翻译开关状态 |
-| **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接 |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言（若用户手动选择过则尊重锁定标志）。打开时同步按钮状态和划词翻译开关状态 |
+| **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接、清除缓存 |
 
 ### Message Catalog
 
@@ -75,7 +75,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 | `translate` | content → background | 请求翻译文本段 → 返回结果 |
 | `toggleSelection` | popup → content | 启用/禁用划词翻译 |
 | `ping` | popup → content | 检测内容脚本是否已注入（`ensureContentScript` 用） |
-| `clearCache` | popup → background | 清空 IndexedDB 缓存 |
+| `clearCache` | settings → background | 清空 IndexedDB 缓存 |
 | `testConnection` | settings → background | 验证 API key/endpoint 可用 |
 
 Popup 消息监听按 `sender.tab.id` 与 `activeTabId` 过滤，避免跨标签 UI 污染。
