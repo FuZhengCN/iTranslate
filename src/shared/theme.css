@@ -13,6 +13,7 @@
   --itranslate-gradient-brand: linear-gradient(135deg, var(--itranslate-brand-purple), var(--itranslate-brand-purple-hover));
   --itranslate-gradient-brand-hover: linear-gradient(135deg, var(--itranslate-brand-purple-hover), #4FA8CC);
   --itranslate-gradient-accent: linear-gradient(90deg, var(--itranslate-brand-purple), var(--itranslate-brand-purple-hover));
+  --itranslate-gradient-undo: linear-gradient(135deg, #CF8B6B, #D9A88E);
 
   /* ── Brand Light / Alpha Variants ──────────────────── */
   --itranslate-brand-bg-soft: #F5F3EF;

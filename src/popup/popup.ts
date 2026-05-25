@@ -138,7 +138,7 @@ async function syncState(): Promise<void> {
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {
       isTranslated = true;
-      translateBtn.textContent = t('undoTranslation');
+      setButtonState('undo');
     }
     updateSelectionToggleUI(response?.selectionEnabled ?? false);
   } catch {
@@ -151,6 +151,7 @@ appNameLabel.textContent = t('appName');
 settingsBtn.title = t('settings');
 swapBtn.title = t('swapLanguages');
 translateBtn.textContent = t('translatePage');
+translateBtn.style.color = 'var(--itranslate-surface-white)';
 selectionToggleText.textContent = t('selectionTranslate');
 
 populateLanguageSelects();
@@ -173,6 +174,23 @@ function updateSelectionToggleUI(enabled: boolean): void {
     selectionToggle.classList.remove('off');
   } else {
     selectionToggle.classList.add('off');
+  }
+}
+
+const BTN_UNDO_BG = 'var(--itranslate-gradient-undo)';
+
+function setButtonState(state: 'translate' | 'undo' | 'translating'): void {
+  translateBtn.style.background = '';
+  translateBtn.style.color = '';
+  if (state === 'translate') {
+    translateBtn.textContent = t('translatePage');
+    translateBtn.style.color = 'var(--itranslate-surface-white)';
+  } else if (state === 'undo') {
+    translateBtn.textContent = t('undoTranslation');
+    translateBtn.style.background = BTN_UNDO_BG;
+    translateBtn.style.color = 'var(--itranslate-surface-white)';
+  } else {
+    translateBtn.textContent = t('translating');
   }
 }
 
@@ -252,7 +270,7 @@ translateBtn.addEventListener('click', async () => {
 
     if (!isTranslated) {
       translateBtn.disabled = true;
-      translateBtn.textContent = t('translating');
+      setButtonState('translating');
       try {
         await chrome.tabs.sendMessage(tab.id, { action: 'translatePage' });
       } catch {
@@ -269,7 +287,7 @@ translateBtn.addEventListener('click', async () => {
         await chrome.tabs.sendMessage(tab.id, { action: 'undoTranslation' });
       }
       isTranslated = false;
-      translateBtn.textContent = t('translatePage');
+      setButtonState('translate');
       window.close();
     }
   } catch (err) {
@@ -277,7 +295,7 @@ translateBtn.addEventListener('click', async () => {
     errorDiv.classList.remove('hidden');
     isTranslated = false;
     translateBtn.disabled = false;
-    translateBtn.textContent = t('translatePage');
+    setButtonState('translate');
   }
 });
 
@@ -291,11 +309,11 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.action === 'translationComplete') {
     isTranslated = true;
     translateBtn.disabled = false;
-    translateBtn.textContent = t('undoTranslation');
+    setButtonState('undo');
   }
   if (message.action === 'translationError') {
     isTranslated = false;
     translateBtn.disabled = false;
-    translateBtn.textContent = t('translatePage');
+    setButtonState('translate');
   }
 });

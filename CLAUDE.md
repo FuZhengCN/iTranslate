@@ -60,7 +60,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
 | **Content script** | `src/content/index.ts` | Popup 通过 `scripting.executeScript` 按需注入（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签 |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置 |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，白字），源/目标语言选择 + 互换，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置 |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接、清除缓存 |
 
 ### Message Catalog
@@ -191,9 +191,9 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Visual Design & Theming
 
-**主题系统：** `src/shared/theme.css` 集中定义 33 个 `--itranslate-*` CSS 变量。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
+**主题系统：** `src/shared/theme.css` 集中定义 34 个 `--itranslate-*` CSS 变量（含 `--itranslate-gradient-undo` 撤销按钮暖陶色渐变）。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
 
-**组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深）。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡（`itranslate-selection-bubble`）：极地冰川主题 — 米白渐变底（`#FCFBF9`→`#F5F3EF`）、14px 圆角、冰川蓝微边框、4px 三色渐变顶条；Header 左侧"通译"品牌名兼拖拽手柄；原文折叠 3 行渐变淡出；译文上方细分割线；复制按钮胶囊形（`border-radius: 14px`）、关闭按钮正圆形。划词触发小球（`itranslate-selection-ball`）：12px 冰川蓝圆点，悬停 JS 加 `.animating` class 驱动 `translateY(-12px) scale(2)` 膨胀动画 + 光环扩散 1s 匀速减速缓动，防鼠标微移重启动画，`::after` 通过 `attr(data-label)` 显示"译"/"Tr"。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
+**组件视觉：** popup logo 纯色冰川蓝。翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字（`--itranslate-gradient-undo`），颜色切换由 `setButtonState()` 统一管理。按钮/开关/Toast 微渐变（同色系浅→深）。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡（`itranslate-selection-bubble`）：极地冰川主题 — 米白渐变底（`#FCFBF9`→`#F5F3EF`）、14px 圆角、冰川蓝微边框、4px 三色渐变顶条；Header 左侧"通译"品牌名兼拖拽手柄；原文折叠 3 行渐变淡出；译文上方细分割线；复制按钮胶囊形（`border-radius: 14px`）、关闭按钮正圆形。划词触发小球（`itranslate-selection-ball`）：12px 冰川蓝圆点，悬停 JS 加 `.animating` class 驱动 `translateY(-12px) scale(2)` 膨胀动画 + 光环扩散 1s 匀速减速缓动，防鼠标微移重启动画，`::after` 通过 `attr(data-label)` 显示"译"/"Tr"。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
 
 ### Test Strategy
 
