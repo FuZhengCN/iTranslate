@@ -2,11 +2,13 @@
 
 ## Short Description (≤132 characters)
 
-> AI-powered bilingual translation. Translations appear inline below original text — no layout disruption. Bring your own API key, data stays local.
+> AI bilingual translation. Inline display below original, no layout break. Requires your own AI API key (DeepSeek, OpenAI, etc). Data stays local.
 
 ---
 
 ## Detailed Description
+
+> **This extension requires you to provide your own AI API key. It is NOT a free translation service — it will not translate anything for you out of the box. If you don't know what an API key is, please research before installing to avoid disappointment.**
 
 **iTranslate lets you read any webpage in your language, as naturally as if it were written that way.**
 
