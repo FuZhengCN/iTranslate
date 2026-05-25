@@ -162,6 +162,15 @@
   letter-spacing: 0.3px;
 }
 
+.itranslate-bubble-mode-tag {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--itranslate-text-muted);
+  background: rgba(107, 174, 207, 0.06);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
 /* ── Body ── */
 .itranslate-selection-bubble .itranslate-bubble-body {
   padding: 12px 16px;
@@ -382,7 +391,7 @@
 }
 
 .itranslate-selection-ball.animating {
-  animation: itranslate-ball-inflate 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: itranslate-ball-inflate 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes itranslate-ball-inflate {

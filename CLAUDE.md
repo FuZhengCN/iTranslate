@@ -52,7 +52,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 - 开发：`npm run dev` 启动 Vite dev server，Chrome 加载**源码目录**（项目根目录，非 `dist/`）
 - 生产：`npm run build`，Chrome 加载 `dist/` 目录
 
-**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 35 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
+**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 37 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
 
 ### Extension Contexts (4 isolated execution environments)
 
@@ -128,7 +128,7 @@ Popup click → content script
 用户选中文字 → mouseup
   ├─ 300ms 防抖 → isValidSelection()
   ├─ 选区 Rect → positionBall() → createBall()  // 12px 小球在选区右上角
-  └─ 悬停 0.55s → showBubble(rect, text)
+  └─ 悬停 1s → showBubble(rect, text)
         ├─ isSingleWord(text) → whitespace split 判断
         ├─ isEnglishText(text) → CJK/假名/谚文正则拒绝
         ├─ mode = (single && english) ? 'dictionary' : 'translate'
@@ -152,7 +152,7 @@ Popup click → content script
 ### Key Modules
 
 - **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。仅对 "Receiving end does not exist" / "Could not establish connection" 类错误重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。
-- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 0.55s 膨胀动画后触发翻译。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。`showBubble()` 中 `isSingleWord()` + `isEnglishText()` 自动判断 mode（单拉丁单词 → dictionary，其余 → translate），Background 返回结果后 `renderDictionaryResult()` 或翻译气泡分支渲染。词典气泡与翻译气泡结构一致（bar→header→body→actions），展示词条头（单词+音标+词性标签）+编号义项列表。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区。气泡支持拖拽移动。注入 `::selection` 高亮背景。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
+- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 1s 膨胀动画后触发翻译（JS 驱动 `.animating` class，防鼠标微移重启）。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。`showBubble()` 中 `isSingleWord()` + `isEnglishText()` 自动判断 mode（单拉丁单词 → dictionary，其余 → translate），Background 返回结果后 `renderDictionaryResult()` 或翻译气泡分支渲染。词典气泡与翻译气泡结构一致（bar→header→body→actions），展示词条头（单词+音标+词性标签）+编号义项列表。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区。气泡支持拖拽移动。注入 `::selection` 高亮背景。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。`translateBatch()` 按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批，并行 3 批并发。`translateDictionary(word)` 专用于单次词典请求，使用内置 `DICT_SYSTEM_PROMPT`（非用户 settings.systemPrompt），返回 `{ success, data }`。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
 - **`src/background/dict-prompt.ts`** — 词典 prompt 预制内置（不在 settings 中，用户不可编辑）。`DICT_SYSTEM_PROMPT` 为英→中词典 system prompt（JSON 输出格式：`{word, ipa, pos, definitions: [{zh}]}`）。`dictUserPrompt(word)` 生成 `Define: ${word}`。`parseDictionaryResponse(raw)` 解析 JSON 响应，清理 markdown fences，校验必填字段，失败返回 null。当前仅英→中一份 prompt，后期扩展改为语言对注册表。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
@@ -191,7 +191,7 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 **主题系统：** `src/shared/theme.css` 集中定义 33 个 `--itranslate-*` CSS 变量。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
 
-**组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深）。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡（`itranslate-selection-bubble`）：极地冰川主题 — 米白渐变底（`#FCFBF9`→`#F5F3EF`）、14px 圆角、冰川蓝微边框、4px 三色渐变顶条；Header 左侧"通译"品牌名兼拖拽手柄；原文折叠 3 行渐变淡出；译文上方细分割线；复制按钮胶囊形（`border-radius: 14px`）、关闭按钮正圆形。划词触发小球（`itranslate-selection-ball`）：12px 冰川蓝圆点，悬停 `translateY(-12px) scale(2)` 膨胀弹跳动画 + 光环扩散 0.55s spring 缓动，`::after` 通过 `attr(data-label)` 显示"译"/"Tr"。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
+**组件视觉：** popup logo 纯色冰川蓝，主按钮/开关/Toast 微渐变（同色系浅→深）。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡（`itranslate-selection-bubble`）：极地冰川主题 — 米白渐变底（`#FCFBF9`→`#F5F3EF`）、14px 圆角、冰川蓝微边框、4px 三色渐变顶条；Header 左侧"通译"品牌名兼拖拽手柄；原文折叠 3 行渐变淡出；译文上方细分割线；复制按钮胶囊形（`border-radius: 14px`）、关闭按钮正圆形。划词触发小球（`itranslate-selection-ball`）：12px 冰川蓝圆点，悬停 JS 加 `.animating` class 驱动 `translateY(-12px) scale(2)` 膨胀动画 + 光环扩散 1s 匀速减速缓动，防鼠标微移重启动画，`::after` 通过 `attr(data-label)` 显示"译"/"Tr"。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
 
 ### Test Strategy
 

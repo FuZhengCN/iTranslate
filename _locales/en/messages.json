@@ -33,5 +33,6 @@
   "copy":                   { "message": "Copy" },
   "copied":                 { "message": "Copied" },
   "translationFailed":      { "message": "Translation failed" },
-  "ballLabel":              { "message": "Tr" }
+  "ballLabel":              { "message": "Tr" },
+  "dictLabel":              { "message": "Dict" }
 }

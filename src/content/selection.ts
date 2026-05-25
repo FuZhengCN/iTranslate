@@ -178,6 +178,8 @@ function renderDictionaryResult(body: HTMLElement, jsonStr: string): void {
 async function showBubble(rect: DOMRect, text: string): Promise<void> {
   hideBubble();
 
+  const mode = (isSingleWord(text) && isEnglishText(text)) ? 'dictionary' : 'translate';
+
   // ── Container ──
   const bubble = document.createElement('div');
   bubble.className = 'itranslate-selection-bubble itranslate-translation';
@@ -193,6 +195,12 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   brand.className = 'itranslate-bubble-brand';
   brand.textContent = t('appName');
   header.appendChild(brand);
+  if (mode === 'dictionary') {
+    const tag = document.createElement('span');
+    tag.className = 'itranslate-bubble-mode-tag';
+    tag.textContent = t('dictLabel');
+    header.appendChild(tag);
+  }
 
   // ── Body ──
   const body = document.createElement('div');
@@ -279,10 +287,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   header.addEventListener('mousedown', onDragStart);
 
   // ── Translation request ──
-  const single = isSingleWord(text);
-  const english = isEnglishText(text);
-  const mode = (single && english) ? 'dictionary' : 'translate';
-  console.log(`[iTranslate] 🔀 Mode decision: text="${text.slice(0, 40)}" singleWord=${single} englishText=${english} → ${mode}`);
+  console.log(`[iTranslate] 🔀 Mode decision: text="${text.slice(0, 40)}" singleWord=${isSingleWord(text)} englishText=${isEnglishText(text)} → ${mode}`);
   try {
     const response = await sendToBgWithRetry({
       action: 'translate',
