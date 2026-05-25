@@ -25,6 +25,8 @@ async function catchUpNewContent(): Promise<void> {
 
   try {
     const extraction = extractSegments();
+    console.log(`[iTranslate] 🔎 catchUpNewContent: extracted ${extraction.allSegments.length} segments`);
+
     // Filter to blocks that don't already have a translation sibling
     const newSourceElements: Element[] = [];
     const newSegments: TranslationSegment[] = [];
@@ -38,11 +40,11 @@ async function catchUpNewContent(): Promise<void> {
     }
 
     if (newSegments.length === 0) {
-      console.log('[iTranslate] Catch-up: no new blocks found, skipping');
+      console.log('[iTranslate] 🔎 Catch-up: no new blocks found, skipping');
       return;
     }
 
-    console.log(`[iTranslate] Catch-up: ${newSegments.length} new blocks found after translation`);
+    console.log(`[iTranslate] 🔎 Catch-up: ${newSegments.length} new blocks — texts: [${newSegments.map(s => `"${s.text.slice(0,50)}"`).join(', ')}]`);
     renderPlaceholders(newSourceElements);
 
     try {

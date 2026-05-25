@@ -18,6 +18,10 @@ function hasSkippableAncestor(el: Element): boolean {
     if (SKIP_TAGS.has(current.tagName)) return true;
     const className = current.className?.toString() ?? '';
     if (SKIP_CLASS_NAMES.test(className)) return true;
+    if (className.includes('itranslate-translation')) {
+      console.log(`[iTranslate] 🔎 hasSkippableAncestor SKIP: <${current.tagName.toLowerCase()} class="${className}"> is ancestor of <${el.tagName.toLowerCase()} text="${(el.textContent||'').slice(0,40)}">`);
+      return true;
+    }
     const id = current.id ?? '';
     if (SKIP_CLASS_NAMES.test(id)) return true;
     current = current.parentElement;

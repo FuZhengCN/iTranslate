@@ -259,6 +259,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   bubble.appendChild(header);
   bubble.appendChild(body);
   bubble.appendChild(actions);
+  console.log(`[iTranslate] 🔎 showBubble: appending bubble to body, mode=${mode}, text="${text.slice(0, 40)}"`);
   document.body.appendChild(bubble);
 
   const pos = getBubblePosition(rect);

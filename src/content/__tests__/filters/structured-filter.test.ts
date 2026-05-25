@@ -88,17 +88,21 @@ describe('structured-filter', () => {
     expect(structural[1].reason).toBe('structural');
   });
 
-  it('已翻译元素由 extractor 层处理（filter 层不重复检查 itranslate-translation）', () => {
-    // itranslate-translation 在 extractor 的 isSkippable() 中已被过滤，
-    // 不会到达 filter 层。filter 仅检查祖先链上的 SKIP_CLASS_NAMES。
-    const el = document.createElement('p');
-    el.className = 'itranslate-translation';
+  it('过滤祖先链上的 itranslate-translation 元素', () => {
+    // extractor 的 isSkippable() 只检查元素自身 class，不检查祖先。
+    // 划词泡泡等子元素自身没有 itranslate-translation class，需由 filter 层
+    // hasSkippableAncestor 沿祖先链补刀，防止翻译内容被二次翻译。
+    const parent = document.createElement('div');
+    parent.className = 'itranslate-translation';
+    const child = document.createElement('span');
+    child.textContent = 'Should be filtered';
+    parent.appendChild(child);
     const result = structuredFilter.filter([
-      { id: 'seg_0', text: '你好世界这是翻译文本。', blockElement: el, isHeading: false, leafElements: [el] },
+      { id: 'seg_0', text: 'Should be filtered', blockElement: child, isHeading: false, leafElements: [child] },
       makeSeg('Hello world this is enough text for translation.', false),
     ]);
-    // 两个都保留 — itranslate-translation 不是 SKIP_CLASS_NAMES 关键词
-    expect(result.kept).toHaveLength(2);
+    expect(result.kept).toHaveLength(1);
+    expect(result.kept[0].text).toContain('Hello world');
   });
 
   it('空数组返回空结果', () => {
