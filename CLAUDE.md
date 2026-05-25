@@ -52,7 +52,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 - 开发：`npm run dev` 启动 Vite dev server，Chrome 加载**源码目录**（项目根目录，非 `dist/`）
 - 生产：`npm run build`，Chrome 加载 `dist/` 目录
 
-**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 37 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
+**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 36 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
 
 ### Extension Contexts (4 isolated execution environments)
 
@@ -113,6 +113,8 @@ Popup click → content script
 
 **调试 "No translatable content"：** 控制台日志分两阶段 — `📄 Extracted N raw blocks`（extractor 产出）→ `✅ Extracted M blocks (K filtered)`（filter 后）。若 N > 0 但 M = 0，说明 `structuredFilter` 的 `hasSkippableAncestor()` 或噪音模式把所有 block 过滤了，需在页面控制台沿祖先链排查哪个元素 class/id 命中了 `SKIP_CLASS_NAMES`。
 
+**诊断日志标记约定：** `🔎` 前缀标记 Observer → catchUpNewContent → filter 全链路诊断日志，用于排查"翻译内容被二次翻译"类问题。`👁` 前缀标记 Observer 触发及新增节点详情。
+
 **Content → Background 重试机制：** `sendToBgWithRetry()` 包装 `chrome.runtime.sendMessage`。MV3 Service Worker 空闲终止后重新唤醒存在竞态：消息到达时 `onMessage` 监听器可能尚未注册，导致 "Receiving end does not exist" 错误。重试 3 次（间隔 600ms）给 SW 足够的启动时间。仅对连接类错误重试，其它错误直接抛出。
 
 **内容脚本注入机制：** Popup 通过 `ensureContentScript(tabId)` 按需注入：
@@ -159,7 +161,7 @@ Popup click → content script
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。`handleTranslate(segments, tabId?, mode?)` 支持 `'translate'` 和 `'dictionary'` 双模式。缓存 key 含 mode 前缀（`dict_`/`seg_`）和目标语言，词典/翻译缓存互不覆盖。词典模式先校验语言对（仅英→中），不满足则降级翻译。`translateDictionary()` JSON 解析失败时自动 fallback 到 `translateBatch()`。结果用位置映射（position map）排序。每次翻译前重新读取 settings 以获取最新 targetLang。
 - **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素通过 `offsetParent === null` 跳过**（注意：`offsetParent` 对 `position:fixed` 和 `display:contents` 元素也返回 null，存在漏判可能）。文件内 `extractSegments()` 为向后兼容死代码，活跃入口在 `filters/index.ts`。
 - **`src/content/filters/` — 标准过滤器模块**。`SegmentFilter` 接口定义在 `types.ts`（`{ name, filter(segments: RawSegment[]): FilterResult }`），第三方实现此接口即可接入。`registry.ts` 提供 `registerFilter()` / `setActiveFilter()` / `getActiveFilter()` 纯内存注册机制。`index.ts` 为 barrel 入口，自动注册内建过滤器并默认激活 `structured-filter`，同时导出 `extractSegments()`（内部调用 `extractRawSegments()` + 活跃过滤器）。内建两个实现：
-  - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链向上检查 `SKIP_CLASS_NAMES`，一直走到 `document.documentElement` 不停（含 `<body>` 和 `<html>`）。若页面顶层容器 class 命中 skip 关键词，会导致全页内容被过滤（已知 whitehouse.gov 触发此问题）。标题（H1-H6）直接保留不做字符数限制。非标题无字符数阈值。噪音模式过滤纯数字、时间戳、相对时间等。
+  - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链向上检查 `SKIP_CLASS_NAMES` + `itranslate-translation` class（extractor 的 `isSkippable()` 只检查元素自身 class，子元素自身不含此类名需由 filter 层补刀），一直走到 `document.documentElement` 不停（含 `<body>` 和 `<html>`）。若页面顶层容器 class 命中 skip 关键词，会导致全页内容被过滤（已知 whitehouse.gov 触发此问题）。标题（H1-H6）直接保留不做字符数限制。非标题无字符数阈值。噪音模式过滤纯数字、时间戳、相对时间等。
   - **`default-filter`** — 旧 CJK/Latin 字符数阈值（CJK ≥12，Latin ≥20），兼容原行为。
   - **`debug-visualization.ts`** — 调试可视化（独立 dev 入口）。绿色/红色高亮标注保留/过滤元素，通过 `window.__itranslateFilterV2` 暴露。
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
