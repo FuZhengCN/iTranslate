@@ -276,6 +276,81 @@
   outline-offset: 1px;
 }
 
+/* ── Dictionary Result ── */
+.itranslate-dict-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.itranslate-dict-word {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--itranslate-text-translated);
+}
+
+.itranslate-dict-ipa {
+  font-size: 12px;
+  color: var(--itranslate-text-muted);
+}
+
+.itranslate-dict-pos {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--itranslate-brand-purple);
+  background: var(--itranslate-brand-100);
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.itranslate-dict-sep {
+  padding-top: 10px;
+  border-top: 1px solid rgba(107, 174, 207, 0.12);
+  margin-bottom: 8px;
+}
+
+.itranslate-dict-defs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.itranslate-dict-def {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 2px 0;
+}
+
+.itranslate-dict-num-primary {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--itranslate-brand-purple);
+  flex-shrink: 0;
+}
+
+.itranslate-dict-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--itranslate-text-muted);
+  flex-shrink: 0;
+}
+
+.itranslate-dict-text-primary {
+  font-size: 13px;
+  color: var(--itranslate-text-translated);
+  line-height: 1.6;
+}
+
+.itranslate-dict-text {
+  font-size: 13px;
+  color: var(--itranslate-text-secondary);
+  line-height: 1.6;
+}
+
 /* ── Selection Trigger Ball ── */
 .itranslate-selection-ball {
   all: initial;

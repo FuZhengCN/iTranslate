@@ -22,6 +22,4 @@ export interface Settings {
   systemPrompt: string;
   sourceLang: string;
   targetLang: string;
-  sourceLangLocked: boolean;
-  targetLangLocked: boolean;
 }

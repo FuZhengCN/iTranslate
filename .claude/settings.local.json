@@ -77,7 +77,18 @@
       "WebFetch(domain:github.com)",
       "Bash(npx sharp-cli@latest *)",
       "Bash(uipro init *)",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(powershell -Command \"Compress-Archive -Path * -DestinationPath ../iTranslate-v1.0.0.zip -Force\")",
+      "Bash(powershell *)",
+      "Bash(unzip *)",
+      "Bash(C:/Users/fuzheng/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh *)",
+      "Bash(head -170 src/background/translator.ts)",
+      "Bash(rm -f /tmp/translator_test.ts)",
+      "Bash(bash *)",
+      "Bash(cat vitest.config.ts)",
+      "Bash(cat vitest.config.js)",
+      "Bash(cat vite.config.ts)",
+      "Bash(cd C:\\\\Users\\\\fuzheng\\\\source\\\\workspace\\\\vibeCoding\\\\iTranslate *)"
     ]
   }
 }

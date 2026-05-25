@@ -17,8 +17,6 @@ export const DEFAULT_SETTINGS: Settings = {
     'You are a professional English-to-Chinese translator. Translate the following text accurately while preserving the original meaning, tone, and formatting. Only output the Chinese translation, nothing else.',
   sourceLang: 'English',
   targetLang: 'Chinese',
-  sourceLangLocked: false,
-  targetLangLocked: false,
 };
 
 export const CACHE_DB_NAME = 'itranslate-cache';

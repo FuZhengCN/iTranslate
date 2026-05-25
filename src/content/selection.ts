@@ -14,6 +14,15 @@ export function isValidSelection(): boolean {
   return text.length > 0;
 }
 
+function isSingleWord(text: string): boolean {
+  return text.trim().split(/\s+/).length === 1;
+}
+
+function isEnglishText(text: string): boolean {
+  // Reject if contains CJK, hiragana, katakana, or hangul
+  return !/[一-鿿぀-ゟ゠-ヿ가-힯]/.test(text);
+}
+
 export function getBubblePosition(rect: DOMRect): { top: number; left: number } {
   const GAP = 8;
   const bubbleWidth = 380;
@@ -110,6 +119,60 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
   document.body.appendChild(ball);
   currentBall = ball;
   return ball;
+}
+
+function renderDictionaryResult(body: HTMLElement, jsonStr: string): void {
+  try {
+    const data = JSON.parse(jsonStr);
+    // Word + IPA + POS line
+    const headRow = document.createElement('div');
+    headRow.className = 'itranslate-dict-head';
+    const wordEl = document.createElement('span');
+    wordEl.className = 'itranslate-dict-word';
+    wordEl.textContent = data.word;
+    headRow.appendChild(wordEl);
+    if (data.ipa) {
+      const ipaEl = document.createElement('span');
+      ipaEl.className = 'itranslate-dict-ipa';
+      ipaEl.textContent = data.ipa;
+      headRow.appendChild(ipaEl);
+    }
+    if (data.pos) {
+      const posEl = document.createElement('span');
+      posEl.className = 'itranslate-dict-pos';
+      posEl.textContent = data.pos;
+      headRow.appendChild(posEl);
+    }
+    body.appendChild(headRow);
+
+    // Separator
+    const sep = document.createElement('div');
+    sep.className = 'itranslate-dict-sep';
+    body.appendChild(sep);
+
+    // Definitions list
+    const list = document.createElement('div');
+    list.className = 'itranslate-dict-defs';
+    data.definitions.forEach((def: { zh: string }, i: number) => {
+      const item = document.createElement('div');
+      item.className = 'itranslate-dict-def';
+      const num = document.createElement('span');
+      num.className = i === 0 ? 'itranslate-dict-num-primary' : 'itranslate-dict-num';
+      num.textContent = `${i + 1}.`;
+      item.appendChild(num);
+      const zh = document.createElement('span');
+      zh.className = i === 0 ? 'itranslate-dict-text-primary' : 'itranslate-dict-text';
+      zh.textContent = def.zh;
+      item.appendChild(zh);
+      list.appendChild(item);
+    });
+    body.appendChild(list);
+  } catch {
+    const fallback = document.createElement('div');
+    fallback.className = 'itranslate-bubble-translation';
+    fallback.textContent = jsonStr;
+    body.appendChild(fallback);
+  }
 }
 
 async function showBubble(rect: DOMRect, text: string): Promise<void> {
@@ -216,28 +279,34 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   header.addEventListener('mousedown', onDragStart);
 
   // ── Translation request ──
+  const single = isSingleWord(text);
+  const english = isEnglishText(text);
+  const mode = (single && english) ? 'dictionary' : 'translate';
+  console.log(`[iTranslate] 🔀 Mode decision: text="${text.slice(0, 40)}" singleWord=${single} englishText=${english} → ${mode}`);
   try {
     const response = await sendToBgWithRetry({
       action: 'translate',
       segments: [{ id: 'sel_0', text }],
+      mode,
     });
 
-    // Stop loading animation
     placeholder.remove();
 
     if (response?.success && response.results?.[0]) {
-      const translationEl = document.createElement('div');
-      translationEl.className = 'itranslate-bubble-translation';
-      translationEl.textContent = response.results[0].translated;
-      body.appendChild(translationEl);
+      if (response.mode === 'dictionary') {
+        renderDictionaryResult(body, response.results[0].translated);
+      } else {
+        const translationEl = document.createElement('div');
+        translationEl.className = 'itranslate-bubble-translation';
+        translationEl.textContent = response.results[0].translated;
+        body.appendChild(translationEl);
+      }
       copyBtn.style.display = '';
-      console.log(`[iTranslate] 🔍 Selection translated: "${text.slice(0, 40)}" → "${response.results[0].translated.slice(0, 40)}"`);
     } else {
       const errorEl = document.createElement('div');
       errorEl.className = 'itranslate-bubble-translation';
       errorEl.textContent = t('translationFailed');
       body.appendChild(errorEl);
-      console.warn('[iTranslate] 🔍 Selection translation failed:', response);
     }
   } catch (err) {
     placeholder.remove();

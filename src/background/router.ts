@@ -1,16 +1,17 @@
 import type { TranslationSegment, TranslationResult } from '../shared/types';
 import { cacheGetBulk, cacheSetBulk } from './cache';
-import { translateBatch } from './translator';
+import { translateBatch, translateDictionary } from './translator';
 import { getSettings } from '../shared/storage';
 
-function segmentKey(text: string, targetLang: string): string {
+function segmentKey(text: string, targetLang: string, mode: 'translate' | 'dictionary'): string {
+  const prefix = mode === 'dictionary' ? 'dict_' : 'seg_';
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  return 'seg_' + Math.abs(hash).toString(36) + '_' + text.length.toString(36) + '_' + targetLang;
+  return prefix + Math.abs(hash).toString(36) + '_' + text.length.toString(36) + '_' + targetLang;
 }
 
 function sendProgress(tabId: number, completed: number, total: number): void {
@@ -23,11 +24,22 @@ function sendProgress(tabId: number, completed: number, total: number): void {
 
 export async function handleTranslate(
   segments: TranslationSegment[],
-  tabId?: number
-): Promise<{ results: TranslationResult[]; stats: { hits: number; misses: number } }> {
+  tabId?: number,
+  mode: 'translate' | 'dictionary' = 'translate',
+): Promise<{ results: TranslationResult[]; stats: { hits: number; misses: number }; mode: 'translate' | 'dictionary' }> {
   const settings = await getSettings();
-  console.log(`[iTranslate] 🔍 Router: handling ${segments.length} segments`);
-  const keys = segments.map((s) => segmentKey(s.text, settings.targetLang));
+  // Dictionary only applies to English→Chinese
+  const srcOk = settings.sourceLang === 'English';
+  const tgtOk = settings.targetLang === 'Chinese';
+  if (mode === 'dictionary') {
+    console.log(`[iTranslate] 🔀 Router dict check: incomingMode=${mode} sourceLang="${settings.sourceLang}"→srcOk=${srcOk} targetLang="${settings.targetLang}"→tgtOk=${tgtOk}`);
+  }
+  if (mode === 'dictionary' && (!srcOk || !tgtOk)) {
+    console.log(`[iTranslate] 🔀 Router: overriding dictionary→translate (lang pair mismatch)`);
+    mode = 'translate';
+  }
+  console.log(`[iTranslate] 🔍 Router: handling ${segments.length} segments, mode=${mode}`);
+  const keys = segments.map((s) => segmentKey(s.text, settings.targetLang, mode));
   const cacheMap = await cacheGetBulk(keys);
 
   console.log(`[iTranslate] 💾 Cache lookup: ${cacheMap.size}/${keys.length} keys found in IndexedDB`);
@@ -40,7 +52,6 @@ export async function handleTranslate(
   for (let i = 0; i < segments.length; i++) {
     const key = keys[i];
     const cached = cacheMap.get(key);
-    // Verify original text to guard against hash collisions
     if (cached && cached.original === segments[i].text) {
       hits++;
       results.push({ id: segments[i].id, original: segments[i].text, translated: cached.translated });
@@ -55,30 +66,46 @@ export async function handleTranslate(
 
   console.log(`[iTranslate] 📊 Cache result: ${hits} hits, ${misses.length} misses, ${collisions} collisions`);
 
-  // Report cache-hit progress
   if (tabId != null) sendProgress(tabId, hits, segments.length);
 
-  if (misses.length > 0) {
-    const texts = misses.map((m) => m.text);
-    console.log(`[iTranslate] 🌐 Sending ${texts.length} texts to API`);
-    const translations = await translateBatch(texts, (batchCompleted) => {
-      if (tabId != null) sendProgress(tabId, hits + batchCompleted, segments.length);
-    });
+  let responseMode: 'translate' | 'dictionary' = mode;
 
+  if (misses.length > 0) {
     const newEntries = new Map();
-    for (let i = 0; i < misses.length; i++) {
-      const { idx, key, text } = misses[i];
-      const translated = translations[i];
-      results.push({ id: segments[idx].id, original: segments[idx].text, translated });
-      newEntries.set(key, { original: text, translated, timestamp: Date.now() });
+
+    if (mode === 'dictionary') {
+      const { idx, key, text } = misses[0];
+      const result = await translateDictionary(text);
+      if (result.success) {
+        results.push({ id: segments[idx].id, original: segments[idx].text, translated: result.data! });
+        newEntries.set(key, { original: text, translated: result.data!, timestamp: Date.now() });
+      } else {
+        console.log(`[iTranslate] 🔄 Dictionary parse failed for "${text}", falling back to translate`);
+        responseMode = 'translate';
+        const translations = await translateBatch([text]);
+        results.push({ id: segments[idx].id, original: segments[idx].text, translated: translations[0] });
+        newEntries.set(segmentKey(text, settings.targetLang, 'translate'), { original: text, translated: translations[0], timestamp: Date.now() });
+      }
+    } else {
+      const texts = misses.map((m) => m.text);
+      console.log(`[iTranslate] 🌐 Sending ${texts.length} texts to API`);
+      const translations = await translateBatch(texts, (batchCompleted) => {
+        if (tabId != null) sendProgress(tabId, hits + batchCompleted, segments.length);
+      });
+
+      for (let i = 0; i < misses.length; i++) {
+        const { idx, key, text } = misses[i];
+        const translated = translations[i];
+        results.push({ id: segments[idx].id, original: segments[idx].text, translated });
+        newEntries.set(key, { original: text, translated, timestamp: Date.now() });
+      }
     }
 
-    // Build a position map to avoid O(n²) findIndex calls in sort
     const positionMap = new Map(segments.map((s, i) => [s.id, i]));
     results.sort((a, b) => (positionMap.get(a.id) ?? 0) - (positionMap.get(b.id) ?? 0));
 
     cacheSetBulk(newEntries).catch(() => {});
   }
 
-  return { results, stats: { hits, misses: misses.length } };
+  return { results, stats: { hits, misses: misses.length }, mode: responseMode };
 }

@@ -31,49 +31,75 @@ function populateLanguageSelects(): void {
   }
 }
 
+async function getTabLocks(tabId: number): Promise<{ source: boolean; target: boolean }> {
+  const key = `lang_lock_${tabId}`;
+  const data = await chrome.storage.session.get(key);
+  return data[key] || { source: false, target: false };
+}
+
+async function setTabLocks(tabId: number, lockSource: boolean, lockTarget: boolean): Promise<void> {
+  const key = `lang_lock_${tabId}`;
+  const current = await getTabLocks(tabId);
+  await chrome.storage.session.set({
+    [key]: { source: current.source || lockSource, target: current.target || lockTarget },
+  });
+}
+
 async function loadLanguageSettings(): Promise<void> {
   const settings = await getSettings();
+  const tab = await getActiveTab();
+  const locks = tab.id ? await getTabLocks(tab.id) : { source: false, target: false };
+
   sourceLangEl.value = settings.sourceLang;
   targetLangEl.value = settings.targetLang;
+  console.log(`[iTranslate] 🌐 Popup init: sourceLang="${settings.sourceLang}" targetLang="${settings.targetLang}" tabId=${tab.id} locked=${locks.source}/${locks.target}`);
 
-  // Auto-detect page language if user hasn't locked source manually
-  if (!settings.sourceLangLocked) {
+  // Auto-detect page language if not locked for this tab
+  if (!locks.source && tab.id) {
     try {
-      const tab = await getActiveTab();
-      if (tab.id) {
-        const results = await chrome.scripting.executeScript({
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => document.documentElement.lang,
+      });
+      const pageLang = results[0]?.result ?? null;
+      console.log(`[iTranslate] 🌐 Page detect: <html lang>="${pageLang}"`);
+      let detected = detectPageLang(pageLang);
+      console.log(`[iTranslate] 🌐 detectPageLang result: "${detected}"`);
+
+      if (!detected) {
+        console.log(`[iTranslate] 🌐 Falling back to text-based detection...`);
+        const textResults = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          func: () => document.documentElement.lang,
+          func: () => document.body.innerText.slice(0, 2000),
         });
-        const pageLang = results[0]?.result ?? null;
-        let detected = detectPageLang(pageLang);
-
-        // Fallback: character-based detection when <html lang> is missing
-        if (!detected) {
-          const textResults = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: () => document.body.innerText.slice(0, 2000),
-          });
-          const bodyText = textResults[0]?.result ?? '';
-          detected = detectLangFromText(bodyText);
-        }
-
-        if (detected && detected !== settings.sourceLang) {
-          settings.sourceLang = detected;
-          sourceLangEl.value = detected;
-        }
+        const bodyText = textResults[0]?.result ?? '';
+        detected = detectLangFromText(bodyText);
+        console.log(`[iTranslate] 🌐 Text-based detect result: "${detected}" from "${bodyText.slice(0, 40)}..."`);
       }
-    } catch {
-      // chrome:// page or restricted — silently skip
+
+      if (detected && detected !== settings.sourceLang) {
+        console.log(`[iTranslate] 🌐 Updating sourceLang: "${settings.sourceLang}" → "${detected}"`);
+        settings.sourceLang = detected;
+        sourceLangEl.value = detected;
+      } else if (detected) {
+        console.log(`[iTranslate] 🌐 sourceLang already matches detected: "${detected}"`);
+      }
+    } catch (err) {
+      console.log(`[iTranslate] 🌐 Source detect failed (restricted page?):`, err);
     }
   }
 
-  // Auto-detect target language from browser UI language if user hasn't locked it
-  if (!settings.targetLangLocked) {
+  // Auto-detect target language from browser UI language if not locked for this tab
+  if (!locks.target) {
+    console.log(`[iTranslate] 🌐 Target detect: navigator.language="${navigator.language}"`);
     const detected = detectPageLang(navigator.language);
+    console.log(`[iTranslate] 🌐 Target detect result: "${detected}"`);
     if (detected && detected !== settings.targetLang) {
+      console.log(`[iTranslate] 🌐 Updating targetLang: "${settings.targetLang}" → "${detected}"`);
       settings.targetLang = detected;
       targetLangEl.value = detected;
+    } else if (detected) {
+      console.log(`[iTranslate] 🌐 targetLang already matches detected: "${detected}"`);
     }
   }
 
@@ -89,10 +115,13 @@ async function saveLanguageSettings(lockSource = false, lockTarget = false): Pro
   const settings = await getSettings();
   settings.sourceLang = sourceLangEl.value;
   settings.targetLang = targetLangEl.value;
-  if (lockSource) settings.sourceLangLocked = true;
-  if (lockTarget) settings.targetLangLocked = true;
   settings.systemPrompt = generateSystemPrompt(settings.sourceLang, settings.targetLang);
   await saveSettings(settings);
+
+  if (lockSource || lockTarget) {
+    const tab = await getActiveTab();
+    if (tab.id) await setTabLocks(tab.id, lockSource, lockTarget);
+  }
 }
 
 async function getActiveTab(): Promise<chrome.tabs.Tab> {

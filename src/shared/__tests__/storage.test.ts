@@ -24,8 +24,6 @@ describe('storage', () => {
     const settings = await getSettings();
     expect(settings.sourceLang).toBe('English');
     expect(settings.targetLang).toBe('Chinese');
-    expect(settings.sourceLangLocked).toBe(false);
-    expect(settings.targetLangLocked).toBe(false);
   });
 
   it('merges saved settings over defaults', async () => {
@@ -37,15 +35,11 @@ describe('storage', () => {
       systemPrompt: 'Custom prompt',
       sourceLang: 'Japanese',
       targetLang: 'Korean',
-      sourceLangLocked: true,
-      targetLangLocked: true,
     });
     const settings = await getSettings();
     expect(settings.sourceLang).toBe('Japanese');
     expect(settings.targetLang).toBe('Korean');
     expect(settings.apiEndpoint).toBe('https://api.openai.com/v1');
-    expect(settings.sourceLangLocked).toBe(true);
-    expect(settings.targetLangLocked).toBe(true);
   });
 
   it('fills missing fields with defaults', async () => {
@@ -61,7 +55,5 @@ describe('storage', () => {
     const settings = await getSettings();
     expect(settings.sourceLang).toBe('English');
     expect(settings.targetLang).toBe('Chinese');
-    expect(settings.sourceLangLocked).toBe(false);
-    expect(settings.targetLangLocked).toBe(false);
   });
 });

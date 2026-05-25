@@ -59,7 +59,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
 | **Content script** | `src/content/index.ts` | Popup 通过 `scripting.executeScript` 按需注入（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签 |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言（若用户手动选择过则尊重锁定标志）。打开时同步按钮状态和划词翻译开关状态 |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮，源/目标语言选择 + 互换，划词翻译开关。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置 |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接、清除缓存 |
 
 ### Message Catalog
@@ -72,7 +72,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 | `translationComplete` | content → runtime | 通知 popup：翻译成功（含统计） |
 | `translationError` | content → runtime | 通知 popup：翻译失败 |
 | `translationProgress` | background → content | （未使用，handler 已移除） |
-| `translate` | content → background | 请求翻译文本段 → 返回结果 |
+| `translate` | content → background | 请求翻译文本段 → 返回结果。支持 `mode: 'translate' | 'dictionary'`，content 根据单词数和文字脚本自动判断，background 校验语言对后路由到对应 prompt |
 | `toggleSelection` | popup → content | 启用/禁用划词翻译 |
 | `ping` | popup → content | 检测内容脚本是否已注入（`ensureContentScript` 用） |
 | `clearCache` | settings → background | 清空 IndexedDB 缓存 |
@@ -94,7 +94,10 @@ Popup click → content script
   │     │                    // 自动重试 3 次（间隔 600ms），应对 SW 冷启动竞态
   │     ↓
   │   background router
-  │     ├─ cacheGetBulk()    // IndexedDB 查找，带原文校验防哈希碰撞
+  │     ├─ mode='translate' → 正常翻译流程
+  │     ├─ mode='dictionary' → 语言对校验(仅英→中) → translateDictionary()
+  │     │     └─ JSON 解析失败 → 自动降级 translateBatch()
+  │     ├─ cacheGetBulk()    // IndexedDB 查找，dict_/seg_ 前缀隔离
   │     ├─ translateBatch()  // 按 token 分批，并行 3 并发，429/5xx 重试 3 次
   │     └─ 结果排序，cacheSetBulk() 缓存新条目，返回
   │     ↓
@@ -118,13 +121,41 @@ Popup click → content script
 
 内容脚本为 IIFE 格式（`vite.content.config.ts` 单独构建），因 `executeScript` 不支持 ESM `import` 语句。CSS（`theme.css` + `styles.css`）通过 `?inline` 导入为字符串，注入时创建 `<style>` 标签插入页面。
 
+### Selection Translation Flow (划词翻译)
+
+```
+用户选中文字 → mouseup
+  ├─ 300ms 防抖 → isValidSelection()
+  ├─ 选区 Rect → positionBall() → createBall()  // 12px 小球在选区右上角
+  └─ 悬停 0.55s → showBubble(rect, text)
+        ├─ isSingleWord(text) → whitespace split 判断
+        ├─ isEnglishText(text) → CJK/假名/谚文正则拒绝
+        ├─ mode = (single && english) ? 'dictionary' : 'translate'
+        ├─ sendToBgWithRetry({ action:'translate', segments, mode })
+        │     ↓
+        │   background router
+        │     ├─ mode='dictionary' → 校验 sourceLang=English && targetLang=Chinese
+        │     │     └─ 不满足 → mode 降级为 'translate'
+        │     ├─ cacheGetBulk()（dict_/seg_ 前缀隔离）
+        │     ├─ translateDictionary() 或 translateBatch()
+        │     ├─ dict JSON 解析失败 → 降级 translateBatch()
+        │     └─ 返回 { results, mode }（mode 告知前端渲染方式）
+        │     ↓
+        ├─ mode='dictionary' → renderDictionaryResult(body, json)
+        │     └─ 词条头（单词+音标+词性标签）→ 分隔线 → 编号义项
+        └─ mode='translate' → 原文 + 译文（现有翻译气泡）
+```
+
+小球位置逻辑（`positionBall`，`selection.ts:64`）：优先选区右上角外侧 2px → 顶部溢出翻到下方 → 右侧溢出翻到左侧 → 左边界 clamp 2px。气泡位置逻辑（`getBubblePosition`）：优先选区下方居中 → 底部溢出翻到上方。
+
 ### Key Modules
 
 - **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。仅对 "Receiving end does not exist" / "Could not establish connection" 类错误重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。
-- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 0.55s 膨胀动画后触发翻译，避免每次选中都自动调用 API。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。气泡复用 Background translate 消息链路（含缓存）。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区，气泡弹出时保留选中状态。气泡支持拖拽移动（顶条品牌名区域为拖拽手柄）。注入 `::selection` 高亮背景提示划词翻译已开启。包含复制到剪贴板功能，按钮文字通过 `t()` i18n 支持中英双语。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
-- **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批。并行 3 批并发。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
+- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 0.55s 膨胀动画后触发翻译。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。`showBubble()` 中 `isSingleWord()` + `isEnglishText()` 自动判断 mode（单拉丁单词 → dictionary，其余 → translate），Background 返回结果后 `renderDictionaryResult()` 或翻译气泡分支渲染。词典气泡与翻译气泡结构一致（bar→header→body→actions），展示词条头（单词+音标+词性标签）+编号义项列表。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区。气泡支持拖拽移动。注入 `::selection` 高亮背景。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
+- **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。`translateBatch()` 按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批，并行 3 批并发。`translateDictionary(word)` 专用于单次词典请求，使用内置 `DICT_SYSTEM_PROMPT`（非用户 settings.systemPrompt），返回 `{ success, data }`。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
+- **`src/background/dict-prompt.ts`** — 词典 prompt 预制内置（不在 settings 中，用户不可编辑）。`DICT_SYSTEM_PROMPT` 为英→中词典 system prompt（JSON 输出格式：`{word, ipa, pos, definitions: [{zh}]}`）。`dictUserPrompt(word)` 生成 `Define: ${word}`。`parseDictionaryResponse(raw)` 解析 JSON 响应，清理 markdown fences，校验必填字段，失败返回 null。当前仅英→中一份 prompt，后期扩展改为语言对注册表。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
-- **`src/background/router.ts`** — 编排缓存查找 + API 调用。缓存 key 含目标语言（`segmentKey(text, targetLang)`），切换目标语言不会命中旧缓存。结果用位置映射（position map）排序，避免 O(n²) 的 `findIndex`。`handleTranslate(segments, tabId?)`。每次翻译前重新读取 settings 以获取最新 targetLang。
+- **`src/background/router.ts`** — 编排缓存查找 + API 调用。`handleTranslate(segments, tabId?, mode?)` 支持 `'translate'` 和 `'dictionary'` 双模式。缓存 key 含 mode 前缀（`dict_`/`seg_`）和目标语言，词典/翻译缓存互不覆盖。词典模式先校验语言对（仅英→中），不满足则降级翻译。`translateDictionary()` JSON 解析失败时自动 fallback 到 `translateBatch()`。结果用位置映射（position map）排序。每次翻译前重新读取 settings 以获取最新 targetLang。
 - **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素通过 `offsetParent === null` 跳过**（注意：`offsetParent` 对 `position:fixed` 和 `display:contents` 元素也返回 null，存在漏判可能）。文件内 `extractSegments()` 为向后兼容死代码，活跃入口在 `filters/index.ts`。
 - **`src/content/filters/` — 标准过滤器模块**。`SegmentFilter` 接口定义在 `types.ts`（`{ name, filter(segments: RawSegment[]): FilterResult }`），第三方实现此接口即可接入。`registry.ts` 提供 `registerFilter()` / `setActiveFilter()` / `getActiveFilter()` 纯内存注册机制。`index.ts` 为 barrel 入口，自动注册内建过滤器并默认激活 `structured-filter`，同时导出 `extractSegments()`（内部调用 `extractRawSegments()` + 活跃过滤器）。内建两个实现：
   - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链向上检查 `SKIP_CLASS_NAMES`，一直走到 `document.documentElement` 不停（含 `<body>` 和 `<html>`）。若页面顶层容器 class 命中 skip 关键词，会导致全页内容被过滤（已知 whitehouse.gov 触发此问题）。标题（H1-H6）直接保留不做字符数限制。非标题无字符数阈值。噪音模式过滤纯数字、时间戳、相对时间等。
@@ -135,8 +166,8 @@ Popup click → content script
 - **`src/content/toast.ts`** — 死代码，不再被任何模块引用，可安全删除。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
 - **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 33 个 `--itranslate-*` 变量。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
-- **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段（如 `sourceLang`、`targetLang`、`*Locked`）对旧用户自动获得默认值。
-- **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese、`sourceLangLocked`/`targetLangLocked` 均为 false）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
+- **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段对旧用户自动获得默认值。语言锁定不在此模块——per-tab lock 由 popup.ts 通过 `chrome.storage.session` 独立管理。
+- **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
 
 ### Translation DOM Pattern
@@ -163,6 +194,6 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。70 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并、向后兼容和 `*Locked` 标志读写。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。70 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并和向后兼容。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
 
 Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `github` → GitHub (`https://github.com/FuZhengCN/iTranslate.git`).

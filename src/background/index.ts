@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ success: false, error: 'Malformed segment entries' });
       return false;
     }
-    handleTranslate(segments, _sender.tab?.id)
+    handleTranslate(segments, _sender.tab?.id, message.mode)
       .then((result) => sendResponse({ success: true, ...result }))
       .catch((err: Error) => sendResponse({ success: false, error: err.message }));
     return true;

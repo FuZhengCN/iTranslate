@@ -1,5 +1,6 @@
 import type { Settings } from '../shared/types';
 import { getSettings } from '../shared/storage';
+import { DICT_SYSTEM_PROMPT, dictUserPrompt, parseDictionaryResponse } from './dict-prompt';
 
 // Batch sizing uses estimated tokens rather than raw chars, so CJK text
 // (~1.5 tok/char) and Latin text (~0.35 tok/char) both produce balanced batches.
@@ -238,6 +239,66 @@ export async function translateBatch(
   console.log(`[iTranslate] ✅ All ${totalBatches} batches completed`);
 
   return results;
+}
+
+export async function translateDictionary(word: string): Promise<{ success: boolean; data: string | null }> {
+  const settings = await getSettings();
+  if (!settings.apiKey) throw new Error('API key not configured');
+
+  const endpoint = settings.apiEndpoint.replace(/\/+$/, '');
+  const prompt = dictUserPrompt(word);
+  console.log(`[iTranslate] 📖 Dictionary lookup: "${word}"`);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await fetch(`${endpoint}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${settings.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          messages: [
+            { role: 'system', content: DICT_SYSTEM_PROMPT },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.1,
+          thinking: { type: 'disabled' },
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429 || response.status >= 500) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        throw new Error(`API error ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content: string = data.choices?.[0]?.message?.content ?? '';
+
+      if (!content && data.usage?.completion_tokens > 0) {
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        continue;
+      }
+
+      const parsed = parseDictionaryResponse(content);
+      if (parsed) {
+        return { success: true, data: JSON.stringify(parsed) };
+      }
+      return { success: false, data: null };
+    } catch (err) {
+      if (attempt < 2) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  return { success: false, data: null };
 }
 
 export async function testConnection(settings: Settings): Promise<boolean> {
