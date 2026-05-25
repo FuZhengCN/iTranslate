@@ -370,19 +370,19 @@
 .itranslate-selection-ball::after {
   content: attr(data-label);
   opacity: 0;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 600;
   color: #fff;
-  transition: opacity 0.25s ease 0.2s;
+  line-height: 1;
+  transition: opacity 0.3s ease;
 }
 
-.itranslate-selection-ball:hover {
-  animation: itranslate-ball-inflate 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-.itranslate-selection-ball:hover::after {
+.itranslate-selection-ball.animating::after {
   opacity: 1;
-  transition: opacity 0.25s ease 0.2s;
+}
+
+.itranslate-selection-ball.animating {
+  animation: itranslate-ball-inflate 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes itranslate-ball-inflate {

@@ -102,18 +102,18 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
 
   ball.addEventListener('mouseenter', () => {
     if (ballHoverTimer) return;
-    // Delay translation so the CSS hover animation (ball enlarge + glow + label)
-    // has time to play before the ball is removed
+    // Trigger CSS animation via class so micro-movements don't restart it
+    ball.classList.add('animating');
     ballHoverTimer = setTimeout(() => {
       ballHoverTimer = null;
-      if (!currentBall) return; // ball was removed by another event (scroll, etc.)
+      if (!currentBall) return;
       removeBall();
       const sel = window.getSelection();
       const currentRect = (sel && sel.rangeCount > 0)
         ? sel.getRangeAt(0).getBoundingClientRect()
         : rect;
       showBubble(currentRect, text);
-    }, 550);
+    }, 1000);
   });
 
   document.body.appendChild(ball);
