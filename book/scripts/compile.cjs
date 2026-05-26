@@ -17,6 +17,7 @@ const order = [
   'part2-itranslate/ch11-dictionary.md',
   'part2-itranslate/ch12-visual.md',
   'part2-itranslate/ch13-testing-release.md',
+  'part3-advanced/part3-opening.md',
   'part3-advanced/ch14-prompt-patterns.md',
   'part3-advanced/ch15-refactoring.md',
   'part3-advanced/ch16-multi-model.md',
