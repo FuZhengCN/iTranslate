@@ -146,7 +146,47 @@ iTranslate 用 IndexedDB（通过 `idb` 库）做持久化缓存。选 IndexedDB
 
 ---
 
-## 7.5 核心技巧
+## 7.5 CC 对话实录
+
+以下是 Prompt 设计迭代中的一段对话（基于真实调试经历复盘）：
+
+```
+[我的 Prompt]
+> 翻译引擎的 System Prompt 这样设计可以吗：
+> "You are a professional translator. Translate the following text.
+>  Use [0], [1] format to label each translation."
+> 实际测试中发现两个问题：
+> 1. 有时模型不按 [0] [1] 格式返回，解析失败
+> 2. DeepSeek 返回的 content 有时是空的，但 API 调用本身成功了
+
+[CC 的回复]
+> 两个问题分开解决。
+>
+> 问题 1：不要指望模型严格遵循格式要求——即使 prompt 里写得很清楚，
+> 不同模型（甚至同一模型的不同调用）可能输出 0. xxx、0) xxx、0、xxx 等变体。
+> 解决方案：在 parseResponse 里兼容多种格式，用正则按优先级匹配。
+>
+> 问题 2：检查一下 API 返回的 usage.completion_tokens——如果 content 为空
+> 但 completion_tokens > 0，说明 token 花在了内部推理上。这是 DeepSeek
+> 推理模型的 thinking 模式导致的。解决方案：发送 thinking: {type:'disabled'}
+> 参数禁用推理模式。同时加一个检测逻辑——如果禁用了 thinking 之后
+> 仍然出现空 content + completion_tokens > 0，自动重试。
+>
+> 以下是修改后的代码...
+
+[为什么这样问]
+💡 这两个问题是"上线之后才会发现"的典型。本地开发时你可能只测了一种模型
+（比如 gpt-4o），它恰好严格遵循你的格式要求，也没有 thinking 模式。
+但一旦部署到真实环境，用户用的是各种不同的模型，格式兼容性和
+推理模式就暴露了。这不是 prompt 写得"不够好"的问题——不同模型有不同行为
+是 LLM 的固有特性。正确的处理方式不是写更详细的 prompt 去"说服"模型，
+而是在解析层做好容错。这条原则适用于所有与 LLM 交互的程序：prompt 是你的
+"期望"，parser 是你的"兜底"。
+```
+
+---
+
+## 7.6 核心技巧
 
 1. **为多种模型设计，而不是为一种模型优化。** 你的 prompt 在 gpt-4o 上完美运行不代表在 deepseek-v4-flash 上也能。关键不是在 prompt 里写越来越多的约束，而是在解析层建立容错机制——`parseResponse()` 兼容 4 种格式变体，比写 4 个不同版本的 prompt 优雅得多。
 
@@ -160,7 +200,7 @@ iTranslate 用 IndexedDB（通过 `idb` 库）做持久化缓存。选 IndexedDB
 
 ---
 
-## 7.6 小结
+## 7.7 小结
 
 - **与任何 OpenAI 兼容 API 对话**：标准化 `/chat/completions` 请求体，`model`、`endpoint`、`apiKey` 全部从 settings 读取，用户随时可切换到任何兼容服务。
 - **System Prompt 是翻译质量的上限**：默认 Prompt 包含角色设定、翻译原则、裸输出约束三要素。但最有价值的不是默认 Prompt 本身，而是用户可以在设置页自定义它——这是 iTranslate 与内置翻译引擎的本质区别。

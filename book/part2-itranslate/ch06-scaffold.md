@@ -83,6 +83,30 @@ export default defineConfig({
 - 开发时：`npm run dev` → Chrome `chrome://extensions` → "加载已解压的扩展程序" → 选择**项目根目录**（不是 `dist/`）
 - 生产时：`npm run build` → 产出 `dist/` → Chrome 加载 `dist/`
 
+**CC 在脚手架搭建中的实际交互：**
+
+```
+[我的 Prompt]
+> 我要做一个 Chrome Manifest V3 扩展，用 Vite + TypeScript。
+> 帮我初始化项目结构，包括 manifest.json、vite.config.ts、
+> 以及 background / content script / popup / settings 四个入口。
+
+[CC 的回复]
+> 我来帮你搭建。首先确认几个技术选型：
+> - 构建工具用 Vite + @crxjs/vite-plugin（自动处理 manifest）
+> - 权限暂时只声明 storage, activeTab, scripting（最小权限原则）
+> - Content Script 后续用 executeScript 按需注入，不声明 content_scripts
+>
+> 现在生成以下文件...
+
+[为什么这样问]
+💡 搭建脚手架时，CC 不会问你要什么文件结构——它会直接根据 MV3 规范
+推断出你需要的最小文件集合。你只需要告诉它技术选型（Vite + crxjs），
+它就能生成正确的配置文件。这里的关键是：你一定要确认权限策略——
+CC 默认可能会加 host_permissions，如果你不主动要求最小权限，
+它不会替你想到"审核友好"这个维度。
+```
+
 ---
 
 ## 6.3 四个独立的执行上下文
