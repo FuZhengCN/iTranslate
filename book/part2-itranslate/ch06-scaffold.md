@@ -216,7 +216,7 @@ MV3 支持在 `manifest.json` 中通过 `content_scripts` 字段声明匹配 URL
 
 ## 7. 小结
 
-- **manifest.json 是扩展的身份证**：`manifest_version: 3` 声明时代，`permissions` 只写三个（storage、activeTab、scripting），不声明 `host_permissions`——这是 iTranslate 审核一次通过的关键。
+- **manifest.json 是扩展的身份证**：`manifest_version: 3` 声明时代，`permissions` 只写三个（storage、activeTab、scripting），不声明 `host_permissions`——这是权限保持最简的关键。
 - **Vite + crxjs 把脚手架简化到 13 行配置**：自动版本号注入、HMR 热更新、多上下文构建差异封装。源码 manifest 版本号写 `0.0.0` 占位。
 - **四个执行上下文是完全隔离的沙箱**：Background（Service Worker，随时休眠）、Content Script（页面 DOM，按需注入）、Popup（点击弹窗，即开即毁）、Settings（独立标签页）。它们之间唯一的通信方式是 `chrome.runtime.sendMessage`。
 - **Content Script 必须构建为 IIFE**：`executeScript` 不支持 ESM。用独立的 `vite.content.config.ts` 打包，`emptyOutDir: false` 避免覆盖主构建产物。CSS 通过 `?inline` 内联为字符串。

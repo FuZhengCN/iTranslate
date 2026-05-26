@@ -213,7 +213,7 @@ describe('structured-filter', () => {
 - 70 个测试用例覆盖了提取、过滤、渲染、缓存、存储、语言检测、国际化、翻译引擎、划词交互九个维度。测试不是事后补的，是每次改代码后的安全网。
 - 用 CC 写测试的效率优势来自测试的结构化本质——Arrange/Act/Assert 三段式正是 AI 最擅长生成的代码模式。
 - `npm run build`（不改版本号，日常调试）和 `npm run release`（z+1，构建，打包）两条命令各司其职。`package.json` 是唯一版本源。
-- Chrome Web Store 上架的关键在权限说明——iTranslate 的"按需注入"架构在这个阶段得到了回报：三项权限，审核一次过。
+- Chrome Web Store 上架的关键在权限说明——iTranslate 的"按需注入"架构在这个阶段得到了回报：三项权限，没有因为权限问题被退回。
 - 商店文案需显著标注"自备 API Key"——这是用差评换来的教训。
 
 ---
