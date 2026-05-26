@@ -67,11 +67,17 @@ Claude Code 支持生命周期 Hooks。比如代码修改完成后自动运行 `
 
 ---
 
-## 1.3 为什么配 DeepSeek
+## 1.3 基座模型：为什么选 DeepSeek
 
-Claude Code 再强，也要消耗 API Token。Anthropic 的 Claude API 官方定价是多少？Sonnet 模型约 $3/百万输入 token + $15/百万输出 token。开发 iTranslate 这样一个中等复杂度的项目，如果全程用 Claude API，光 API 费用就可能达到几十甚至上百美元。
+Claude Code 是一个工具，它本身不绑定模型——你可以把它指向任何 OpenAI 兼容的 API。那么问题来了：基座模型用哪个？
 
-这就是 DeepSeek 进场的位置。
+Anthropic 原生的 Claude API 当然是第一选择。Sonnet 模型约 $3/百万输入 token + $15/百万输出 token，能力毋庸置疑。但对国内开发者来说，它有三个硬伤：
+
+1. **需要翻墙**：api.anthropic.com 在国内无法直接访问，必须配置代理
+2. **支付门槛**：需要外币信用卡，不支持支付宝/微信
+3. **价格不菲**：开发一个中等复杂度的项目，API 费用轻松上百美元
+
+这三条加在一起，意味着大多数国内开发者根本用不上 Claude 原生模型。而 DeepSeek 恰好解决了所有三个问题。
 
 ### 3.1 成本对比：不是便宜一点，是差一个数量级
 
@@ -85,18 +91,21 @@ DeepSeek V3 的 API 定价约为 2 元/百万输入 token + 8 元/百万输出 t
 
 ### 3.3 中国开发者的现实便利
 
-这是很多海外工具给不了的体验：**不需要翻墙**。DeepSeek 官网直接访问，API 用支付宝就能充值。Claude Code 本身是用 Anthropic 的 API，但通过自定义 endpoint 配置，可以指向任何 OpenAI 兼容的 API 服务——DeepSeek 恰好完全兼容。
+这是 Claude 原生 API 给不了的体验：**不需要翻墙**。DeepSeek 官网直接访问，API 用支付宝就能充值——充 10 块钱够用一整天。
 
-### 3.4 性价比路线：双模型分工
+Claude Code 默认连接 Anthropic API，但它有一个关键能力：通过自定义 endpoint 配置，可以指向任何 OpenAI 兼容的 API 服务。DeepSeek 的 API 完全兼容 OpenAI 格式，只需改三个配置项（endpoint、apiKey、model），Claude Code 就能跑在 DeepSeek 上。
 
-iTranslate 项目实际采用的分工模式是：
+对中国开发者来说，这意味着：享受 Claude Code 这个最强开发工具的同时，用国内的基座模型，零翻墙、零外币卡、极低成本。
 
-- **DeepSeek 做基础和翻译**：翻译请求、批量处理、日常编码辅助。成本低、量大、不心疼。
-- **Claude Code（Claude API）做架构和审查**：模块设计、代码审查、复杂重构决策。用最聪明的脑子做最重要的决策。
+### 3.4 Claude Code + DeepSeek 的实际配置
 
-这个组合的精髓在于：**把正确的事分配给正确的模型，用最少的钱获得最强的 AI 编程能力。** 就像你不会用跑车去搬家，也不会用卡车去跑赛道——关键是每个任务用对工具。
+iTranslate 项目的开发环境很简单：**Claude Code 做前端工具，DeepSeek 做后端基座模型。** 一套工具、一套 API、一个人。
 
-> **一句话总结**：Claude Code 是大脑，DeepSeek 是双手。大脑贵但关键，双手便宜但能干粗活。搭配起来，一个人的战斗力可以碾压一个没 AI 的小团队。
+具体配置方式：在 Claude Code 中将 API endpoint 指向 `https://api.deepseek.com/v1`，把 DeepSeek 的 API Key 填入，模型选择 `deepseek-chat`。之后所有的开发交互——写代码、调试、架构讨论——都是 Claude Code 发起，DeepSeek 执行推理。
+
+为什么不是反过来（用 DeepSeek 的官方工具 + DeepSeek 模型）？因为 Claude Code 的交互体验远优于 DeepSeek 官方 CLI。它的项目理解能力、Agent 调度、Skills 系统，让开发效率提升了一个量级。DeepSeek 的便宜 API 解决了"用得起"的问题，Claude Code 的工具能力解决了"用得好"的问题。
+
+> **一句话总结**：Claude Code 是最强开发工具，DeepSeek 是国内最实惠的基座模型。把 Claude Code 指向 DeepSeek，就是用最好的工具 + 最省的模型，一个人的战斗力碾压一个没 AI 的小团队。
 
 ---
 
@@ -115,13 +124,11 @@ iTranslate 项目实际采用的分工模式是：
 | 支持语言 | 6 种语言（中/英/日/韩/法/德） |
 | Chrome Web Store 审核 | 一次通过（遵守最小权限原则，仅 `storage` + `activeTab` + `scripting`） |
 
-**分工情况：**
+**开发数据：**
 
-- Claude Code 负责了约 80% 的架构设计和代码生成，包括整个过滤器模块的架构、消息路由网络的设计、多环境通信协议的实现
-- DeepSeek 负责了翻译功能的大量 prompt 调试和批量测试，以及日常编码中大量的"这个函数怎么写"类任务
-- API 总花费：整个开发过程，Claude API 约 **$15-25**，DeepSeek API 约 **15-25 元人民币**（约 $2-3.5）。合计不到 **$30**。
+整个开发过程，所有代码生成、架构设计、调试排错、测试编写，全部通过 Claude Code 完成，基座模型为 DeepSeek V3。API 总花费约 **15-25 元人民币**（约 $2-3.5）——对，你没看错，不到一杯咖啡的钱。
 
-一个 3400 行、功能完整的 Chrome 扩展，从零到上线，API 成本不到 200 元人民币。如果不搭配 DeepSeek，全部用 Claude API，这个数字至少要翻 5-10 倍。这就是双模型分工的价值。
+作为对比，如果 Claude Code 连接的是 Claude 原生 API（Sonnet 模型），同样的开发量 API 费用至少要 $100-200，还需要一直挂着代理。用 DeepSeek 做基座模型，不仅省了 90% 以上的成本，还省了翻墙和信用卡的折腾。
 
 ---
 
@@ -133,7 +140,7 @@ iTranslate 项目实际采用的分工模式是：
 
 **Part 2（实战篇，第 5-13 章）**：跟着 iTranslate 的完整开发过程走一遍。从立项 Spec 开始，到脚手架搭建、翻译引擎、DOM 注入、交互层、划词翻译、词典功能、视觉打磨、测试发布。每一章对应一个真实的开发阶段，你看到的不只是代码，更是"为什么这样设计"的完整思考过程。
 
-**Part 3（进阶篇，第 14-17 章）**：提炼方法论。Prompt 工程模式、复杂重构策略、多模型协作的最佳实践、17 条实战踩坑经验。这部分适合已经上手 Claude Code、想要更进一步的朋友。
+**Part 3（进阶篇，第 14-17 章）**：提炼方法论。Prompt 工程模式、复杂重构策略、多模型协作的最佳实践、20 条实战踩坑经验。这部分适合已经上手 Claude Code、想要更进一步的朋友。
 
 无论你是 1-3 年的初级程序员、想自己搞产品的独立开发者，还是预算有限的学生，这本书的设计都围绕一个核心问题：**如何用最小的成本，一个人搞出一个真正的产品。**
 
@@ -143,9 +150,9 @@ iTranslate 项目实际采用的分工模式是：
 
 - **选工具先想清楚需求**：如果只是加速日常编码，Copilot 够了。如果想一个人搞定一个产品，Claude Code 是目前唯一的选择。
 - **Claude Code 的价值不只是写代码**：它能读项目、理解架构、做设计决策。善用这个能力，别把它当补全工具用。
-- **双模型分工是最佳性价比路线**：Claude 做决策（贵但值），DeepSeek 做执行（便宜量足）。除非预算充足，否则不建议全程用 Claude API。
+- **Claude Code + DeepSeek 是国内开发者的最优解**：最强开发工具 + 最实惠基座模型。不需要翻墙、不需要外币卡、API 成本不到 Claude 原生的 1/10。
 - **Skills + Hooks 是效率放大器**：花 10 分钟定义一套 Skills 和 Hooks，后续每一次交互都在享受它的红利。立刻做，别拖延。
-- **数据是最好的说服力**：iTranslate 这个案例证明，不到 $30 的 API 成本 + 7 天时间 = 一个上架 Chrome Web Store 的完整产品。这不是理论推演，是真实发生的事。
+- **数据是最好的说服力**：iTranslate 这个案例证明，不到 25 元人民币的 API 成本 + 7 天时间 = 一个上架 Chrome Web Store 的完整产品。这不是理论推演，是真实发生的事。
 
 ---
 
@@ -156,7 +163,7 @@ iTranslate 项目实际采用的分工模式是：
 > - Claude Code 的核心优势：终端交互、全项目理解、自主架构决策、Agent 并行、Skills + Hooks 自动化。
 > - Claude Code 不是 IDE 插件——它是你终端里的一个 AI 工程师。
 > - DeepSeek 的价格是 Claude API 的 1/10 到 1/15，中文能力不输，且支付宝就能充值，无需翻墙。
-> - 最佳实践：Claude Code 做架构和决策，DeepSeek 做批量和执行。总成本不到 $30 搞出一个完整产品。
+> - 最佳实践：Claude Code 做开发工具，DeepSeek 做基座模型。一套工具、一套 API，API 成本不到一杯咖啡钱。
 > - 本书的三段路径：入门（会用工具）、实战（跟做产品）、进阶（提炼方法论）。
 
 ---
@@ -165,5 +172,4 @@ iTranslate 项目实际采用的分工模式是：
 
 - [ ] 截图：Claude Code 终端界面截图
 - [ ] 截图：iTranslate 在 Chrome 中的实际运行效果
-- [ ] 数据确认：Claude API 实际花费的确切数字（需要查账单）
 - [ ] 数据确认：DeepSeek API 实际花费的确切数字（需要查账单）
