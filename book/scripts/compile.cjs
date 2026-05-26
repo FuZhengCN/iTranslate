@@ -7,7 +7,6 @@ const order = [
   'part1-getting-started/ch01-why-cc-ds.md',
   'part1-getting-started/ch02-setup.md',
   'part1-getting-started/ch03-cc-basics.md',
-  'part1-getting-started/ch04-first-task.md',
   'part2-itranslate/ch05-planning.md',
   'part2-itranslate/ch06-scaffold.md',
   'part2-itranslate/ch07-engine.md',
