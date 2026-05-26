@@ -1,12 +1,12 @@
 # 第 6 章 脚手架：Manifest V3 扩展
 
-## 1. 本章目标
+**本章目标**：读完本章，你将亲手搭起一个 Manifest V3 浏览器扩展的完整脚手架——从 `npm init` 到第一个能加载进 Chrome 的 Hello World。你会理解 Vite + crxjs 的构建原理、四个执行上下文的隔离机制，以及为什么 Content Script 必须构建为 IIFE 格式。
 
-读完本章，你将亲手搭起一个 Manifest V3 浏览器扩展的完整脚手架——从 `npm init` 到第一个能加载进 Chrome 的 Hello World。你会理解 Vite + crxjs 的构建原理、四个执行上下文的隔离机制，以及为什么 Content Script 必须构建为 IIFE 格式。
+**预计字数**：约4000字
 
----
+**状态**：✅ 初稿完成
 
-## 2. MV3 扩展的最小骨架
+## 5.1 MV3 扩展的最小骨架
 
 Chrome 扩展的本质是一个压缩包，里面至少需要一个 `manifest.json`。iTranslate 的 manifest 骨架长这样：
 
@@ -49,7 +49,7 @@ Chrome 扩展的本质是一个压缩包，里面至少需要一个 `manifest.js
 
 ---
 
-## 3. Vite + crxjs 搭建过程
+## 5.2 Vite + crxjs 搭建过程
 
 选定 Vite + crxjs 后，实际的搭建过程异常简洁。`vite.config.ts` 只有 13 行：
 
@@ -86,33 +86,9 @@ export default defineConfig({
 - 开发时：`npm run dev` → Vite 启动 dev server → Chrome `chrome://extensions` → "加载已解压的扩展程序" → 选择**项目根目录**（不是 `dist/`）。crxjs 的 dev server 直接从源码目录提供文件。
 - 生产时：`npm run build` → 产出 `dist/` 目录 → Chrome 加载 `dist/`。
 
-**CC 在脚手架搭建中的实际交互：**
-
-```
-[我的 Prompt]
-> 我要做一个 Chrome Manifest V3 扩展，用 Vite + TypeScript。
-> 帮我初始化项目结构，包括 manifest.json、vite.config.ts、
-> 以及 background / content script / popup / settings 四个入口。
-
-[CC 的回复]
-> 我来帮你搭建。首先确认几个技术选型：
-> - 构建工具用 Vite + @crxjs/vite-plugin（自动处理 manifest）
-> - 权限暂时只声明 storage, activeTab, scripting（最小权限原则）
-> - Content Script 后续用 executeScript 按需注入，不声明 content_scripts
->
-> 现在生成以下文件...
-
-[为什么这样问]
-💡 搭建脚手架时，CC 不会问你要什么文件结构——它会直接根据 MV3 规范
-推断出你需要的最小文件集合。你只需要告诉它技术选型（Vite + crxjs），
-它就能生成正确的配置文件。这里的关键是：你一定要确认权限策略——
-CC 默认可能会加 host_permissions，如果你不主动要求最小权限，
-它不会替你想到"审核友好"这个维度。
-```
-
 ---
 
-## 4. 四上下文入口
+## 5.3 四上下文入口
 
 iTranslate 有四个独立的执行上下文，每个都有入口文件：
 
@@ -157,7 +133,7 @@ src/
 
 ---
 
-## 5. IIFE 构建的特殊处理
+## 5.4 IIFE 构建的特殊处理
 
 Content Script 的构建有个特殊的坑：`chrome.scripting.executeScript` 的参数是一个代码字符串或文件路径，它**不支持 ESM 的 `import`/`export` 语法**。如果你直接把含有 `import` 语句的 TypeScript 编译产物丢给 `executeScript`，运行时会报错。
 
@@ -202,7 +178,7 @@ MV3 支持在 `manifest.json` 中通过 `content_scripts` 字段声明匹配 URL
 
 ---
 
-## 6. 核心技巧
+## 5.5 核心技巧
 
 1. **manifest.json 中的版本号写占位符**：源码中写 `0.0.0`，真正的版本号由构建时从 `package.json` 注入。这个习惯避免了你忘记更新 manifest 版本号导致的"改了代码但版本号没变"的尴尬。
 
@@ -214,7 +190,7 @@ MV3 支持在 `manifest.json` 中通过 `content_scripts` 字段声明匹配 URL
 
 ---
 
-## 7. 小结
+## 5.6 小结
 
 - **manifest.json 是扩展的身份证**：`manifest_version: 3` 声明时代，`permissions` 只写三个（storage、activeTab、scripting），不声明 `host_permissions`——这是权限保持最简的关键。
 - **Vite + crxjs 把脚手架简化到 13 行配置**：自动版本号注入、HMR 热更新、多上下文构建差异封装。源码 manifest 版本号写 `0.0.0` 占位。
