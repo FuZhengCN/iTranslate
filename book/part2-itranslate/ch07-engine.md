@@ -146,9 +146,9 @@ iTranslate 用 IndexedDB（通过 `idb` 库）做持久化缓存。选 IndexedDB
 
 ---
 
-## 7.5 CC 对话实录
+## 7.5 实战复盘：System Prompt 调试
 
-以下是 Prompt 设计迭代中的一段对话（基于真实调试经历复盘）：
+基于真实调试经历复盘：
 
 ```
 [我的 Prompt]

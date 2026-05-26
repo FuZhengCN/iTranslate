@@ -83,7 +83,7 @@ export default defineConfig({
 - 开发时：`npm run dev` → Chrome `chrome://extensions` → "加载已解压的扩展程序" → 选择**项目根目录**（不是 `dist/`）
 - 生产时：`npm run build` → 产出 `dist/` → Chrome 加载 `dist/`
 
-**CC 在脚手架搭建中的实际交互：**
+**实战复盘：CC 如何生成脚手架**
 
 ```
 [我的 Prompt]

@@ -186,9 +186,9 @@ const patterns = [
 
 整体业务流程严格遵循**缓存优先**原则：触发翻译后，程序优先批量查询本地缓存，命中的文本直接复用本地译文、无需请求接口；仅未命中的新增文本，才会发起 AI 翻译请求，翻译完成后自动批量写入缓存。用户二次访问同一页面可实现零请求、零延迟、零成本翻译，极大优化体验、降低使用成本。
 
-## 7.5 Prompt 设计实战复盘
+## 7.5 实战复盘：System Prompt 调试
 
-以下是 Prompt 设计迭代中的一段真实交互（基于调试经历复盘）：
+基于真实调试经历复盘：
 
 项目初期测试翻译引擎时，遇到了两个典型问题。我的 System Prompt 初始版本为 "You are a professional translator. Translate the following text. Use [0], [1] format to label each translation."。实际测试中发现：(1) 部分模型不按 `[0]` `[1]` 格式返回，解析失败；(2) DeepSeek 有时返回空 content，但 API 调用本身成功、Token 正常扣费。
 
