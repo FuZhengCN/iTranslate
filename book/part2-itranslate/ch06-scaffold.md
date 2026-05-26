@@ -8,7 +8,7 @@
 
 ## 5.1 把项目描述丢给 CC
 
-搭建脚手架的过程比我预想的简单得多。我没有 Chrome 扩展开发经验，不知道 manifest.json 该长什么样、不知道构建工具怎么配。我的做法是直接告诉 CC 我要什么：
+搭建脚手架的过程很简单——告诉 CC 你要什么，它生成全部文件。我当时的输入是：
 
 > "我要做一个 Chrome Manifest V3 扩展，用 Vite + TypeScript。帮我初始化项目结构。"
 
@@ -31,9 +31,9 @@
 }
 ```
 
-我当时并不完全理解每个字段的含义，但有几个关键点 CC 在生成时做了明确的决策，值得拆开来看：
+CC 生成的这份配置中有几个关键决策值得拆开来看：
 
-- `manifest_version: 3`：CC 直接选了 V3，没有问我要 V2 还是 V3。事后我才知道 V2 即将被 Chrome 废弃，CC 替我做了正确的默认选择。
+- `manifest_version: 3`：CC 直接选了 V3，没有问。这是正确的默认选择——V2 即将被 Chrome 废弃，新项目选 V2 等于给自己埋后续重构的坑。
 - `permissions`：**只有三个**——`storage`（保存设置）、`activeTab`（获取当前标签页）、`scripting`（动态注入脚本）。CC 没有加 `host_permissions`，这是我最感激它的一个决定——后面会详细说为什么这在审核和用户信任上至关重要。
 - `background.service_worker` 指向 TypeScript 源码路径而不是编译产物——crxjs 在构建时会自动处理路径映射，CC 选择 crxjs 的时候就顺便解决了这个问题。
 - `version: "0.0.0"`：这是一个占位符。真正的版本号在 `package.json` 里，构建时 crxjs 会自动注入。
@@ -72,7 +72,7 @@ export default defineConfig({
 
 核心逻辑：`crx()` 插件展开源码 `manifest.json` 的所有字段，然后用 `package.json` 的 `version` 覆盖 `0.0.0` 占位符。这意味着你永远不需要手动同步版本号——`npm run release` 自动递增构建号后，产物的 manifest 自动跟上。
 
-当时我不清楚为什么选 crxjs，事后理解它的价值在三个维度：
+为什么选 crxjs？它的价值在三个维度：
 
 1. **自动处理 manifest**：版本号注入、TS 源码到编译产物的路径映射、权限声明合并，全自动完成。手动维护 manifest 是 Chrome 扩展开发中最容易出错的环节，crxjs 直接消灭了这个环节。
 2. **HMR 热更新**：`npm run dev` 后修改 Popup 的 TS 文件，保存，浏览器里的扩展弹窗直接更新，不需要手动刷新。这个体验差距在 UI 迭代时非常大。
@@ -106,7 +106,7 @@ src/
     └── storage.ts        # chrome.storage 封装
 ```
 
-刚开始我不理解为什么是四个独立入口而不是一个整合的架构。后来才明白这不是设计选择，而是 Chrome MV3 的架构强制要求——MV3 把扩展拆成了互相隔离的沙箱：
+四个独立入口不是设计偏好，而是 Chrome MV3 的架构强制要求。MV3 把扩展拆成了互相隔离的沙箱：
 
 - **Service Worker**（Background）：没有 DOM 访问权，可随时被浏览器休眠。空闲约 30 秒后终止，下次有消息时重新唤醒。不能在 Background 里维护全局状态，不能用 `setTimeout` 做长时间操作。每次唤醒都是"干净"的环境。
 - **Content Script**：运行在页面上下文中，有完整 DOM 访问权。和页面 JS 在隔离世界（isolated world）中运行——变量不共享，互不污染。生命周期随页面：注入时激活，页面关闭时销毁。
@@ -156,7 +156,7 @@ export default defineConfig({
 tsc && vite build && vite build --config vite.content.config.ts
 ```
 
-先类型检查，再主构建，最后辅助构建。这些如果让我自己配，大概率会在 `emptyOutDir` 这里翻车——主构建产物被清掉、浏览器里扩展直接崩了。CC 在脚手架阶段就把这个坑绕过去了。
+先类型检查，再主构建，最后辅助构建。`emptyOutDir: false` 这个配置尤其关键——清空了主构建产物，扩展在浏览器里就直接崩了。CC 在脚手架阶段就把这个坑绕过去了。
 
 **为什么不用 `content_scripts` 声明式注入？** MV3 支持在 manifest 中声明匹配 URL 让 Chrome 自动注入脚本，但那个方案必须在 manifest 中声明 `host_permissions`。iTranslate 的权限策略不允许这样做。`executeScript` + `activeTab` 的组合是唯一符合最小权限原则的方案，代价就是多了一个 `vite.content.config.ts`。
 
