@@ -113,7 +113,7 @@ iTranslate 项目实际采用的分工模式是：
 | 消息类型 | 12 种跨上下文消息协议 |
 | 开发周期 | 约 7 天，194 次 commit |
 | 支持语言 | 6 种语言（中/英/日/韩/法/德） |
-| Chorme Web Store 审核 | 一次通过（遵守最小权限原则，仅 `storage` + `activeTab` + `scripting`） |
+| Chrome Web Store 审核 | 一次通过（遵守最小权限原则，仅 `storage` + `activeTab` + `scripting`） |
 
 **分工情况：**
 
