@@ -203,13 +203,20 @@ Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `
 
 ## Book Project (`book/`)
 
-本书《Claude Code + DeepSeek 从入门到精通》书稿同在仓库中，17 章 + Part 3 开篇铁律。合稿脚本：`node book/scripts/compile.cjs`，产出 `book/manuscript.md`。Part 1 三个章节（ch01-ch03）有用户亲自润色的版本（`.md` 后缀），我们的编辑版（`*-why-cc-ds.md` / `*-setup.md` / `*-cc-basics.md`）为旧版。
+本书《Claude Code + DeepSeek 从入门到精通》书稿同在仓库中，17 章 + Part 3 开篇铁律。合稿脚本：`node book/scripts/compile.cjs`，产出 `book/manuscript.md`。
+
+**文件版本说明：** 用户亲自润色的版本使用中文文件名（如 `第5章 立项：从模糊想法到标准化技术Spec.md`），subagent 生成的英文文件名（如 `ch05-planning.md`）为旧版。Part 1（ch01-03）和 Part 2（第5-7章）均有润色版。编辑时优先修改中文文件名的润色版，同步更新英文文件名的旧版以保持 compile.cjs 编译链完整。
 
 **书稿编辑规则：**
 - 不编造内容——所有案例、对话、数据必须来自真实项目经历，无法核实的个人经验需注明
+- CC 对话复盘需区分"完全编造"和"基于真实经历重构"——后者是合法的写作手法
 - 不拉踩其他工具——只说 CC 自身的功能和适用场景，不对比贬低
 - iTranslate 定位为"AI Coding 练手项目"，不夸大功能或商业价值
 - 技术事实（API 端点、命令名、模型名、定价）需要和项目源码保持一致
+- 叙事视角：CC 生成代码 → 用户理解设计意图，而非"用户亲手设计"
+- 统一格式：`**本章目标**：` + `**预计字数**：` + `**状态**：` 元信息块 → `## x.1` ~ `## x.N` 编号
+- CC 对话统一命名为 `## x.N 实战复盘：[主题]`，置于核心技巧之前
+- 避免绝对化表述（"最强""唯一""彻底""海量"），避免营销用语（"核心竞争力"）
 
 ## Claude Code 开发环境
 
