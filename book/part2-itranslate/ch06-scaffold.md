@@ -6,7 +6,7 @@
 
 **状态**：✅ 初稿完成
 
-## 5.1 把项目描述丢给 CC
+## 6.1 把项目描述丢给 CC
 
 搭建脚手架的过程很简单——告诉 CC 你要什么，它生成全部文件。我当时的输入是：
 
@@ -50,7 +50,7 @@ CC 生成的这份配置中有几个关键决策值得拆开来看：
 
 ---
 
-## 5.2 Vite + crxjs：CC 的构建选型
+## 6.2 Vite + crxjs：CC 的构建选型
 
 CC 选了 Vite + `@crxjs/vite-plugin` 作为构建方案。它生成的 `vite.config.ts` 只有几行：
 
@@ -85,7 +85,7 @@ export default defineConfig({
 
 ---
 
-## 5.3 四个独立的执行上下文
+## 6.3 四个独立的执行上下文
 
 CC 生成的文件结构是这样的：
 
@@ -119,7 +119,7 @@ src/
 
 ---
 
-## 5.4 IIFE：Content Script 的特殊构建
+## 6.4 IIFE：Content Script 的特殊构建
 
 这个坑是我在项目开发到一半时才发现的。`chrome.scripting.executeScript` 用来动态注入 Content Script，但它有一个关键限制：**不支持 ESM 的 `import`/`export` 语法**。如果直接把含有 `import` 语句的 TypeScript 编译产物丢给 `executeScript`，运行时会报错。
 
@@ -162,7 +162,7 @@ tsc && vite build && vite build --config vite.content.config.ts
 
 ---
 
-## 5.5 核心技巧
+## 6.5 核心技巧
 
 1. **脚手架交给 CC，你只需要确认关键决策**。不需要手写 manifest.json 和构建配置——告诉 CC 技术选型（Vite + TypeScript + MV3），它会生成正确的文件集合。但权限策略一定要自己确认：CC 默认可能加 `host_permissions`，你需要明确要求最小权限。
 
@@ -174,7 +174,7 @@ tsc && vite build && vite build --config vite.content.config.ts
 
 ---
 
-## 5.6 小结
+## 6.6 小结
 
 - **脚手架是 CC 自动生成的，不是手搭的**。告诉 CC 你的技术选型，它会输出正确的文件集合和构建配置。
 - **manifest.json 的权限只声明三个**：`storage`、`activeTab`、`scripting`。没有 `host_permissions`——这是 CC 做的关键决策，直接影响审核速度和用户信任。
