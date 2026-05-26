@@ -146,7 +146,7 @@ Claude Code 默认连接 Anthropic API，但它有一个关键能力：通过自
 
 iTranslate 项目的开发环境很简单：**Claude Code 做前端工具，DeepSeek 做后端基座模型。** 一套工具、一套 API、一个人。
 
-具体配置方式：在 Claude Code 中将 API endpoint 指向 `https://api.deepseek.com/v1`，把 DeepSeek 的 API Key 填入，模型选择 `deepseek-v4-pro`（追求质量）或 `deepseek-v4-flash`（追求速度和性价比）。之后所有的开发交互——写代码、调试、架构讨论——都是 Claude Code 发起，DeepSeek V4 执行推理。
+具体配置方式：通过 CC-Switch 等社区工具一键切换，或在 Claude Code 的 settings.json 中将 API endpoint 指向 DeepSeek 的 Anthropic 兼容端点（`https://api.deepseek.com/anthropic`），填入 API Key，模型映射为 `deepseek-v4-pro`（旗舰推理）或 `deepseek-v4-flash`（日常极速）。之后所有的开发交互——写代码、调试、架构讨论——都是 Claude Code 发起，DeepSeek V4 执行推理。详细配置步骤见第 2 章。
 
 为什么不是反过来（用 DeepSeek 的官方工具 + DeepSeek 模型）？因为 Claude Code 的交互体验远优于 DeepSeek 官方 CLI。它的项目理解能力、Agent 调度、Skills 系统，让开发效率提升了一个量级。DeepSeek 的便宜 API 解决了"用得起"的问题，Claude Code 的工具能力解决了"用得好"的问题。
 

@@ -34,7 +34,7 @@ fetch(`${endpoint}/chat/completions`, {
 
 逐个解释这些参数的设计意图：
 
-**`model` 和 `messages`** 是 `/chat/completions` 的标准字段，没什么好说的。`model` 从 settings 读取，用户可以在设置页随时切换——今天用 `deepseek-chat`，明天换 `gpt-4o`，代码一行不改。
+**`model` 和 `messages`** 是 `/chat/completions` 的标准字段，没什么好说的。`model` 从 settings 读取，用户可以在设置页随时切换——今天用 `deepseek-v4-flash`，明天换 `gpt-4o`，代码一行不改。
 
 **`temperature: 0.1`** 是一个经过权衡的值。翻译场景下，你不希望模型"发挥创造力"——原文说"Apple"，你希望译文是"苹果"而不是"一种蔷薇科水果"。但设为 0（完全确定性）也有问题：输出会变得生硬，缺乏自然语言的流畅感。0.1 保留了极少量的随机性，足以让译文读起来自然，同时不会偏离原文语义。这是翻译场景的最优解，不是随便挑的数字。
 
@@ -188,7 +188,7 @@ iTranslate 用 IndexedDB（通过 `idb` 库）做持久化缓存。选 IndexedDB
 
 ## 7. 核心技巧
 
-1. **为多种模型设计，而不是为一种模型优化。** 你的 prompt 在 gpt-4o 上完美运行不代表在 deepseek-chat 上也能。关键不是在 prompt 里写越来越多的约束，而是在解析层建立容错机制——`parseResponse()` 兼容 4 种格式变体，比写 4 个不同版本的 prompt 优雅得多。
+1. **为多种模型设计，而不是为一种模型优化。** 你的 prompt 在 gpt-4o 上完美运行不代表在 deepseek-v4-flash 上也能。关键不是在 prompt 里写越来越多的约束，而是在解析层建立容错机制——`parseResponse()` 兼容 4 种格式变体，比写 4 个不同版本的 prompt 优雅得多。
 
 2. **temperature 不是越低越好。** 0 会冻结模型的随机性，产出生硬甚至重复的文本。0.1 是翻译场景的 sweet spot——足够确定以忠实原文，足够随机以读起来像人写的。
 
