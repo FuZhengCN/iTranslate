@@ -200,3 +200,38 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。70 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并和向后兼容。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
 
 Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `github` → GitHub (`https://github.com/FuZhengCN/iTranslate.git`).
+
+## Book Project (`book/`)
+
+本书《Claude Code + DeepSeek 从入门到精通》书稿同在仓库中，17 章 + Part 3 开篇铁律。合稿脚本：`node book/scripts/compile.cjs`，产出 `book/manuscript.md`。Part 1 三个章节（ch01-ch03）有用户亲自润色的版本（`.md` 后缀），我们的编辑版（`*-why-cc-ds.md` / `*-setup.md` / `*-cc-basics.md`）为旧版。
+
+**书稿编辑规则：**
+- 不编造内容——所有案例、对话、数据必须来自真实项目经历，无法核实的个人经验需注明
+- 不拉踩其他工具——只说 CC 自身的功能和适用场景，不对比贬低
+- iTranslate 定位为"AI Coding 练手项目"，不夸大功能或商业价值
+- 技术事实（API 端点、命令名、模型名、定价）需要和项目源码保持一致
+
+## Claude Code 开发环境
+
+本项目开发时 Claude Code 通过 **CC-Switch** 连接 DeepSeek V4 作为基座模型，而非 Anthropic 原生 Claude API。
+
+**settings.json 实际配置**（`~/.claude/settings.json`）：
+
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "<deepseek-api-key>",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-pro[1m]",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro[1m]",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-v4-flash[1m]"
+  }
+}
+```
+
+> **注意：** 扩展运行时配置（`src/shared/constants.ts` 中的 `apiEndpoint: 'https://api.deepseek.com/v1'`）和开发工具链配置（上述 `ANTHROPIC_BASE_URL: 'https://api.deepseek.com/anthropic'`）使用不同的端点。`/v1` 是 OpenAI 兼容端点（扩展调用），`/anthropic` 是 Anthropic 兼容端点（CC 调用）。两者不可互换。
+
+**已安装插件：**
+- `superpowers@claude-plugins-official` — 核心工作流（brainstorming/TDD/debugging/code-review）
+- `agent-skills@addy-agent-skills` — 专业审查代理（code-reviewer/test-engineer/security-auditor）
+- `claude-hud@claude-hud` — 终端状态栏
