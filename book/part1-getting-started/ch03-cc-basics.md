@@ -8,7 +8,7 @@
 
 ## 2. Slash Commands 全景
 
-Slash commands 是 Claude Code 的"快捷键"。它们以 `/` 开头，在对话中直接输入，告诉 CC 执行某个内置操作。如果不使用这些命令，你需要用自然语言反复描述同样的意图——比如"请帮我清理一下上下文"或"帮我看看当前这个修改有什么问题"——而 slash commands 让你一句话搞定。
+Slash Commands 是 Claude Code 的"快捷键"。它们以 `/` 开头，在对话中直接输入，告诉 CC 执行某个内置操作。如果不使用这些命令，你需要用自然语言反复描述同样的意图——比如"请帮我清理一下上下文"或"帮我看看当前这个修改有什么问题"——而 Slash Commands 让你一句话搞定。
 
 以下是最常用的几个命令：
 
@@ -28,9 +28,9 @@ Slash commands 是 Claude Code 的"快捷键"。它们以 `/` 开头，在对话
 
 **`/status`** — 查看当前会话状态，包括已加载的文件、活跃的 Agent 等。当你不确定 CC 当前"看到"了什么时，用 `/status` 快速检查。
 
-**自定义 slash commands** — 除了内置命令，你还可以定义自己的。在项目根目录的 `.claude/commands/` 下放一个 markdown 文件，文件名就是命令名。比如我创建了一个 `/release` 命令，内容是"执行 `npm run release`，然后把生成的 zip 文件路径告诉我"，每次要发版时直接输 `/release` 就行，不用每次解释一通。
+**自定义 Slash Commands** — 除了内置命令，你还可以定义自己的。在项目根目录的 `.claude/commands/` 下放一个 markdown 文件，文件名就是命令名。比如我创建了一个 `/release` 命令，内容是"执行 `npm run release`，然后把生成的 zip 文件路径告诉我"，每次要发版时直接输 `/release` 就行，不用每次解释一通。
 
-核心观点：Slash commands 解决的是"重复描述"的问题。用熟了之后，你会发现很多高频操作都不需要写长句子了，一个 `/` 就搞定。
+核心观点：Slash Commands 解决的是"重复描述"的问题。用熟了之后，你会发现很多高频操作都不需要写长句子了，一个 `/` 就搞定。
 
 ---
 
@@ -48,7 +48,7 @@ CC 内置了几种 Agent 类型，各自擅长不同的工作：
 
 **General-purpose Agent** — 通用 Agent，什么都能干，适合执行具体的实现任务。当你说"帮我把这个函数加上错误处理"或"重构这段代码"时，CC 默认就是用通用 Agent 在干活。
 
-**子代理并行**是 Agent 机制最强大的用法之一。你可以同时派多个 Agent 出去干活——比如一个改 content script 的提取逻辑，另一个同时改 background 的缓存策略，两个互不依赖、互不阻塞。在 iTranslate 开发中，我就经常这样用：一边让 Agent A 修改 popup 的 UI，一边让 Agent B 优化 background 的翻译批处理，两边同时推进，不用等一个做完再开始另一个。
+**子代理并行**是 Agent 机制最实用的场景之一。你可以同时派多个 Agent 出去干活——比如一个改 content script 的提取逻辑，另一个同时改 background 的缓存策略，两个互不依赖、互不阻塞。在 iTranslate 开发中，我就经常这样用：一边让 Agent A 修改 popup 的 UI，一边让 Agent B 优化 background 的翻译批处理，两边同时推进，不用等一个做完再开始另一个。
 
 **Agent 的隔离性**是关键。每个 Agent 有自己独立的上下文窗口，Agent A 读的文件、做的修改不会污染 Agent B 的上下文。这意味着你不会遇到"聊着聊着 CC 把两个任务的上下文搞混了"的情况。不过这也意味着你需要给每个 Agent 足够清晰的任务描述——它看不到你和其他 Agent 的对话。
 
