@@ -3,14 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **语言要求：所有回复、解释、注释、说明使用简体中文，代码关键字/标识符保留英文。**
-
-## 铁律
-
-1. **根因驱动**：必须定位到问题的根本原因再动手修改。禁止在未找到根因的情况下猜测性修改代码。每个修改必须能解释"为什么"。
-2. **三轮止损**：同一个问题如果在三个对话轮次内仍未解决，必须停下来回到问题起点，从第一性原理重新分析，不可继续沿用之前的思路惯性。
-3. **极简修改**：能少写一行代码就绝不多写。优先用最精简的方式解决问题，禁止引入不必要的抽象、额外文件或依赖。
-4. **专注问题**：改问题时只改问题本身，禁止顺手重构、格式化、优化无关代码。重构需要先征得明确同意。
-5. **二次确认**：当用户的选择与你推荐的选择不符时，必须先展示该选择的利弊，让用户二次确认后再执行。禁止直接按用户选择执行而不做利弊提醒。
+**铁律见全局 `~/.claude/CLAUDE.md`（6 条），本项目不再重复。**
 
 ## Build & Test Commands
 
@@ -165,8 +158,7 @@ Popup click → content script
   - **`default-filter`** — 旧 CJK/Latin 字符数阈值（CJK ≥12，Latin ≥20），兼容原行为。
   - **`debug-visualization.ts`** — 调试可视化（独立 dev 入口）。绿色/红色高亮标注保留/过滤元素，通过 `window.__itranslateFilterV2` 暴露。
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
-- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。`startObserving(root, callback)` / `stopObserving()`。监听 `childList` + `subtree` + `attributes`（`attributeFilter: ['class', 'style']`），捕获 CSS 类名切换导致的隐藏/显示变化。回调触发 `catchUpNewContent()`（增量），非完整 `translatePage()`。
-- **`src/content/toast.ts`** — 死代码，不再被任何模块引用，可安全删除。
+- **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
 - **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 33 个 `--itranslate-*` 变量。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段对旧用户自动获得默认值。语言锁定不在此模块——per-tab lock 由 popup.ts 通过 `chrome.storage.session` 独立管理。
@@ -193,11 +185,11 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 **主题系统：** `src/shared/theme.css` 集中定义 34 个 `--itranslate-*` CSS 变量（含 `--itranslate-gradient-undo` 撤销按钮暖陶色渐变）。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
 
-**组件视觉：** popup logo 纯色冰川蓝。翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字（`--itranslate-gradient-undo`），颜色切换由 `setButtonState()` 统一管理。按钮/开关/Toast 微渐变（同色系浅→深）。进度指示器：浅冰蓝 3 个圆点依次弹跳（`itranslate-dot`）。划词翻译泡泡（`itranslate-selection-bubble`）：极地冰川主题 — 米白渐变底（`#FCFBF9`→`#F5F3EF`）、14px 圆角、冰川蓝微边框、4px 三色渐变顶条；Header 左侧"通译"品牌名兼拖拽手柄；原文折叠 3 行渐变淡出；译文上方细分割线；复制按钮胶囊形（`border-radius: 14px`）、关闭按钮正圆形。划词触发小球（`itranslate-selection-ball`）：12px 冰川蓝圆点，悬停 JS 加 `.animating` class 驱动 `translateY(-12px) scale(2)` 膨胀动画 + 光环扩散 1s 匀速减速缓动，防鼠标微移重启动画，`::after` 通过 `attr(data-label)` 显示"译"/"Tr"。翻译文本：`sans-serif`，opacity 0.85，颜色等样式从原文元素动态复制。`::selection` 高亮色通过 CSS 变量注入。无 toast 通知栏。
+**组件视觉：** 翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字，`setButtonState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。70 个测试分布在 9 个文件中（`__tests__/` 目录）。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并和向后兼容。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件位于各模块的 `__tests__/` 目录。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并和向后兼容。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
 
 Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `github` → GitHub (`https://github.com/FuZhengCN/iTranslate.git`).
 
