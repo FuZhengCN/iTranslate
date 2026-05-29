@@ -57,7 +57,7 @@ export interface ExtractionResult {
 }
 
 // 纯 DOM 提取，产出生段（不做内容过滤）
-export function extractRawSegments(root: Element = document.body): RawSegment[] {
+export function extractRawSegments(root: Element = findContentRoot()): RawSegment[] {
   const allElements = root.querySelectorAll('*');
   const blockTexts = new Map<Element, { texts: string[]; leafElements: Element[] }>();
   let skippedLeaf = 0;
