@@ -160,17 +160,18 @@ Popup click → content script
   - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链向上检查 `SKIP_CLASS_NAMES` + `itranslate-translation` class（extractor 的 `isSkippable()` 只检查元素自身 class，子元素自身不含此类名需由 filter 层补刀），一直走到 `document.documentElement` 不停（含 `<body>` 和 `<html>`）。若页面顶层容器 class 命中 skip 关键词，会导致全页内容被过滤（已知 whitehouse.gov 触发此问题）。标题（H1-H6）直接保留不做字符数限制。非标题无字符数阈值。噪音模式过滤纯数字、时间戳、相对时间等。
   - **`default-filter`** — 旧 CJK/Latin 字符数阈值（CJK ≥12，Latin ≥20），兼容原行为。
   - **`debug-visualization.ts`** — 调试可视化（独立 dev 入口）。绿色/红色高亮标注保留/过滤元素，通过 `window.__itranslateFilterV2` 暴露。
-- **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
+- **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`createClone()` 统一创建翻译元素（`<li>` 在 `<ol>`/`<ul>` 内时改用 `<div>` 标签，避免浏览器对翻译副本自动编号/加 bullet）。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
 - **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 46 个 `--itranslate-*` 变量（含调试可视化变量、复制成功状态、翻译文本色等）。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段对旧用户自动获得默认值。语言锁定不在此模块——per-tab lock 由 popup.ts 通过 `chrome.storage.session` 独立管理。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
+- **`src/shared/types.ts`** — 核心类型定义。`TranslationSegment`、`TranslationResult`、`CacheEntry`、`Settings` 等接口均在此定义，跨 background/content/popup 共享。
 
 ### Translation DOM Pattern
 
-原始元素保持不变。翻译是块级祖先元素的**浅克隆**（相同标签、类、属性），通过 `insertAdjacentElement('afterend', clone)` 插入其后。CSS 类 `itranslate-translation` 标记所有翻译元素（`opacity: 0.85`，`font-family: sans-serif`）。`.itranslate-placeholder` 类显示 3 点进度指示器，翻译完成后移除。
+原始元素保持不变。翻译是块级祖先元素的**浅克隆**（复制所有属性，通过 `insertAdjacentElement('afterend', clone)` 插入其后）。**例外：** `<li>` 在 `<ol>`/`<ul>` 内时，克隆改用 `<div>` 标签，避免浏览器将翻译副本渲染为额外编号/项目符号。CSS 类 `itranslate-translation` 标记所有翻译元素（`opacity: 0.85`，`font-family: sans-serif`）。`.itranslate-placeholder` 类显示 3 点进度指示器，翻译完成后移除。
 
 ### Icons
 
@@ -192,7 +193,7 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件（10 个，76 个用例）位于各模块的 `__tests__/` 目录：
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件（10 个，79 个用例）位于各模块的 `__tests__/` 目录：
 
 | 测试文件 | 覆盖 |
 |----------|------|
