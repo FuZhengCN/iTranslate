@@ -29,6 +29,30 @@ function findTextLeaf(block: Element): Element | null {
   return bestEl;
 }
 
+/** Determine the tag name for a translation clone. For `<li>` inside
+ *  `<ol>`/`<ul>`, use `<div>` to avoid the browser rendering the clone as an
+ *  additional numbered/bulleted list item. */
+function getCloneTag(source: Element): string {
+  const parent = source.parentElement;
+  if (parent && (parent.tagName === 'OL' || parent.tagName === 'UL')
+      && source.tagName === 'LI') {
+    return 'DIV';
+  }
+  return source.tagName;
+}
+
+/** Create a shallow clone of the source element for translation insertion.
+ *  Copies all attributes from source. For list items, the tag may differ
+ *  (see {@link getCloneTag}). */
+function createClone(source: Element): HTMLElement {
+  const clone = document.createElement(getCloneTag(source));
+  for (let i = 0; i < source.attributes.length; i++) {
+    const attr = source.attributes[i];
+    clone.setAttribute(attr.name, attr.value);
+  }
+  return clone;
+}
+
 /** Copy key text-rendering computed styles from source element's text leaf
  *  to the translation target, so the clone matches the original text
  *  appearance even though it lacks the inner DOM structure. Also resets
@@ -65,7 +89,7 @@ export function renderPlaceholders(sourceElements: Element[]): void {
       continue;
     }
 
-    const clone = el.cloneNode(false) as HTMLElement;
+    const clone = createClone(el);
     clone.innerHTML = '<span class="itranslate-dot"></span><span class="itranslate-dot"></span><span class="itranslate-dot"></span>';
     clone.classList.add('itranslate-translation', 'itranslate-placeholder');
     // 移除可能从源元素克隆来的隐藏样式，确保占位点可见
@@ -107,7 +131,7 @@ export function renderTranslations(
       continue;
     }
 
-    const clone = el.cloneNode(false) as HTMLElement;
+    const clone = createClone(el);
     clone.textContent = result.translated;
     clone.classList.add('itranslate-translation');
     applyTextStyles(el, clone);

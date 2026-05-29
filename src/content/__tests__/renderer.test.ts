@@ -38,6 +38,40 @@ describe('renderPlaceholders', () => {
     const placeholders = document.querySelectorAll('.itranslate-placeholder');
     expect(placeholders).toHaveLength(1);
   });
+
+  it('uses div tag for li inside ol to avoid extra numbering', () => {
+    document.body.innerHTML = `
+      <ol>
+        <li>First</li>
+        <li>Second</li>
+      </ol>
+    `;
+
+    const items = document.querySelectorAll('li');
+    renderPlaceholders(Array.from(items));
+
+    // Placeholders should be <div>, not <li>, inside <ol>
+    const placeholders = document.querySelectorAll('.itranslate-placeholder');
+    expect(placeholders).toHaveLength(2);
+    expect(placeholders[0].tagName).toBe('DIV');
+    expect(placeholders[1].tagName).toBe('DIV');
+  });
+
+  it('uses div tag for li inside ul to avoid extra bullets', () => {
+    document.body.innerHTML = `
+      <ul>
+        <li>Item A</li>
+        <li>Item B</li>
+      </ul>
+    `;
+
+    const items = document.querySelectorAll('li');
+    renderPlaceholders(Array.from(items));
+
+    const placeholders = document.querySelectorAll('.itranslate-placeholder');
+    expect(placeholders).toHaveLength(2);
+    expect(placeholders[0].tagName).toBe('DIV');
+  });
 });
 
 describe('renderTranslations', () => {
@@ -165,6 +199,28 @@ describe('renderTranslations', () => {
 
     expect(original.textContent).toBe('Hello world.');
     expect(original.classList.contains('itranslate-translation')).toBe(false);
+  });
+
+  it('uses div tag for li translation inside ol', () => {
+    document.body.innerHTML = `
+      <ol>
+        <li>First</li>
+      </ol>
+    `;
+
+    const el = document.querySelector('li')!;
+    const results = [
+      { id: 'seg_0', original: 'First', translated: '第一' },
+    ];
+
+    renderTranslations(results, [el]);
+
+    // Translation should be a <div> inside <ol>, not <li>
+    const translation = document.querySelector('.itranslate-translation')!;
+    expect(translation.tagName).toBe('DIV');
+    expect(translation.textContent).toBe('第一');
+    // Original <li> is still the only <li>
+    expect(document.querySelectorAll('li')).toHaveLength(1);
   });
 });
 
