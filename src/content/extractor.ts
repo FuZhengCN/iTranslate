@@ -1,6 +1,7 @@
 import type { RawSegment } from './filters/types';
 import type { TranslationSegment } from '../shared/types';
 import { getActiveFilter } from './filters/registry';
+import { getSiteRoot } from './site-rules';
 
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME', 'CODE', 'PRE', 'KBD', 'BR', 'HR', 'IMG', 'INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'VIDEO', 'AUDIO', 'CANVAS']);
 const SKIP_CLASS_NAMES = /\b(?:header|footer|nav|sidebar|comment|menu|widget|widgets|ad|advert|advertisement|banner|social|share-btn|related|trending|recommend|recommended|avatar|byline|publishTime|time-hidden|property-name|addMore|view-more|load-more|read-more)\b/i;
@@ -47,7 +48,7 @@ function findBlockAncestor(el: Element): Element {
 }
 
 function findContentRoot(): Element {
-  return document.body;
+  return getSiteRoot();
 }
 
 export interface ExtractionResult {
