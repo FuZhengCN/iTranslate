@@ -117,6 +117,8 @@ Popup click → content script
 
 内容脚本为 IIFE 格式（`vite.content.config.ts` 单独构建），因 `executeScript` 不支持 ESM `import` 语句。CSS（`theme.css` + `styles.css`）通过 `?inline` 导入为字符串，注入时创建 `<style>` 标签插入页面。
 
+**扩展更新后内容脚本过期恢复：** Popup 发送 `translatePage`/`undoTranslation` 失败时，自动调用 `ensureContentScript()` 重新注入内容脚本后重试。应对扩展更新后旧版 content script 已卸载但新版本未注入的情况。
+
 ### Selection Translation Flow (划词翻译)
 
 ```
@@ -152,7 +154,8 @@ Popup click → content script
 - **`src/background/dict-prompt.ts`** — 词典 prompt 预制内置（不在 settings 中，用户不可编辑）。`DICT_SYSTEM_PROMPT` 为英→中词典 system prompt（JSON 输出格式：`{word, ipa, pos, definitions: [{zh}]}`）。`dictUserPrompt(word)` 生成 `Define: ${word}`。`parseDictionaryResponse(raw)` 解析 JSON 响应，清理 markdown fences，校验必填字段，失败返回 null。当前仅英→中一份 prompt，后期扩展改为语言对注册表。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。`handleTranslate(segments, tabId?, mode?)` 支持 `'translate'` 和 `'dictionary'` 双模式。缓存 key 含 mode 前缀（`dict_`/`seg_`）和目标语言，词典/翻译缓存互不覆盖。词典模式先校验语言对（仅英→中），不满足则降级翻译。`translateDictionary()` JSON 解析失败时自动 fallback 到 `translateBatch()`。结果用位置映射（position map）排序。每次翻译前重新读取 settings 以获取最新 targetLang。
-- **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素通过 `offsetParent === null` 跳过**（注意：`offsetParent` 对 `position:fixed` 和 `display:contents` 元素也返回 null，存在漏判可能）。文件内 `extractSegments()` 为向后兼容死代码，活跃入口在 `filters/index.ts`。
+- **`src/content/extractor.ts`** — 纯 DOM 提取层，不做内容过滤。`extractRawSegments(root?)` 默认根由 `findContentRoot()` → `getSiteRoot()` 决定（站点规则命中时限定到指定容器，否则 `document.body`）。遍历所有元素，筛选有直接文本节点的元素，按块级祖先（`P/DIV/LI/H1-H6` 等）分组，产出 `RawSegment[]`（含 `id`、`text`、`blockElement`、`isHeading`、`leafElements`）。结构过滤（`isSkippable`）跳过 `SKIP_TAGS` / `SKIP_CLASS_NAMES` / ARIA 角色 / `hidden` / `aria-hidden` / `itranslate-translation` 类。叶子级 ≤3 字符文本（非标题）丢弃。**CSS 隐藏元素通过 `offsetParent === null` 跳过**（注意：`offsetParent` 对 `position:fixed` 和 `display:contents` 元素也返回 null，存在漏判可能）。文件内 `extractSegments()` 为向后兼容死代码，活跃入口在 `filters/index.ts`。
+- **`src/content/site-rules.ts`** — 站点感知提取规则。`SITE_RULES` 数组按 hostname 后缀匹配（含子域名），将提取范围限定到指定 CSS selector 容器。当前规则：`github.com` → `.markdown-body`（只翻译 README/Issue/PR/Wiki 区域）。`getSiteRoot(hostname?)` 命中规则返回匹配元素，未命中或选择器无匹配降级为 `document.body`。新增站点只需追加一条 `SiteRule`。
 - **`src/content/filters/` — 标准过滤器模块**。`SegmentFilter` 接口定义在 `types.ts`（`{ name, filter(segments: RawSegment[]): FilterResult }`），第三方实现此接口即可接入。`registry.ts` 提供 `registerFilter()` / `setActiveFilter()` / `getActiveFilter()` 纯内存注册机制。`index.ts` 为 barrel 入口，自动注册内建过滤器并默认激活 `structured-filter`，同时导出 `extractSegments()`（内部调用 `extractRawSegments()` + 活跃过滤器）。内建两个实现：
   - **`structured-filter`**（默认）— 结构化过滤 + 标题豁免。`hasSkippableAncestor()` 沿祖先链向上检查 `SKIP_CLASS_NAMES` + `itranslate-translation` class（extractor 的 `isSkippable()` 只检查元素自身 class，子元素自身不含此类名需由 filter 层补刀），一直走到 `document.documentElement` 不停（含 `<body>` 和 `<html>`）。若页面顶层容器 class 命中 skip 关键词，会导致全页内容被过滤（已知 whitehouse.gov 触发此问题）。标题（H1-H6）直接保留不做字符数限制。非标题无字符数阈值。噪音模式过滤纯数字、时间戳、相对时间等。
   - **`default-filter`** — 旧 CJK/Latin 字符数阈值（CJK ≥12，Latin ≥20），兼容原行为。
@@ -160,7 +163,7 @@ Popup click → content script
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。通过 `cloneNode(false)` 克隆，`afterend` 插入。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
-- **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 33 个 `--itranslate-*` 变量。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
+- **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 46 个 `--itranslate-*` 变量（含调试可视化变量、复制成功状态、翻译文本色等）。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段对旧用户自动获得默认值。语言锁定不在此模块——per-tab lock 由 popup.ts 通过 `chrome.storage.session` 独立管理。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（sourceLang: English、targetLang: Chinese）、`LANGUAGE_OPTIONS`（6 种语言，含 label/value 对）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
@@ -183,13 +186,28 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Visual Design & Theming
 
-**主题系统：** `src/shared/theme.css` 集中定义 34 个 `--itranslate-*` CSS 变量（含 `--itranslate-gradient-undo` 撤销按钮暖陶色渐变）。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
+**主题系统：** `src/shared/theme.css` 集中定义 46 个 `--itranslate-*` CSS 变量。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
 
 **组件视觉：** 翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字，`setButtonState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件位于各模块的 `__tests__/` 目录。`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。Cache 测试条目中包含 `original` 字段。Storage 测试覆盖默认值、合并和向后兼容。Lang-detect 测试覆盖所有支持的 BCP 47 标签、null/空输入以及基于字符的回退检测。i18n 测试覆盖语言检测（zh-CN/zh-TW/zh/en-US/en-GB/不支持的语言）和 `t()` 函数（已知 key、缺失 key 回退、单占位符替换、多占位符替换）。`structured-filter` 测试使用 `RawSegment[]` 构造输入（不依赖 DOM），覆盖标题豁免、噪音过滤、结构过滤、边界值。
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件（10 个，76 个用例）位于各模块的 `__tests__/` 目录：
+
+| 测试文件 | 覆盖 |
+|----------|------|
+| `src/shared/__tests__/i18n.test.ts` | 语言检测（zh-CN/zh-TW/en-US/en-GB）和 `t()` 函数 |
+| `src/shared/__tests__/lang-detect.test.ts` | BCP 47 标签映射、null/空输入、字符回退检测 |
+| `src/shared/__tests__/storage.test.ts` | 默认值合并、向后兼容 |
+| `src/background/__tests__/cache.test.ts` | IndexedDB 缓存读写 |
+| `src/background/__tests__/translator.test.ts` | 分批策略、API 调用 |
+| `src/content/__tests__/extractor.test.ts` | DOM 提取、块合并、噪音过滤、去重 |
+| `src/content/__tests__/renderer.test.ts` | placeholder 注入、翻译渲染、样式复制 |
+| `src/content/__tests__/selection.test.ts` | 小球创建/销毁生命周期、气泡定位 |
+| `src/content/__tests__/site-rules.test.ts` | hostname 匹配、子域名、降级、多规则优先级 |
+| `src/content/__tests__/filters/structured-filter.test.ts` | 标题豁免、噪音过滤、结构过滤、边界值 |
+
+`setup.ts` mock `HTMLElement.prototype.offsetParent` 为非 null（jsdom 无布局引擎）。用 `vi.stubGlobal('chrome', {...})` 模拟 `chrome.*` API，然后在测试中动态 import 模块。
 
 Remotes: `origin` → Gitee (`https://gitee.com/fuzheng0312/i-translate.git`), `github` → GitHub (`https://github.com/FuZhengCN/iTranslate.git`).
 
