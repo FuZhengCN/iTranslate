@@ -15,6 +15,15 @@ describe('site-rules', () => {
     expect(root).toBe(div);
   });
 
+  it('子域名后缀匹配 → 返回 querySelector 匹配元素', () => {
+    const div = document.createElement('div');
+    div.className = 'markdown-body';
+    document.body.appendChild(div);
+
+    const root = getSiteRoot('gist.github.com');
+    expect(root).toBe(div);
+  });
+
   it('无匹配规则 → 返回 document.body', () => {
     const root = getSiteRoot('example.com');
     expect(root).toBe(document.body);
