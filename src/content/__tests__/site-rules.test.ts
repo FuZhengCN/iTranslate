@@ -56,6 +56,31 @@ describe('site-rules', () => {
     }
   });
 
+  it.each([
+    { hostname: 'github.com', selector: '.markdown-body', desc: 'GitHub' },
+    { hostname: 'gitee.com', selector: '.markdown-body', desc: 'Gitee' },
+    { hostname: 'gitlab.com', selector: '.md', desc: 'GitLab' },
+    { hostname: 'stackoverflow.com', selector: '.s-prose', desc: 'Stack Overflow' },
+    { hostname: 'math.stackexchange.com', selector: '.s-prose', desc: 'Stack Exchange 子站' },
+    { hostname: 'npmjs.com', selector: '#readme', desc: 'NPM' },
+    { hostname: 'medium.com', selector: 'article', desc: 'Medium' },
+    { hostname: 'dev.to', selector: '#article-body', desc: 'Dev.to' },
+  ])('$desc ($hostname) 命中规则 → 返回选择器匹配元素', ({ hostname, selector }) => {
+    // 创建匹配元素：标签选择器直接用标签名，否则用 div + class/id
+    let el: HTMLElement;
+    if (selector.startsWith('#')) {
+      el = Object.assign(document.createElement('div'), { id: selector.slice(1) });
+    } else if (selector.startsWith('.')) {
+      el = Object.assign(document.createElement('div'), { className: selector.slice(1) });
+    } else {
+      el = document.createElement(selector);
+    }
+    document.body.appendChild(el);
+
+    const root = getSiteRoot(hostname);
+    expect(root).toBe(el);
+  });
+
   it('空规则数组 → 返回 document.body', () => {
     const saved = SITE_RULES.slice();
     SITE_RULES.length = 0;
