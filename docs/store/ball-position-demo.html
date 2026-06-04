@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小球位置演示 — positionBall</title>
+<style>
+  :root {
+    --ball: #08a9d9;
+    --ball-glow: rgba(8,169,217,0.35);
+  }
+  body {
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f2f5;
+  }
+  .panel {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    flex-wrap: wrap;
+  }
+  .case {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    width: 360px;
+    flex-shrink: 0;
+  }
+  .case-header {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 14px;
+    background: #1e293b;
+    color: #e2e8f0;
+  }
+  .case-header code {
+    font-weight: 400;
+    color: #94a3b8;
+  }
+  .viewport {
+    position: relative;
+    width: 360px;
+    height: 220px;
+    border-bottom: 1px dashed #ccc;
+    background: #fafbfc;
+    overflow: hidden;
+  }
+  .selection {
+    position: absolute;
+    background: rgba(79,70,229,0.18);
+    border: 1px solid rgba(79,70,229,0.4);
+    border-radius: 3px;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    padding: 2px 6px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ball {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--ball);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--ball-glow);
+    z-index: 10;
+  }
+  .ball::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--ball);
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .pos-info {
+    font-size: 11px;
+    color: #64748b;
+    padding: 8px 14px;
+    line-height: 1.6;
+    border-top: 1px solid #eee;
+  }
+  .pos-info span {
+    color: #0f172a;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<h2 style="padding:20px 20px 0; margin:0; font-size:18px; color:#1e293b;">
+  positionBall 定位逻辑演示
+</h2>
+<p style="padding:4px 20px 16px; margin:0; font-size:13px; color:#64748b;">
+  12px 冰川蓝小球，优先出现在选区<strong>右上角</strong>外侧 2px，空间不足则翻转
+</p>
+
+<div class="panel" id="panel"></div>
+
+<script>
+const BALL_SIZE = 12;
+const GAP = 2;
+const VP_W = 360;
+const VP_H = 220;
+
+function positionBall(rect) {
+  let top = rect.top - BALL_SIZE - GAP;
+  let left = rect.right + GAP;
+
+  if (top < GAP) top = rect.bottom + GAP;
+  if (left + BALL_SIZE > VP_W - GAP) {
+    left = rect.left - BALL_SIZE - GAP;
+  }
+  if (left < GAP) left = GAP;
+
+  return { top, left };
+}
+
+const cases = [
+  {
+    label: '情况 1：默认 — 右上角',
+    desc: '选区在视口中间，小球出现在选区右上方',
+    rect: { top: 90, right: 240, bottom: 114, left: 120 },
+  },
+  {
+    label: '情况 2：顶部溢出 — 翻到下方',
+    desc: '选区靠近视口顶部，top < 2px 翻转到选区下方',
+    rect: { top: 6, right: 200, bottom: 30, left: 80 },
+  },
+  {
+    label: '情况 3：右侧溢出 — 翻到左侧',
+    desc: 'left + 12 > 358，小球翻转到选区左侧',
+    rect: { top: 80, right: 355, bottom: 104, left: 310 },
+  },
+  {
+    label: '情况 4：左侧溢出 — clamp 到 2px',
+    desc: '选区覆盖整个宽度，左侧也没空间，强制 left = 2px',
+    rect: { top: 40, right: 358, bottom: 64, left: 2 },
+  },
+  {
+    label: '情况 5：左上角极限',
+    desc: '选区靠左上角，top < 2 且 right 不溢出 → 翻到下方',
+    rect: { top: 2, right: 160, bottom: 26, left: 40 },
+  },
+  {
+    label: '情况 6：右下角 — 正常右上',
+    desc: '选区在右下角，上方和右侧都有空间，正常右上',
+    rect: { top: 170, right: 300, bottom: 195, left: 180 },
+  },
+  {
+    label: '情况 7：同时顶部+右侧溢出',
+    desc: 'top < 2 翻转到下，right 溢出翻转到左',
+    rect: { top: 2, right: 358, bottom: 26, left: 310 },
+  },
+  {
+    label: '情况 8：窄选区 — 正常右上',
+    desc: '选区很窄（单个字），小球仍在右上',
+    rect: { top: 60, right: 155, bottom: 84, left: 140 },
+  },
+];
+
+function renderCases() {
+  const panel = document.getElementById('panel');
+  cases.forEach((c, i) => {
+    const pos = positionBall(c.rect);
+    const caseEl = document.createElement('div');
+    caseEl.className = 'case';
+
+    const flipInfo = [];
+    const rawTop = c.rect.top - BALL_SIZE - GAP;
+    const rawLeft = c.rect.right + GAP;
+    if (pos.top !== rawTop) flipInfo.push(`top: ${rawTop}→<span>${pos.top}</span> (翻到下)`);
+    if (pos.left !== rawLeft) flipInfo.push(`left: ${rawLeft}→<span>${pos.left}</span> (翻到左)`);
+    if (pos.left === GAP && rawLeft !== GAP) flipInfo.push(`left clamp 到 <span>2px</span>`);
+
+    caseEl.innerHTML = `
+      <div class="case-header">${c.label} <code>#${i + 1}</code></div>
+      <div class="viewport">
+        <div class="selection" style="
+          top:${c.rect.top}px;
+          left:${c.rect.left}px;
+          width:${c.rect.right - c.rect.left}px;
+          height:${c.rect.bottom - c.rect.top}px;
+          line-height:${c.rect.bottom - c.rect.top - 4}px;
+        ">selected text</div>
+        <div class="ball" style="top:${pos.top}px; left:${pos.left}px;" data-label="ball"></div>
+      </div>
+      <div class="pos-info">
+        📐 rect: { top:<span>${c.rect.top}</span>, right:<span>${c.rect.right}</span>, bottom:<span>${c.rect.bottom}</span>, left:<span>${c.rect.left}</span> }
+        ${flipInfo.length ? '<br>🔄 ' + flipInfo.join('，') : '<br>✅ 无翻转，默认右上角'}
+        <br>📍 最终: top=<span>${pos.top}px</span>, left=<span>${pos.left}px</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;padding:0 14px 10px;line-height:1.5;">${c.desc}</div>
+    `;
+    panel.appendChild(caseEl);
+  });
+}
+
+renderCases();
+</script>
+</body>
+</html>

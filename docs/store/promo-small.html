@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 440px; height: 280px; overflow: hidden;
+    background: #F5F3EF;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+    display: flex; align-items: center; padding: 0 36px;
+    background-image:
+      radial-gradient(ellipse at 85% 15%, rgba(148,200,224,0.28) 0%, transparent 55%),
+      radial-gradient(ellipse at 10% 85%, rgba(107,174,207,0.18) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(148,200,224,0.06) 0%, transparent 70%);
+  }
+
+  .icon {
+    width: 104px; height: 104px; flex-shrink: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%2394C8E0"/><stop offset="100%25" style="stop-color:%236BAECF"/></linearGradient></defs><rect width="128" height="128" rx="24" fill="url(%23g)"/><rect x="24" y="20" width="100" height="82" rx="24" fill="%23F5F3EF" opacity="0.45"/><rect x="14" y="28" width="96" height="82" rx="24" fill="%23F5F3EF" opacity="0.88"/><text x="62" y="94" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,Noto Sans SC,sans-serif" font-weight="700" font-size="72" fill="%235A6270">译</text></svg>') center/contain no-repeat;
+    border-radius: 22px;
+    box-shadow: 0 6px 24px rgba(107,174,207,0.22), 0 2px 8px rgba(0,0,0,0.06);
+    margin-right: 28px;
+  }
+
+  .text-col { flex: 1; }
+
+  .name {
+    font-size: 31px; font-weight: 700; color: #2A3038; letter-spacing: -0.3px;
+    line-height: 1.15;
+  }
+  .name .zh { font-weight: 500; font-size: 24px; color: #5A6270; margin-left: 4px; }
+
+  .tagline {
+    font-size: 13px; color: #5A6270; margin: 6px 0 14px; line-height: 1.4;
+  }
+
+  .features {
+    display: flex; gap: 7px; flex-wrap: wrap;
+  }
+  .chip {
+    font-size: 11.5px; padding: 5px 12px;
+    background: rgba(107,174,207,0.13); color: #2A3038;
+    border-radius: 14px; font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+</style>
+</head>
+<body>
+  <div class="icon"></div>
+  <div class="text-col">
+    <div class="name">iTranslate <span class="zh">通译</span></div>
+    <div class="tagline">AI 驱动的沉浸式双语翻译，支持多语种互译</div>
+    <div class="features">
+      <span class="chip">全文翻译</span>
+      <span class="chip">划词翻译</span>
+      <span class="chip">词典查词</span>
+      <span class="chip">6 语种</span>
+    </div>
+  </div>
+</body>
+</html>

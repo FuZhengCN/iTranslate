@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iTranslate Chrome Web Store — 宣传图方案对比</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    background: #1a1f2e;
+    color: #e2e8f0;
+    padding: 32px 24px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #94C8E0;
+    margin-bottom: 8px;
+  }
+  header p {
+    color: #9BA8B5;
+    font-size: 14px;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #B8DCEB;
+    margin: 48px 0 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #2d3548;
+  }
+
+  .concept-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #9BA8B5;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: #222839;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    border: 1px solid #2d3548;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #6BAECF; }
+  .card h3 {
+    font-size: 16px;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+  }
+  .card .desc {
+    font-size: 13px;
+    color: #9BA8B5;
+    margin-bottom: 16px;
+  }
+  .card .tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .card .tag {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: rgba(148, 200, 224, 0.15);
+    color: #94C8E0;
+  }
+
+  .preview-frame {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    background: #F5F3EF;
+  }
+
+  /* ── Small Tile Designs (440×280) ─────────────────────── */
+  .small-tile {
+    width: 440px; height: 280px; position: relative; overflow: hidden;
+  }
+
+  /* A: Icon Hero */
+  .tile-a {
+    background: linear-gradient(135deg, #6BAECF 0%, #94C8E0 50%, #B8DCEB 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .tile-a .icon-wrap {
+    width: 96px; height: 96px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%2394C8E0"/><stop offset="100%25" style="stop-color:%236BAECF"/></linearGradient></defs><rect width="128" height="128" rx="24" fill="url(%23g)"/><rect x="24" y="20" width="100" height="82" rx="24" fill="%23F5F3EF" opacity="0.45"/><rect x="14" y="28" width="96" height="82" rx="24" fill="%23F5F3EF" opacity="0.88"/><text x="62" y="94" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-weight="700" font-size="72" fill="%235A6270">译</text></svg>') center/contain no-repeat;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    margin-bottom: 18px;
+  }
+  .tile-a .name {
+    font-size: 32px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .tile-a .tagline {
+    font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* B: Left-Right Layout */
+  .tile-b {
+    background: #F5F3EF;
+    display: flex; align-items: center; padding: 0 40px;
+    background-image:
+      radial-gradient(ellipse at 85% 20%, rgba(148,200,224,0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 15% 80%, rgba(107,174,207,0.15) 0%, transparent 40%);
+  }
+  .tile-b .icon-col {
+    width: 100px; height: 100px; flex-shrink: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%2394C8E0"/><stop offset="100%25" style="stop-color:%236BAECF"/></linearGradient></defs><rect width="128" height="128" rx="24" fill="url(%23g)"/><rect x="24" y="20" width="100" height="82" rx="24" fill="%23F5F3EF" opacity="0.45"/><rect x="14" y="28" width="96" height="82" rx="24" fill="%23F5F3EF" opacity="0.88"/><text x="62" y="94" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-weight="700" font-size="72" fill="%235A6270">译</text></svg>') center/contain no-repeat;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(107,174,207,0.2);
+    margin-right: 24px;
+  }
+  .tile-b .text-col { flex: 1; }
+  .tile-b .name {
+    font-size: 30px; font-weight: 700; color: #2A3038; letter-spacing: -0.5px;
+  }
+  .tile-b .tagline {
+    font-size: 13px; color: #5A6270; margin-top: 2px; margin-bottom: 12px;
+  }
+  .tile-b .features {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .tile-b .chip {
+    font-size: 11px; padding: 4px 10px;
+    background: rgba(107,174,207,0.12); color: #2A3038;
+    border-radius: 12px; font-weight: 500;
+  }
+
+  /* C: 译 Brand Hero */
+  .tile-c {
+    background: linear-gradient(160deg, #2A3038 0%, #3a4458 100%);
+    display: flex; align-items: center; padding: 0 36px;
+  }
+  .tile-c .brand-char {
+    font-size: 140px; font-weight: 900; color: rgba(148,200,224,0.12);
+    position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .tile-c .content { position: relative; z-index: 1; }
+  .tile-c .icon-sm {
+    width: 56px; height: 56px; margin-bottom: 12px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%2394C8E0"/><stop offset="100%25" style="stop-color:%236BAECF"/></linearGradient></defs><rect width="128" height="128" rx="24" fill="url(%23g)"/><rect x="24" y="20" width="100" height="82" rx="24" fill="%23F5F3EF" opacity="0.45"/><rect x="14" y="28" width="96" height="82" rx="24" fill="%23F5F3EF" opacity="0.88"/><text x="62" y="94" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-weight="700" font-size="72" fill="%235A6270">译</text></svg>') center/contain no-repeat;
+    border-radius: 12px;
+  }
+  .tile-c .name {
+    font-size: 34px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+  }
+  .tile-c .tagline {
+    font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;
+  }
+  .tile-c .accent-line {
+    width: 48px; height: 3px; background: linear-gradient(90deg, #94C8E0, #6BAECF);
+    border-radius: 2px; margin-top: 14px;
+  }
+
+  /* ── Marquee Designs (1400×560) ────────────────────────── */
+  .marquee {
+    width: 100%; max-width: 1400px; aspect-ratio: 1400/560; position: relative; overflow: hidden;
+    border-radius: 8px;
+  }
+
+  /* A: Browser Mockup */
+  .marquee-a {
+    background: linear-gradient(160deg, #F5F3EF 0%, #E8F4F8 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .marquee-a .browser {
+    width: 85%; max-width: 1200px;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+  .marquee-a .browser-bar {
+    height: 36px; background: #e8ecf0;
+    display: flex; align-items: center; padding: 0 14px; gap: 8px;
+  }
+  .marquee-a .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .marquee-a .browser-dot:nth-child(1) { background: #ff5f57; }
+  .marquee-a .browser-dot:nth-child(2) { background: #ffbd2e; }
+  .marquee-a .browser-dot:nth-child(3) { background: #28c840; }
+  .marquee-a .browser-url {
+    flex: 1; height: 22px; background: #fff; border-radius: 4px; margin-left: 8px;
+    font-size: 11px; color: #9BA8B5; padding: 3px 10px;
+  }
+  .marquee-a .browser-body {
+    display: flex; height: 280px;
+  }
+  .marquee-a .web-content {
+    flex: 1; padding: 24px 28px; position: relative;
+  }
+  .marquee-a .en-text {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #2A3038; font-size: 15px; line-height: 1.7;
+  }
+  .marquee-a .zh-text {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: rgba(107,174,207,0.08); border-left: 3px solid #94C8E0;
+    padding: 8px 12px; margin: 8px 0; font-size: 14px; line-height: 1.7;
+    color: #2A3038; border-radius: 0 6px 6px 0;
+  }
+  .marquee-a .popup-float {
+    position: absolute; right: 20px; top: 20px;
+    width: 200px; background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    padding: 14px;
+  }
+  .marquee-a .popup-title {
+    font-size: 13px; font-weight: 600; color: #2A3038; margin-bottom: 8px;
+  }
+  .marquee-a .popup-btn {
+    width: 100%; padding: 8px; border-radius: 8px;
+    background: linear-gradient(135deg, #6BAECF, #94C8E0);
+    color: #fff; font-size: 12px; font-weight: 600; text-align: center;
+    margin-bottom: 6px;
+  }
+  .marquee-a .popup-lang {
+    display: flex; gap: 4px; margin-top: 8px;
+  }
+  .marquee-a .popup-lang span {
+    flex: 1; text-align: center; padding: 3px; font-size: 10px;
+    background: #F5F3EF; border-radius: 4px; color: #5A6270;
+  }
+
+  /* B: Feature Cards */
+  .marquee-b {
+    background: linear-gradient(135deg, #F5F3EF 0%, #E8F4F8 50%, #F5F3EF 100%);
+    display: flex; padding: 48px 56px; gap: 32px; align-items: center;
+  }
+  .marquee-b .brand-col {
+    flex: 0 0 320px;
+  }
+  .marquee-b .brand-icon {
+    width: 96px; height: 96px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%2394C8E0"/><stop offset="100%25" style="stop-color:%236BAECF"/></linearGradient></defs><rect width="128" height="128" rx="24" fill="url(%23g)"/><rect x="24" y="20" width="100" height="82" rx="24" fill="%23F5F3EF" opacity="0.45"/><rect x="14" y="28" width="96" height="82" rx="24" fill="%23F5F3EF" opacity="0.88"/><text x="62" y="94" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-weight="700" font-size="72" fill="%235A6270">译</text></svg>') center/contain no-repeat;
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(107,174,207,0.2);
+    margin-bottom: 20px;
+  }
+  .marquee-b .brand-name {
+    font-size: 36px; font-weight: 700; color: #2A3038; letter-spacing: -0.5px;
+  }
+  .marquee-b .brand-desc {
+    font-size: 15px; color: #5A6270; margin-top: 6px; line-height: 1.5;
+  }
+  .marquee-b .features-col {
+    flex: 1; display: flex; flex-direction: column; gap: 16px;
+  }
+  .marquee-b .feat-card {
+    background: #fff; border-radius: 12px; padding: 18px 22px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .marquee-b .feat-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .marquee-b .feat-icon.page { background: rgba(148,200,224,0.2); }
+  .marquee-b .feat-icon.select { background: rgba(107,174,207,0.15); }
+  .marquee-b .feat-icon.dict { background: rgba(148,200,224,0.12); }
+  .marquee-b .feat-title {
+    font-size: 15px; font-weight: 600; color: #2A3038; margin-bottom: 3px;
+  }
+  .marquee-b .feat-desc {
+    font-size: 12px; color: #5A6270; line-height: 1.4;
+  }
+
+  /* C: Split Bilingual */
+  .marquee-c {
+    background: #2A3038;
+    display: flex;
+  }
+  .marquee-c .half {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px; position: relative; overflow: hidden;
+  }
+  .marquee-c .half.original { background: linear-gradient(160deg, #2A3038, #353d4e); }
+  .marquee-c .half.translated { background: linear-gradient(160deg, #1e2d3a, #2a3f4f); }
+  .marquee-c .half-label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  .marquee-c .original .half-label { color: rgba(255,255,255,0.4); }
+  .marquee-c .translated .half-label { color: #94C8E0; }
+  .marquee-c .en-sample {
+    font-family: Georgia, serif; font-size: 18px; color: rgba(255,255,255,0.8);
+    line-height: 1.8; max-width: 400px;
+  }
+  .marquee-c .zh-sample {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 17px; color: rgba(255,255,255,0.9); line-height: 1.8;
+    max-width: 400px;
+  }
+  .marquee-c .arrow-icon {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #94C8E0, #6BAECF);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .marquee-c .arrow-icon svg { width: 24px; height: 24px; }
+  .marquee-c .brand-corner {
+    position: absolute; bottom: 28px; right: 36px; display: flex; align-items: center; gap: 10px;
+  }
+  .marquee-c .brand-corner .icon-tiny {
+    width: 32px; height: 32px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%25" y1="0%25" x2="100%25" y2="100%25"><stop offset="0%25" style="stop-color:%2394C8E0"/><stop offset="100%25" style="stop-color:%236BAECF"/></linearGradient></defs><rect width="128" height="128" rx="24" fill="url(%23g)"/><rect x="24" y="20" width="100" height="82" rx="24" fill="%23F5F3EF" opacity="0.45"/><rect x="14" y="28" width="96" height="82" rx="24" fill="%23F5F3EF" opacity="0.88"/><text x="62" y="94" text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-weight="700" font-size="72" fill="%235A6270">译</text></svg>') center/contain no-repeat;
+    border-radius: 8px;
+  }
+  .marquee-c .brand-corner .brand-text {
+    font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.8);
+  }
+
+  /* Helpers */
+  .small-tile-row {
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+
+  @media (max-width: 1500px) {
+    .marquee { transform-origin: top left; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>iTranslate — Chrome Web Store 宣传图方案</h1>
+  <p>极地冰川主题 · 所有方案与插件视觉系统一致</p>
+</header>
+
+<!-- ═══ SMALL TILES ═══ -->
+<h2 class="section-title">小型宣传图块 (Small Tile) — 440×280</h2>
+
+<!-- A -->
+<div class="card">
+  <h3>方案 A：图标为主 (Icon Hero)</h3>
+  <p class="desc">大图标居中 + 名称 + 标语，简洁有力。冰川蓝渐变背景，图标带投影突出，信息一目了然。</p>
+  <div class="tags"><span class="tag">clean</span><span class="tag">brand-forward</span><span class="tag">app-store-style</span></div>
+  <div class="preview-frame">
+    <div class="small-tile tile-a">
+      <div class="icon-wrap"></div>
+      <div class="name">iTranslate</div>
+      <div class="tagline">AI-Powered Immersive Bilingual Translation</div>
+    </div>
+  </div>
+</div>
+
+<!-- B -->
+<div class="card">
+  <h3>方案 B：左图右文 (Left-Right Layout)</h3>
+  <p class="desc">左图标 + 右名称 + 功能标签。米白背景配淡蓝光晕，信息密度更高，展示功能特性。</p>
+  <div class="tags"><span class="tag">informative</span><span class="tag">professional</span><span class="tag">feature-rich</span></div>
+  <div class="preview-frame">
+    <div class="small-tile tile-b">
+      <div class="icon-col"></div>
+      <div class="text-col">
+        <div class="name">iTranslate 通译</div>
+        <div class="tagline">AI 驱动的沉浸式双语翻译，支持多语种互译</div>
+        <div class="features">
+          <span class="chip">全文翻译</span>
+          <span class="chip">划词翻译</span>
+          <span class="chip">词典查词</span>
+          <span class="chip">6 语种</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- C -->
+<div class="card">
+  <h3>方案 C：译字品牌 (Character Brand)</h3>
+  <p class="desc">深色背景 + 巨型"译"字水印 + 小图标 + 品牌名。现代、有冲击力，在 Chrome Web Store 列表中对比度高。</p>
+  <div class="tags"><span class="tag">bold</span><span class="tag">high-contrast</span><span class="tag">chinese-identity</span></div>
+  <div class="preview-frame">
+    <div class="small-tile tile-c">
+      <div class="brand-char">译</div>
+      <div class="content">
+        <div class="icon-sm"></div>
+        <div class="name">iTranslate</div>
+        <div class="tagline">Immersive Bilingual Translation</div>
+        <div class="accent-line"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MARQUEES ═══ -->
+<h2 class="section-title">顶部宣传图 (Marquee) — 1400×560</h2>
+
+<!-- A -->
+<div class="card">
+  <h3>方案 A：浏览器场景 (Browser Mockup)</h3>
+  <p class="desc">模拟真实浏览器中翻译效果：英文原文 + 蓝色左边框双语翻译块 + 浮动 Popup UI。让用户一眼看懂使用场景。</p>
+  <div class="tags"><span class="tag">contextual</span><span class="tag">realistic</span><span class="tag">easy-to-understand</span></div>
+  <div class="preview-frame">
+    <div class="marquee marquee-a">
+      <div class="browser">
+        <div class="browser-bar">
+          <div class="browser-dot"></div><div class="browser-dot"></div><div class="browser-dot"></div>
+          <div class="browser-url">https://example.com/blog/ai-and-the-future-of-translation</div>
+        </div>
+        <div class="browser-body">
+          <div class="web-content">
+            <div class="en-text">
+              <p style="font-weight:700;font-size:17px;margin-bottom:8px;">The Future of AI-Powered Translation</p>
+              <p>Artificial intelligence has revolutionized the way we communicate across languages. Modern neural machine translation systems can process text with remarkable accuracy, understanding context and nuance in ways that rule-based systems never could.</p>
+            </div>
+            <div class="zh-text">
+              人工智能彻底改变了我们跨语言交流的方式。现代神经机器翻译系统能够以卓越的准确度处理文本，以前所未有的方式理解上下文和细微差别。
+            </div>
+            <div class="en-text" style="margin-top:10px;">
+              <p>These advances are not just technological achievements — they represent a fundamental shift in how people around the world access information, conduct business, and build relationships across linguistic boundaries.</p>
+            </div>
+            <div class="zh-text">
+              这些进步不仅是技术成就 — 它们代表着世界各地的人们获取信息、开展业务、跨越语言界限建立关系的根本性转变。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- B -->
+<div class="card">
+  <h3>方案 B：功能展示 (Feature Cards)</h3>
+  <p class="desc">左侧品牌区 + 右侧三大功能卡片。营销感更强，适合突出差异化卖点。浅色极简风格，专业可信赖。</p>
+  <div class="tags"><span class="tag">marketing</span><span class="tag">feature-driven</span><span class="tag">clean</span></div>
+  <div class="preview-frame">
+    <div class="marquee marquee-b">
+      <div class="brand-col">
+        <div class="brand-icon"></div>
+        <div class="brand-name">iTranslate 通译</div>
+        <div class="brand-desc">使用 AI 的沉浸式双语翻译。<br>支持 OpenAI 兼容接口，<br>自带词典与划词翻译。</div>
+      </div>
+      <div class="features-col">
+        <div class="feat-card">
+          <div class="feat-icon page">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6BAECF" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div>
+            <div class="feat-title">全文翻译 Page Translation</div>
+            <div class="feat-desc">一键翻译整个页面，双语对照阅读，支持中/英/日/韩/法/德 6 语种互译</div>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon select">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6BAECF" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div>
+            <div class="feat-title">划词翻译 Selection Translate</div>
+            <div class="feat-desc">选中文字即翻译，弹出优雅气泡展示结果，英文单词自动切换词典模式</div>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon dict">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6BAECF" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div>
+            <div class="feat-title">词典查词 Dictionary</div>
+            <div class="feat-desc">英文单词自动查询词典，展示音标、词性、中文释义，内置 AI 词典精准翻译</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- C -->
+<div class="card">
+  <h3>方案 C：双语对比 (Split Bilingual)</h3>
+  <p class="desc">左右分屏：左侧英文原文，右侧中文译文。中间冰川蓝渐变箭头象征"翻译"。深色背景视觉冲击力强，直接传达核心价值。</p>
+  <div class="tags"><span class="tag">visual-impact</span><span class="tag">dark-theme</span><span class="tag">core-message</span></div>
+  <div class="preview-frame">
+    <div class="marquee marquee-c">
+      <div class="half original">
+        <div class="half-label">Original</div>
+        <div class="en-sample">
+          <p style="font-weight:600;font-size:20px;margin-bottom:12px;">The best way to predict the future is to invent it.</p>
+          <p style="font-size:15px;opacity:0.7;">Language should never be a barrier to knowledge. With AI-powered translation, every webpage becomes accessible — regardless of the language it was written in.</p>
+        </div>
+      </div>
+      <div class="arrow-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </div>
+      <div class="half translated">
+        <div class="half-label">Translated</div>
+        <div class="zh-sample">
+          <p style="font-weight:600;font-size:20px;margin-bottom:12px;">预测未来最好的方式就是去创造它。</p>
+          <p style="font-size:15px;opacity:0.7;">语言不应成为知识的障碍。借助 AI 翻译，每个网页都变得触手可及 — 无论它最初是用什么语言写成的。</p>
+        </div>
+      </div>
+      <div class="brand-corner">
+        <div class="icon-tiny"></div>
+        <div class="brand-text">iTranslate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
