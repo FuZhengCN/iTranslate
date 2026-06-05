@@ -441,6 +441,7 @@
   height: 28px;
   border-radius: 7px;
   background: var(--itranslate-gradient-brand);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -465,6 +466,11 @@
 }
 
 .itranslate-float-btn-translate.translating {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 1px;
   animation: itranslate-float-pulse 0.8s ease-in-out infinite;
   will-change: opacity;
 }

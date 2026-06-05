@@ -53,7 +53,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
 | **Content script** | `src/content/index.ts` | 构建时通过 `content_scripts` 自动注入所有页面（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签。初始化时创建浮动翻译面板（`floating-panel.ts`） |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，白字），源/目标语言选择 + 互换，划词翻译开关，**浮动面板开关**（默认开启，持久化到 `chrome.storage.sync`）。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置 |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，白字），源/目标语言选择 + 互换，划词翻译开关，**浮动面板开关**（默认开启，持久化到 `chrome.storage.sync`）。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置。**受限页面检测**（`chrome://`、`edge://` 等）：`syncState()` 检测 `tab.url`，若为受限协议则调用 `disableAllControls()` 禁用所有按钮并显示错误提示，toggle/translate handler 通过 `isRestrictedPage` 短路保护 |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接、清除缓存 |
 
 ### Message Catalog
@@ -68,7 +68,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 | `translationProgress` | background → content | （未使用，handler 已移除） |
 | `translate` | content → background | 请求翻译文本段 → 返回结果。支持 `mode: 'translate' | 'dictionary'`，content 根据单词数和文字脚本自动判断，background 校验语言对后路由到对应 prompt |
 | `toggleSelection` | popup → content | 启用/禁用划词翻译 |
-| `toggleFloatingPanel` | popup → content | 显示/隐藏浮动翻译面板，由 popup 悬浮开关触发 |
+| `toggleFloatingPanel` | popup → content | 显示/隐藏浮动翻译面板。开启时自动同步按钮状态（`.itranslate-translation` 存在 → `setTranslateState('undo')`），解决"先翻译后开启面板导致按钮状态相反"的问题 |
 | `ping` | popup → content | 检测内容脚本是否已注入（`ensureContentScript` 用） |
 | `clearCache` | settings → background | 清空 IndexedDB 缓存 |
 | `testConnection` | settings → background | 验证 API key/endpoint 可用 |
@@ -163,7 +163,7 @@ Popup click → content script
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`createClone()` 统一创建翻译元素（`<li>` 在 `<ol>`/`<ul>` 内时改用 `<div>` 标签，避免浏览器对翻译副本自动编号/加 bullet）。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`。
-- **`src/shared/theme.css`** — CSS 变量主题系统。`:root` 上定义 46 个 `--itranslate-*` 变量（含调试可视化变量、复制成功状态、翻译文本色等）。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。修改变量值即可全局切换主题。
+- **`src/shared/theme.css`** — 极地冰川主题 CSS 变量。`:root` 上定义 `--itranslate-*` 变量（品牌色 `#6BAECF`、暖陶撤销色 `#CF8B6B`、米白基底 `#F5F3EF` 等）。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段对旧用户自动获得默认值。语言锁定不在此模块——per-tab lock 由 popup.ts 通过 `chrome.storage.session` 独立管理。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（含 `sourceLang`、`targetLang`、`floatingPanelEnabled: true` 等）、`LANGUAGE_OPTIONS`（6 种语言）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
@@ -185,11 +185,11 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 `manifest.json` 引用 `icons/icon{16,48,128}.png`。备选方案：`icon-v1-layered.svg`（层叠冰山+译）、`icon-v3-lineart.svg`（线条速写+译）、`icon-v7-arcs.svg`（原版双弧线冰川色）。切换时覆盖 `icon.svg` 并重新生成 PNG + build。
 
-### Visual Design & Theming
+### Visual Design
 
-**主题系统：** `src/shared/theme.css` 集中定义 46 个 `--itranslate-*` CSS 变量。popup/settings 通过 `@import` 引入，内容脚本通过 Vite `?inline` 内联注入。替换变量值即可全局切换主题，当前为**极地冰川主题**（米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038`）。
+**主题：** `src/shared/theme.css` 定义极地冰川主题 — 米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038` + 暖陶撤销色 `#CF8B6B`。所有 CSS 变量以 `--itranslate-` 为前缀。
 
-**组件视觉：** 翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字，`setButtonState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
+**组件视觉：** 翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字，`setButtonState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。浮动面板翻译按钮在 translating 状态显示白色 `...` 文字（`color: #fff; font-size: 20px`）。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
 
 ### Test Strategy
 

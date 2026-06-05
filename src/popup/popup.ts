@@ -18,6 +18,25 @@ const versionLabel = document.getElementById('versionLabel') as HTMLSpanElement;
 
 let isTranslated = false;
 let activeTabId: number | null = null;
+let isRestrictedPage = false;
+
+/** Chrome 不允许向以这些协议开头的页面注入内容脚本 */
+const RESTRICTED_SCHEMES = ['chrome://', 'edge://', 'chrome-extension://', 'about:', 'chrome-search://'];
+
+function checkRestrictedUrl(url?: string): boolean {
+  if (!url) return true; // 无 URL 信息时保守处理
+  return RESTRICTED_SCHEMES.some(s => url.startsWith(s));
+}
+
+function disableAllControls(): void {
+  selectionToggle.disabled = true;
+  floatingPanelToggle.disabled = true;
+  translateBtn.disabled = true;
+  selectionToggle.classList.add('off');
+  floatingPanelToggle.classList.add('off');
+  errorDiv.textContent = t('cannotTranslatePage');
+  errorDiv.classList.remove('hidden');
+}
 
 function populateLanguageSelects(): void {
   for (const lang of LANGUAGE_OPTIONS) {
@@ -57,7 +76,7 @@ async function loadLanguageSettings(): Promise<void> {
   console.log(`[iTranslate] 🌐 Popup init: sourceLang="${settings.sourceLang}" targetLang="${settings.targetLang}" tabId=${tab.id} locked=${locks.source}/${locks.target}`);
 
   // Auto-detect page language if not locked for this tab
-  if (!locks.source && tab.id) {
+  if (!locks.source && tab.id && !checkRestrictedUrl(tab.url)) {
     try {
       const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -137,6 +156,13 @@ async function syncState(): Promise<void> {
     if (!tab.id) return;
     activeTabId = tab.id;
 
+    // 受限页面（chrome:// etc.）无法注入内容脚本，直接禁用控件
+    if (checkRestrictedUrl(tab.url)) {
+      isRestrictedPage = true;
+      disableAllControls();
+      return;
+    }
+
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'getState' });
     if (response?.isTranslated) {
       isTranslated = true;
@@ -211,6 +237,7 @@ function setButtonState(state: 'translate' | 'undo' | 'translating'): void {
 }
 
 selectionToggle.addEventListener('click', async () => {
+  if (isRestrictedPage) return;
   const enabling = selectionToggle.classList.contains('off');
   console.log(`[iTranslate] 🔘 Selection toggle clicked: ${enabling ? 'ENABLE' : 'DISABLE'}`);
   updateSelectionToggleUI(enabling);
@@ -236,6 +263,7 @@ selectionToggle.addEventListener('click', async () => {
 });
 
 floatingPanelToggle.addEventListener('click', async () => {
+  if (isRestrictedPage) return;
   const enabling = floatingPanelToggle.classList.contains('off');
   updateFloatingPanelToggleUI(enabling);
 
@@ -298,6 +326,7 @@ async function ensureContentScript(tabId: number): Promise<void> {
 }
 
 translateBtn.addEventListener('click', async () => {
+  if (isRestrictedPage) return;
   errorDiv.classList.add('hidden');
 
   try {

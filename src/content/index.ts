@@ -201,6 +201,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'toggleFloatingPanel') {
     if (message.enabled) {
       createFloatingPanel(panelActions);
+      // 同步按钮状态：面板可能在翻译完成后才被开启，此时应显示 undo
+      const hasTranslations = document.querySelector('.itranslate-translation') !== null;
+      if (hasTranslations) {
+        setTranslateState('undo');
+      }
     } else {
       removeFloatingPanel();
     }
