@@ -14,6 +14,8 @@ export function createFloatingPanel(actions: PanelActions): void {
 
   panelEl = document.createElement('div');
   panelEl.className = 'itranslate-float-panel';
+  panelEl.style.position = 'fixed';
+  panelEl.style.right = '0';
 
   // Translate button (top)
   translateBtn = document.createElement('button');
