@@ -53,7 +53,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
 | **Content script** | `src/content/index.ts` | 构建时通过 `content_scripts` 自动注入所有页面（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签。初始化时创建浮动翻译面板（`floating-panel.ts`） |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，白字），源/目标语言选择 + 互换，划词翻译开关，**浮动面板开关**（默认开启，持久化到 `chrome.storage.sync`）。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置。**受限页面检测**（`chrome://`、`edge://` 等）：`syncState()` 检测 `tab.url`，若为受限协议则调用 `disableAllControls()` 禁用所有按钮并显示错误提示，toggle/translate handler 通过 `isRestrictedPage` 短路保护 |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，深色文字 `#2A3038`），源/目标语言选择 + 互换，划词翻译开关，**浮动面板开关**（默认开启，持久化到 `chrome.storage.sync`）。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置。**受限页面检测**（`chrome://`、`edge://` 等）：`syncState()` 检测 `tab.url`，若为受限协议则调用 `disableAllControls()` 禁用所有按钮并显示错误提示，toggle/translate handler 通过 `isRestrictedPage` 短路保护 |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接、清除缓存 |
 
 ### Message Catalog
@@ -148,7 +148,7 @@ Popup click → content script
 
 ### Key Modules
 
-- **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。仅对 "Receiving end does not exist" / "Could not establish connection" 类错误重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。
+- **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。对 "Receiving end does not exist" / "Could not establish connection" 重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。"Extension context invalidated" 抛出专用错误码 `EXTENSION_CONTEXT_INVALIDATED`（不重试，上下文已死），调用方展示刷新提示。
 - **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 1s 膨胀动画后触发翻译（JS 驱动 `.animating` class，防鼠标微移重启）。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。`showBubble()` 中 `isSingleWord()` + `isEnglishText()` 自动判断 mode（单拉丁单词 → dictionary，其余 → translate），Background 返回结果后 `renderDictionaryResult()` 或翻译气泡分支渲染。词典气泡与翻译气泡结构一致（bar→header→body→actions），展示词条头（单词+音标+词性标签）+编号义项列表。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区。气泡支持拖拽移动。注入 `::selection` 高亮背景。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
 - **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。`translateBatch()` 按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批，并行 3 批并发。`translateDictionary(word)` 专用于单次词典请求，使用内置 `DICT_SYSTEM_PROMPT`（非用户 settings.systemPrompt），返回 `{ success, data }`。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
 - **`src/background/dict-prompt.ts`** — 词典 prompt 预制内置（不在 settings 中，用户不可编辑）。`DICT_SYSTEM_PROMPT` 为英→中词典 system prompt（JSON 输出格式：`{word, ipa, pos, definitions: [{zh}]}`）。`dictUserPrompt(word)` 生成 `Define: ${word}`。`parseDictionaryResponse(raw)` 解析 JSON 响应，清理 markdown fences，校验必填字段，失败返回 null。当前仅英→中一份 prompt，后期扩展改为语言对注册表。
@@ -187,9 +187,13 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Visual Design
 
-**主题：** `src/shared/theme.css` 定义极地冰川主题 — 米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038` + 暖陶撤销色 `#CF8B6B`。所有 CSS 变量以 `--itranslate-` 为前缀。
+**主题：** `src/shared/theme.css` 定义极地冰川主题 — 米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038` + 暖陶撤销色 `#CF8B6B`。所有 CSS 变量以 `--itranslate-` 为前缀。各组件圆角统一为 **6px**（气泡/浮动面板/popup/设置页），特殊形状（toggle 胶囊、圆形按钮、Toast）保持原状。
 
-**组件视觉：** 翻译按钮冰川蓝渐变+白字，撤销按钮暖陶色渐变+白字，`setButtonState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。浮动面板翻译按钮在 translating 状态显示白色 `...` 文字（`color: #fff; font-size: 20px`）。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
+**组件视觉：** Popup 主按钮冰川蓝渐变+深色文字（`#2A3038`），浮动面板按钮冰川蓝渐变+白色图标/文字。撤销按钮暖陶色渐变。`setButtonState()` / `setTranslateState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
+
+**无障碍：** `prefers-reduced-motion: reduce` 媒体查询将所有注入动画时长降为 0.01ms。`:focus-visible` 焦点环覆盖所有交互元素。
+
+**扩展上下文失效恢复：** MV3 扩展重载后旧 content script 失去 `chrome.runtime` 上下文。`isContextValid()` 通过 `chrome.runtime.id` 探测存活状态，失效时所有翻译操作静默降级，显示 "⚠️ 扩展已更新，请刷新页面后重试" Toast 替代 `alert()` 弹窗。
 
 ### Test Strategy
 
