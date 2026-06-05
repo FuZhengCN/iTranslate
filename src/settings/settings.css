@@ -14,7 +14,7 @@ body {
   margin: 40px auto;
   padding: 32px;
   background: var(--itranslate-surface-white);
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: var(--itranslate-shadow-sm);
 }
 

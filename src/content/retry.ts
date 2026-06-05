@@ -9,6 +9,10 @@ export async function sendToBgWithRetry(message: unknown, retries = 3, delayMs =
         await new Promise((r) => setTimeout(r, delayMs));
         continue;
       }
+      // Extension 重载后旧 content script 已失效，重试无意义
+      if (msg.includes('Extension context invalidated')) {
+        throw new Error('EXTENSION_CONTEXT_INVALIDATED');
+      }
       throw err;
     }
   }

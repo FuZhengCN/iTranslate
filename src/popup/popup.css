@@ -60,7 +60,7 @@ body {
   gap: 6px;
   margin-bottom: 10px;
   background: var(--itranslate-brand-bg-soft);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 6px 8px;
 }
 
@@ -142,7 +142,7 @@ body {
   padding: 8px 10px;
   margin-bottom: 10px;
   background: var(--itranslate-brand-bg-soft);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .toggle-label {

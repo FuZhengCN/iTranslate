@@ -21,6 +21,20 @@ import { sendToBgWithRetry } from './retry';
 import { createFloatingPanel, setTranslateState, setSelectionState, removeFloatingPanel } from './floating-panel';
 import { getSettings } from '../shared/storage';
 
+// MV3：扩展重载后旧 content script 失去上下文，所有 chrome.* API 都会抛出
+// "Extension context invalidated"。设置标志位让后续调用静默降级而非报错。
+let contextValid = true;
+function isContextValid(): boolean {
+  if (!contextValid) return false;
+  try {
+    void chrome.runtime.id; // 访问 chrome.runtime.id 检测上下文是否存活
+    return true;
+  } catch {
+    contextValid = false;
+    return false;
+  }
+}
+
 async function catchUpNewContent(): Promise<void> {
   if (catchUpInProgress) return;
   catchUpInProgress = true;
@@ -66,12 +80,26 @@ async function catchUpNewContent(): Promise<void> {
   }
 }
 
+function showReloadToast(): void {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--itranslate-surface-inverse);color:var(--itranslate-surface-white);padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;pointer-events:none;';
+  toast.textContent = '⚠️ 扩展已更新，请刷新页面后重试';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
 async function translatePage(caller = 'popup'): Promise<void> {
   console.log(`[iTranslate] ▶  translatePage called by: ${caller}`);
   if (translateInProgress) {
     console.log('[iTranslate] ⏸  translatePage skipped — already in progress');
     return;
   }
+
+  if (!isContextValid()) {
+    showReloadToast();
+    return;
+  }
+
   translateInProgress = true;
   setTranslateState('translating');
   const t0 = performance.now();
@@ -155,64 +183,80 @@ async function translatePage(caller = 'popup'): Promise<void> {
   } catch (err) {
     console.error('[iTranslate] Error:', err);
     setTranslateState('translate');
-    alert(`Translation error: ${(err as Error).message}`);
+
+    const errMsg = (err as Error).message;
+    if (errMsg === 'EXTENSION_CONTEXT_INVALIDATED') {
+      contextValid = false;
+      showReloadToast();
+    } else {
+      alert(`Translation error: ${errMsg}`);
+      chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
+    }
+
     removeTranslations();
-    chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
   } finally {
     translateInProgress = false;
   }
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.action === 'translatePage') {
-    translatePage();
-    sendResponse({ received: true });
-  }
-  if (message.action === 'getState') {
-    const hasTranslations = document.querySelector('.itranslate-translation') !== null;
-    sendResponse({ isTranslated: hasTranslations, selectionEnabled: isSelectionEnabled() });
-    return true;
-  }
-  if (message.action === 'undoTranslation') {
-    removeTranslations();
-    stopObserving();
-    setTranslateState('translate');
-    sendResponse({ received: true });
-    return true;
-  }
-  if (message.action === 'toggleSelection') {
-    console.log(`[iTranslate] 📋 toggleSelection received: enabled=${message.enabled}`);
-    if (message.enabled) {
-      enableSelection();
-      console.log('[iTranslate] 📋 enableSelection() called');
-    } else {
-      disableSelection();
-      console.log('[iTranslate] 📋 disableSelection() called');
-    }
-    setSelectionState(message.enabled);
-    sendResponse({ received: true });
-    return true;
-  }
-  if (message.action === 'ping') {
-    console.log('[iTranslate] 📋 ping received — responding pong');
-    sendResponse({ pong: true });
-    return true;
-  }
-  if (message.action === 'toggleFloatingPanel') {
-    if (message.enabled) {
-      createFloatingPanel(panelActions);
-      // 同步按钮状态：面板可能在翻译完成后才被开启，此时应显示 undo
-      const hasTranslations = document.querySelector('.itranslate-translation') !== null;
-      if (hasTranslations) {
-        setTranslateState('undo');
+// 注册消息监听（MV3 扩展重载后可能抛出 "Extension context invalidated"）
+try {
+  if (isContextValid()) {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message.action === 'translatePage') {
+        translatePage();
+        sendResponse({ received: true });
       }
-    } else {
-      removeFloatingPanel();
-    }
-    sendResponse({ received: true });
-    return true;
+      if (message.action === 'getState') {
+        const hasTranslations = document.querySelector('.itranslate-translation') !== null;
+        sendResponse({ isTranslated: hasTranslations, selectionEnabled: isSelectionEnabled() });
+        return true;
+      }
+      if (message.action === 'undoTranslation') {
+        removeTranslations();
+        stopObserving();
+        setTranslateState('translate');
+        sendResponse({ received: true });
+        return true;
+      }
+      if (message.action === 'toggleSelection') {
+        console.log(`[iTranslate] 📋 toggleSelection received: enabled=${message.enabled}`);
+        if (message.enabled) {
+          enableSelection();
+          console.log('[iTranslate] 📋 enableSelection() called');
+        } else {
+          disableSelection();
+          console.log('[iTranslate] 📋 disableSelection() called');
+        }
+        setSelectionState(message.enabled);
+        sendResponse({ received: true });
+        return true;
+      }
+      if (message.action === 'ping') {
+        console.log('[iTranslate] 📋 ping received — responding pong');
+        sendResponse({ pong: true });
+        return true;
+      }
+      if (message.action === 'toggleFloatingPanel') {
+        if (message.enabled) {
+          createFloatingPanel(panelActions);
+          // 同步按钮状态：面板可能在翻译完成后才被开启，此时应显示 undo
+          const hasTranslations = document.querySelector('.itranslate-translation') !== null;
+          if (hasTranslations) {
+            setTranslateState('undo');
+          }
+        } else {
+          removeFloatingPanel();
+        }
+        sendResponse({ received: true });
+        return true;
+      }
+    });
   }
-});
+} catch {
+  contextValid = false;
+  console.warn('[iTranslate] ⚠️ Extension context invalidated — content script is orphaned. Please refresh the page.');
+}
 
 const panelActions = {
   onTranslate: () => translatePage('floating-panel'),
@@ -231,9 +275,13 @@ const panelActions = {
   },
 };
 
-getSettings().then((settings) => {
-  if (settings.floatingPanelEnabled) {
-    createFloatingPanel(panelActions);
-  }
-});
+if (isContextValid()) {
+  getSettings().then((settings) => {
+    if (settings.floatingPanelEnabled) {
+      createFloatingPanel(panelActions);
+    }
+  }).catch(() => {
+    contextValid = false;
+  });
+}
 
