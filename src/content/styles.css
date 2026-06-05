@@ -404,3 +404,78 @@
     box-shadow: 0 0 0 10px rgba(107, 174, 207, 0.15), 0 4px 20px rgba(107, 174, 207, 0.35);
   }
 }
+
+/* ── Floating Toggle Panel ── */
+.itranslate-float-panel {
+  all: initial;
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 99996;
+  width: 32px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #FCFBF9, #F5F3EF);
+  border: 1px solid rgba(107, 174, 207, 0.18);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  box-shadow: -2px 2px 14px rgba(42, 48, 56, 0.07);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.itranslate-float-btn-translate {
+  all: unset;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--itranslate-gradient-brand);
+  color: var(--itranslate-surface-white);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(107, 174, 207, 0.25);
+  transition: background 0.2s;
+}
+
+.itranslate-float-btn-translate.undo {
+  background: var(--itranslate-gradient-undo);
+}
+
+.itranslate-float-btn-translate.translating {
+  animation: itranslate-float-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes itranslate-float-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.itranslate-float-btn-selection {
+  all: unset;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #6BAECF;
+  border: 1px solid rgba(107, 174, 207, 0.2);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.itranslate-float-btn-selection.active {
+  background: var(--itranslate-gradient-brand);
+  color: var(--itranslate-surface-white);
+  border-color: transparent;
+}
