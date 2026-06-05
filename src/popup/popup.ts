@@ -7,6 +7,8 @@ const translateBtn = document.getElementById('translateBtn') as HTMLButtonElemen
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
 const selectionToggle = document.getElementById('selectionToggle') as HTMLButtonElement;
 const selectionToggleText = document.getElementById('selectionToggleText') as HTMLSpanElement;
+const floatingPanelToggle = document.getElementById('floatingPanelToggle') as HTMLButtonElement;
+const floatingPanelToggleText = document.getElementById('floatingPanelToggleText') as HTMLSpanElement;
 const sourceLangEl = document.getElementById('sourceLang') as HTMLSelectElement;
 const targetLangEl = document.getElementById('targetLang') as HTMLSelectElement;
 const swapBtn = document.getElementById('swapBtn') as HTMLButtonElement;
@@ -153,10 +155,16 @@ swapBtn.title = t('swapLanguages');
 translateBtn.textContent = t('translatePage');
 translateBtn.style.color = 'var(--itranslate-surface-white)';
 selectionToggleText.textContent = t('selectionTranslate');
+floatingPanelToggleText.textContent = t('floatingPanelToggle');
 
 populateLanguageSelects();
 loadLanguageSettings();
 syncState();
+
+// Init floating panel toggle from settings
+getSettings().then((settings) => {
+  updateFloatingPanelToggleUI(settings.floatingPanelEnabled);
+});
 
 // Set version label
 versionLabel.textContent = t('version', [chrome.runtime.getManifest().version]);
@@ -174,6 +182,14 @@ function updateSelectionToggleUI(enabled: boolean): void {
     selectionToggle.classList.remove('off');
   } else {
     selectionToggle.classList.add('off');
+  }
+}
+
+function updateFloatingPanelToggleUI(enabled: boolean): void {
+  if (enabled) {
+    floatingPanelToggle.classList.remove('off');
+  } else {
+    floatingPanelToggle.classList.add('off');
   }
 }
 
@@ -216,6 +232,28 @@ selectionToggle.addEventListener('click', async () => {
   } catch (err) {
     console.error(`[iTranslate] 🔘 toggleSelection failed:`, err);
     updateSelectionToggleUI(!enabling);
+  }
+});
+
+floatingPanelToggle.addEventListener('click', async () => {
+  const enabling = floatingPanelToggle.classList.contains('off');
+  updateFloatingPanelToggleUI(enabling);
+
+  const settings = await getSettings();
+  settings.floatingPanelEnabled = enabling;
+  await saveSettings(settings);
+
+  try {
+    const tab = await getActiveTab();
+    if (!tab.id) return;
+    await ensureContentScript(tab.id);
+    await chrome.tabs.sendMessage(tab.id, {
+      action: 'toggleFloatingPanel',
+      enabled: enabling,
+    });
+  } catch (err) {
+    console.error('[iTranslate] 🔘 toggleFloatingPanel failed:', err);
+    updateFloatingPanelToggleUI(!enabling);
   }
 });
 

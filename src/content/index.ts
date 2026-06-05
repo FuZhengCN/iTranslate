@@ -18,7 +18,8 @@ let translateInProgress = false;
 let catchUpInProgress = false;
 
 import { sendToBgWithRetry } from './retry';
-import { createFloatingPanel, setTranslateState, setSelectionState } from './floating-panel';
+import { createFloatingPanel, setTranslateState, setSelectionState, removeFloatingPanel } from './floating-panel';
+import { getSettings } from '../shared/storage';
 
 async function catchUpNewContent(): Promise<void> {
   if (catchUpInProgress) return;
@@ -197,9 +198,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ pong: true });
     return true;
   }
+  if (message.action === 'toggleFloatingPanel') {
+    if (message.enabled) {
+      createFloatingPanel(panelActions);
+    } else {
+      removeFloatingPanel();
+    }
+    sendResponse({ received: true });
+    return true;
+  }
 });
 
-createFloatingPanel({
+const panelActions = {
   onTranslate: () => translatePage('floating-panel'),
   onUndo: () => {
     removeTranslations();
@@ -214,5 +224,11 @@ createFloatingPanel({
     }
     setSelectionState(enable);
   },
+};
+
+getSettings().then((settings) => {
+  if (settings.floatingPanelEnabled) {
+    createFloatingPanel(panelActions);
+  }
 });
 

@@ -42,6 +42,7 @@ function getFormSettings(): Settings {
     systemPrompt: systemPromptEl.value.trim() || DEFAULT_SETTINGS.systemPrompt,
     sourceLang: '',
     targetLang: '',
+    floatingPanelEnabled: true,
   };
 }
 
@@ -55,6 +56,7 @@ saveBtn.addEventListener('click', async () => {
   const current = await getSettings();
   settings.sourceLang = current.sourceLang;
   settings.targetLang = current.targetLang;
+  settings.floatingPanelEnabled = current.floatingPanelEnabled;
   await saveSettings(settings);
   showStatus(t('settingsSaved'), 'success');
 });
@@ -68,6 +70,7 @@ testBtn.addEventListener('click', async () => {
   const current = await getSettings();
   settings.sourceLang = current.sourceLang;
   settings.targetLang = current.targetLang;
+  settings.floatingPanelEnabled = current.floatingPanelEnabled;
   await saveSettings(settings);
 
   try {

@@ -22,4 +22,5 @@ export interface Settings {
   systemPrompt: string;
   sourceLang: string;
   targetLang: string;
+  floatingPanelEnabled: boolean;
 }

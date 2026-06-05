@@ -34,5 +34,6 @@
   "copied":                 { "message": "Copied" },
   "translationFailed":      { "message": "Translation failed" },
   "ballLabel":              { "message": "Tr" },
-  "dictLabel":              { "message": "Dict" }
+  "dictLabel":              { "message": "Dict" },
+  "floatingPanelToggle":    { "message": "Floating Panel" }
 }
