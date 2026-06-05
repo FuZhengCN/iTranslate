@@ -20,7 +20,7 @@ beforeEach(async () => {
 });
 
 describe('createFloatingPanel', () => {
-  it('creates panel with container and two buttons', () => {
+  it('creates panel with translate button, separator, and selection toggle', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -33,11 +33,14 @@ describe('createFloatingPanel', () => {
 
     const translateBtn = panel!.querySelector('.itranslate-float-btn-translate');
     expect(translateBtn).not.toBeNull();
-    expect(translateBtn!.textContent).toBe('文');
+    expect(translateBtn!.querySelector('svg')).not.toBeNull();
 
-    const selectionBtn = panel!.querySelector('.itranslate-float-btn-selection');
-    expect(selectionBtn).not.toBeNull();
-    expect(selectionBtn!.textContent).toBe('选');
+    expect(panel!.querySelector('.itranslate-float-sep')).not.toBeNull();
+
+    const selectionEl = panel!.querySelector('.itranslate-float-selection');
+    expect(selectionEl).not.toBeNull();
+    expect(selectionEl!.querySelector('.itranslate-float-selection-icon')).not.toBeNull();
+    expect(selectionEl!.querySelector('.itranslate-float-toggle')).not.toBeNull();
   });
 
   it('does not create duplicate panels', () => {
@@ -68,7 +71,7 @@ describe('createFloatingPanel', () => {
 });
 
 describe('setTranslateState', () => {
-  it('sets button to "translate" state (glacier blue, 文字)', () => {
+  it('shows translate SVG icon in default state', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -78,12 +81,12 @@ describe('setTranslateState', () => {
     setTranslateState('translate');
 
     const btn = document.querySelector('.itranslate-float-btn-translate')!;
-    expect(btn.textContent).toBe('文');
+    expect(btn.querySelector('svg')).not.toBeNull();
     expect(btn.classList.contains('undo')).toBe(false);
     expect(btn.classList.contains('translating')).toBe(false);
   });
 
-  it('sets button to "translating" state (pulse animation, 三点)', () => {
+  it('shows "..." and translating class in translating state', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -93,11 +96,11 @@ describe('setTranslateState', () => {
     setTranslateState('translating');
 
     const btn = document.querySelector('.itranslate-float-btn-translate')!;
-    expect(btn.textContent).toBe('...');
+    expect(btn.innerHTML).toBe('...');
     expect(btn.classList.contains('translating')).toBe(true);
   });
 
-  it('sets button to "undo" state (warm terracotta, 撤字)', () => {
+  it('shows undo SVG icon and undo class in undo state', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -107,11 +110,11 @@ describe('setTranslateState', () => {
     setTranslateState('undo');
 
     const btn = document.querySelector('.itranslate-float-btn-translate')!;
-    expect(btn.textContent).toBe('撤');
+    expect(btn.querySelector('svg')).not.toBeNull();
     expect(btn.classList.contains('undo')).toBe(true);
   });
 
-  it('ignores "translating" click when in translating state', () => {
+  it('ignores click when in translating state', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -129,7 +132,7 @@ describe('setTranslateState', () => {
 });
 
 describe('setSelectionState', () => {
-  it('sets selection button to active (filled) state', () => {
+  it('sets toggle to active and icon stroke to blue', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -138,12 +141,14 @@ describe('setSelectionState', () => {
     createFloatingPanel(actions);
     setSelectionState(true);
 
-    const btn = document.querySelector('.itranslate-float-btn-selection')!;
-    expect(btn.classList.contains('active')).toBe(true);
-    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    const toggle = document.querySelector('.itranslate-float-toggle')!;
+    expect(toggle.classList.contains('active')).toBe(true);
+
+    const icon = document.querySelector('.itranslate-float-selection-icon')!;
+    expect(icon.getAttribute('stroke')).toBe('#6BAECF');
   });
 
-  it('sets selection button to inactive (hollow) state', () => {
+  it('sets toggle to inactive and icon stroke to gray', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -153,9 +158,11 @@ describe('setSelectionState', () => {
     setSelectionState(true);
     setSelectionState(false);
 
-    const btn = document.querySelector('.itranslate-float-btn-selection')!;
-    expect(btn.classList.contains('active')).toBe(false);
-    expect(btn.getAttribute('aria-pressed')).toBe('false');
+    const toggle = document.querySelector('.itranslate-float-toggle')!;
+    expect(toggle.classList.contains('active')).toBe(false);
+
+    const icon = document.querySelector('.itranslate-float-selection-icon')!;
+    expect(icon.getAttribute('stroke')).toBe('#bbb');
   });
 });
 
@@ -192,7 +199,7 @@ describe('button click actions', () => {
     expect(actions.onTranslate).not.toHaveBeenCalled();
   });
 
-  it('selection button click calls onSelectionToggle(true) when off', () => {
+  it('selection toggle click calls onSelectionToggle(true) when off', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -200,13 +207,13 @@ describe('button click actions', () => {
     };
     createFloatingPanel(actions);
 
-    const btn = document.querySelector('.itranslate-float-btn-selection')! as HTMLButtonElement;
-    btn.click();
+    const el = document.querySelector('.itranslate-float-selection')! as HTMLElement;
+    el.click();
 
     expect(actions.onSelectionToggle).toHaveBeenCalledWith(true);
   });
 
-  it('selection button click calls onSelectionToggle(false) when on', () => {
+  it('selection toggle click calls onSelectionToggle(false) when on', () => {
     const actions = {
       onTranslate: vi.fn(),
       onUndo: vi.fn(),
@@ -215,8 +222,8 @@ describe('button click actions', () => {
     createFloatingPanel(actions);
     setSelectionState(true);
 
-    const btn = document.querySelector('.itranslate-float-btn-selection')! as HTMLButtonElement;
-    btn.click();
+    const el = document.querySelector('.itranslate-float-selection')! as HTMLElement;
+    el.click();
 
     expect(actions.onSelectionToggle).toHaveBeenCalledWith(false);
   });
@@ -236,7 +243,6 @@ describe('removeFloatingPanel', () => {
   });
 
   it('is safe to call setters before createFloatingPanel', () => {
-    // Should not throw when buttons don't exist yet
     expect(() => setTranslateState('translate')).not.toThrow();
     expect(() => setSelectionState(true)).not.toThrow();
   });

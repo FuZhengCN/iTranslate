@@ -413,12 +413,12 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 99996;
-  width: 32px;
-  padding: 8px 6px;
+  width: 36px;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   background: linear-gradient(180deg, #FCFBF9, #F5F3EF);
   border: 1px solid rgba(107, 174, 207, 0.18);
   border-right: none;
@@ -427,15 +427,20 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+.itranslate-float-sep {
+  width: 20px;
+  height: 1px;
+  background: rgba(107, 174, 207, 0.12);
+  flex-shrink: 0;
+}
+
+/* ── Translate action button ── */
 .itranslate-float-btn-translate {
   all: unset;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   background: var(--itranslate-gradient-brand);
-  color: var(--itranslate-surface-white);
-  font-size: 12px;
-  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -469,37 +474,53 @@
   50% { opacity: 0.5; }
 }
 
-.itranslate-float-btn-selection {
+/* ── Selection toggle ── */
+.itranslate-float-selection {
   all: unset;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--itranslate-brand-purple);
-  border: 1px solid rgba(107, 174, 207, 0.2);
-  font-size: 12px;
-  font-weight: 600;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 3px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
 }
 
-.itranslate-float-btn-selection:hover {
-  background: var(--itranslate-brand-bg-soft);
-  border-color: var(--itranslate-brand-200);
-}
-.itranslate-float-btn-selection:active {
-  background: var(--itranslate-brand-100);
-}
-.itranslate-float-btn-selection:focus-visible {
+.itranslate-float-selection:focus-visible {
   outline: 2px solid var(--itranslate-brand-200);
   outline-offset: 1px;
+  border-radius: 4px;
 }
 
-.itranslate-float-btn-selection.active {
+.itranslate-float-selection-icon {
+  display: block;
+  transition: stroke 0.2s;
+}
+
+.itranslate-float-toggle {
+  width: 24px;
+  height: 14px;
+  border-radius: 7px;
+  background: #bbb;
+  position: relative;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.itranslate-float-toggle.active {
   background: var(--itranslate-gradient-brand);
-  color: var(--itranslate-surface-white);
-  border-color: transparent;
+}
+
+.itranslate-float-toggle-knob {
+  width: 11px;
+  height: 11px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 1.5px;
+  left: 1.5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: left 0.15s;
+}
+
+.itranslate-float-toggle.active .itranslate-float-toggle-knob {
+  left: 11.5px;
 }
