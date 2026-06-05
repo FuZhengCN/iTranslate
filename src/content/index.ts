@@ -92,6 +92,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
       console.log(`[iTranslate] ⏱  Total flow: ${(performance.now() - t0).toFixed(0)}ms (no content)`);
+      setTranslateState('translate');
       return;
     }
 
