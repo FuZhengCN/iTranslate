@@ -4,7 +4,7 @@ interface PanelActions {
   onSelectionToggle: (enable: boolean) => void;
 }
 
-const SVG_TRANSLATE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>';
+const SVG_TRANSLATE = '<svg width="16" height="16" viewBox="-2 -2 20 20" fill="none"><text x="3" y="6" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="sans-serif" transform="rotate(-15, 3, 6)">A</text><text x="13" y="6" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="sans-serif" transform="rotate(15, 13, 6)">あ</text><text x="8" y="17" text-anchor="middle" fill="white" font-size="8" font-weight="700" font-family="sans-serif">文</text></svg>';
 const SVG_UNDO = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><path d="M7 6l-4 4 4 4"/></svg>';
 const SVG_SELECTION = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="itranslate-float-selection-icon"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
 
