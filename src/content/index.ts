@@ -1,12 +1,28 @@
 console.log('[iTranslate] 📋 Content script loaded');
 
-// CSS 内联导入（避免独立 CSS 文件，Vite ?inline 返回字符串）
-import themeCss from '../shared/theme.css?inline';
+// CSS inline imports (Vite ?inline returns raw string)
+import glacierCss from '../shared/themes/glacier.css?inline';
+import googleBlueCss from '../shared/themes/google-blue.css?inline';
+import googleLogoCss from '../shared/themes/google-logo.css?inline';
 import stylesCss from './styles.css?inline';
-const style = document.createElement('style');
-style.textContent = themeCss + stylesCss;
-document.head.appendChild(style);
-console.log('[iTranslate] 📋 CSS injected');
+
+const THEME_CSS_MAP: Record<string, string> = {
+  glacier: glacierCss,
+  'google-blue': googleBlueCss,
+  'google-logo': googleLogoCss,
+};
+
+// Inject styles CSS (layout rules, animations) immediately
+const stylesEl = document.createElement('style');
+stylesEl.textContent = stylesCss;
+document.head.appendChild(stylesEl);
+
+// Inject default theme CSS immediately (no flicker), will be updated from settings
+const themeEl = document.createElement('style');
+themeEl.id = 'itranslate-theme';
+themeEl.textContent = glacierCss;
+document.head.appendChild(themeEl);
+console.log('[iTranslate] 📋 CSS injected (default theme)');
 
 import type { TranslationSegment } from '../shared/types';
 import { extractSegments } from './filters';
@@ -207,6 +223,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ received: true });
     return true;
   }
+  if (message.action === 'updateTheme') {
+    if (message.theme && THEME_CSS_MAP[message.theme]) {
+      themeEl.textContent = THEME_CSS_MAP[message.theme];
+      console.log(`[iTranslate] 📋 Theme updated to: ${message.theme}`);
+    }
+    sendResponse({ received: true });
+    return true;
+  }
 });
 
 const panelActions = {
@@ -227,6 +251,14 @@ const panelActions = {
 };
 
 getSettings().then((settings) => {
+  // Apply stored theme if different from default
+  if (settings.theme && settings.theme !== 'glacier') {
+    const el = document.getElementById('itranslate-theme');
+    if (el && THEME_CSS_MAP[settings.theme]) {
+      el.textContent = THEME_CSS_MAP[settings.theme];
+      console.log(`[iTranslate] 📋 Theme set from settings: ${settings.theme}`);
+    }
+  }
   if (settings.floatingPanelEnabled) {
     createFloatingPanel(panelActions);
   }

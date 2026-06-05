@@ -35,5 +35,6 @@
   "translationFailed":      { "message": "Translation failed" },
   "ballLabel":              { "message": "Tr" },
   "dictLabel":              { "message": "Dict" },
-  "floatingPanelToggle":    { "message": "Floating Panel" }
+  "floatingPanelToggle":    { "message": "Floating Panel" },
+  "theme":                  { "message": "Theme" }
 }

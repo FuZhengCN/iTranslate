@@ -118,3 +118,22 @@ input:focus, textarea:focus {
   color: var(--itranslate-text-muted);
   font-size: 11px;
 }
+
+/* Theme selector */
+.theme-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--itranslate-border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--itranslate-surface-white);
+  color: var(--itranslate-text-primary);
+  cursor: pointer;
+}
+
+.theme-select:focus {
+  outline: none;
+  border-color: var(--itranslate-brand-purple);
+  box-shadow: 0 0 0 2px var(--itranslate-accent-bg-hover);
+}

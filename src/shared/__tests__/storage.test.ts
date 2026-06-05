@@ -36,6 +36,7 @@ describe('storage', () => {
       sourceLang: 'Japanese',
       targetLang: 'Korean',
       floatingPanelEnabled: true,
+      theme: 'glacier',
     });
     const settings = await getSettings();
     expect(settings.sourceLang).toBe('Japanese');

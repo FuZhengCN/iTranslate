@@ -2,6 +2,7 @@ import { getSettings, saveSettings } from '../shared/storage';
 import { LANGUAGE_OPTIONS } from '../shared/constants';
 import { detectPageLang, detectLangFromText } from '../shared/lang-detect';
 import { t } from '../shared/i18n';
+import { applyTheme, THEME_OPTIONS } from '../shared/theme-loader';
 
 const translateBtn = document.getElementById('translateBtn') as HTMLButtonElement;
 const settingsBtn = document.getElementById('settingsBtn') as HTMLButtonElement;
@@ -15,6 +16,8 @@ const swapBtn = document.getElementById('swapBtn') as HTMLButtonElement;
 const errorDiv = document.getElementById('error') as HTMLDivElement;
 const appNameLabel = document.getElementById('appNameLabel') as HTMLSpanElement;
 const versionLabel = document.getElementById('versionLabel') as HTMLSpanElement;
+const themeSelect = document.getElementById('themeSelect') as HTMLSelectElement;
+const themeLabel = document.getElementById('themeLabel') as HTMLSpanElement;
 
 let isTranslated = false;
 let activeTabId: number | null = null;
@@ -156,14 +159,25 @@ translateBtn.textContent = t('translatePage');
 translateBtn.style.color = 'var(--itranslate-surface-white)';
 selectionToggleText.textContent = t('selectionTranslate');
 floatingPanelToggleText.textContent = t('floatingPanelToggle');
+themeLabel.textContent = t('theme');
 
 populateLanguageSelects();
 loadLanguageSettings();
 syncState();
 
-// Init floating panel toggle from settings
+// Init floating panel toggle and theme from settings
 getSettings().then((settings) => {
   updateFloatingPanelToggleUI(settings.floatingPanelEnabled);
+  // Populate and set theme
+  THEME_OPTIONS.forEach((opt) => {
+    const option = document.createElement('option');
+    option.value = opt.value;
+    option.textContent = opt.label;
+    themeSelect.appendChild(option);
+  });
+  const currentTheme = settings.theme || 'glacier';
+  themeSelect.value = currentTheme;
+  applyTheme(currentTheme);
 });
 
 // Set version label
@@ -230,7 +244,11 @@ selectionToggle.addEventListener('click', async () => {
     });
     console.log(`[iTranslate] 🔘 toggleSelection message sent successfully`);
   } catch (err) {
-    console.error(`[iTranslate] 🔘 toggleSelection failed:`, err);
+    if ((err as Error).message === 'Cannot access restricted URL') {
+      console.log(`[iTranslate] 🔘 toggleSelection: restricted URL — skipped`);
+    } else {
+      console.error(`[iTranslate] 🔘 toggleSelection failed:`, err);
+    }
     updateSelectionToggleUI(!enabling);
   }
 });
@@ -252,7 +270,11 @@ floatingPanelToggle.addEventListener('click', async () => {
       enabled: enabling,
     });
   } catch (err) {
-    console.error('[iTranslate] 🔘 toggleFloatingPanel failed:', err);
+    if ((err as Error).message === 'Cannot access restricted URL') {
+      console.log('[iTranslate] 🔘 toggleFloatingPanel: restricted URL — skipped');
+    } else {
+      console.error('[iTranslate] 🔘 toggleFloatingPanel failed:', err);
+    }
     updateFloatingPanelToggleUI(!enabling);
   }
 });
@@ -264,7 +286,38 @@ swapBtn.addEventListener('click', async () => {
   await saveLanguageSettings(true, true);
 });
 
+themeSelect.addEventListener('change', async () => {
+  const theme = themeSelect.value as 'glacier' | 'google-blue' | 'google-logo';
+  applyTheme(theme);
+
+  const settings = await getSettings();
+  settings.theme = theme;
+  await saveSettings(settings);
+
+  // Notify content script for immediate update
+  try {
+    const tab = await getActiveTab();
+    if (tab.id) {
+      await chrome.tabs.sendMessage(tab.id, { action: 'updateTheme', theme });
+    }
+  } catch {
+    // Content script might not be injected — no-op
+  }
+});
+
 async function ensureContentScript(tabId: number): Promise<void> {
+  // Check for restricted URLs where content scripts cannot run
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    const url = tab.url || '';
+    if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:') || url.startsWith('edge://')) {
+      throw new Error('Cannot access restricted URL');
+    }
+  } catch (err) {
+    if ((err as Error).message === 'Cannot access restricted URL') throw err;
+    // tab.get failed — proceed anyway and let executeScript surface the error
+  }
+
   console.log(`[iTranslate] 🔘 ensureContentScript: checking if content script is loaded...`);
   try {
     await chrome.tabs.sendMessage(tabId, { action: 'ping' });
@@ -280,8 +333,8 @@ async function ensureContentScript(tabId: number): Promise<void> {
     });
     console.log(`[iTranslate] 🔘 ensureContentScript: content.js injected, verifying with ping...`);
   } catch (err) {
-    console.error(`[iTranslate] 🔘 ensureContentScript: injection failed`, err);
-    throw err;
+    console.log(`[iTranslate] 🔘 ensureContentScript: injection failed (restricted page?)`);
+    throw new Error('Cannot access restricted URL');
   }
   // 注入后重试验证（最多 5 次，每次 100ms），应对竞态
   for (let i = 0; i < 5; i++) {

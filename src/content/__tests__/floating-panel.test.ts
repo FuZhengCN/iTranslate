@@ -144,8 +144,8 @@ describe('setSelectionState', () => {
     const toggle = document.querySelector('.itranslate-float-toggle')!;
     expect(toggle.classList.contains('active')).toBe(true);
 
-    const icon = document.querySelector('.itranslate-float-selection-icon')!;
-    expect(icon.getAttribute('stroke')).toBe('#6BAECF');
+    const icon = document.querySelector('.itranslate-float-selection-icon')! as SVGElement;
+    expect(icon.style.stroke).toBe('var(--itranslate-float-icon-active)');
   });
 
   it('sets toggle to inactive and icon stroke to gray', () => {
@@ -161,8 +161,8 @@ describe('setSelectionState', () => {
     const toggle = document.querySelector('.itranslate-float-toggle')!;
     expect(toggle.classList.contains('active')).toBe(false);
 
-    const icon = document.querySelector('.itranslate-float-selection-icon')!;
-    expect(icon.getAttribute('stroke')).toBe('#bbb');
+    const icon = document.querySelector('.itranslate-float-selection-icon')! as SVGElement;
+    expect(icon.style.stroke).toBe('var(--itranslate-float-icon-inactive)');
   });
 });
 

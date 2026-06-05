@@ -1,0 +1,105 @@
+/* ═══════════════════════════════════════════════════════════
+   iTranslate Design Tokens — Google 经典蓝主题
+   Material Blue · 纯白基底 · 扁平无渐变 · 高对比
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand Primitives ──────────────────────────────── */
+  --itranslate-brand-indigo: #1A73E8;
+  --itranslate-brand-purple: #1A73E8;
+  --itranslate-brand-indigo-hover: #1557B0;
+  --itranslate-brand-purple-hover: #1557B0;
+
+  /* ── Gradients (flat: solid colors, no gradient) ───── */
+  --itranslate-gradient-brand: #1A73E8;
+  --itranslate-gradient-brand-hover: #1557B0;
+  --itranslate-gradient-accent: #1A73E8;
+  --itranslate-gradient-undo: #5F6368;
+
+  /* ── Brand Light / Alpha Variants ──────────────────── */
+  --itranslate-brand-bg-soft: #F8F9FA;
+  --itranslate-brand-100: #E8F0FE;
+  --itranslate-brand-200: #D2E3FC;
+  --itranslate-accent-bg-subtle: rgba(26, 115, 232, 0.08);
+  --itranslate-accent-bg-hover: rgba(26, 115, 232, 0.15);
+  --itranslate-accent-selection: rgba(26, 115, 232, 0.24);
+  --itranslate-accent-border: rgba(26, 115, 232, 0.15);
+  --itranslate-accent-border-hover: rgba(26, 115, 232, 0.30);
+  --itranslate-accent-shadow: rgba(26, 115, 232, 0.20);
+
+  /* ── Surfaces / Backgrounds ────────────────────────── */
+  --itranslate-surface-white: #FFFFFF;
+  --itranslate-surface-inverse: #202124;
+  --itranslate-surface-hover: #F1F3F4;
+  --itranslate-surface-secondary-hover: #F8F9FA;
+
+  /* ── Text ──────────────────────────────────────────── */
+  --itranslate-text-primary: #202124;
+  --itranslate-text-secondary: #5F6368;
+  --itranslate-text-muted: #80868B;
+  --itranslate-text-disabled: #BDC1C6;
+  --itranslate-text-translated: #202124;
+  --itranslate-text-on-brand: #FFFFFF;
+  --itranslate-text-icon: #5F6368;
+
+  /* ── Borders ───────────────────────────────────────── */
+  --itranslate-border-primary: #DADCE0;
+  --itranslate-border-footer: #DADCE0;
+
+  /* ── Semantic: Success ─────────────────────────────── */
+  --itranslate-success-bg: #E6F4EA;
+  --itranslate-success-border: #CEEAD6;
+  --itranslate-success-text: #137333;
+
+  /* ── Semantic: Error ───────────────────────────────── */
+  --itranslate-error-bg: #FCE8E6;
+  --itranslate-error-border: #F6C6C2;
+  --itranslate-error-text: #C5221F;
+
+  /* ── Copy Success ──────────────────────────────────── */
+  --itranslate-copy-success-text: #137333;
+  --itranslate-copy-success-border: #CEEAD6;
+
+  /* ── Bubble / Panel Surfaces ───────────────────────── */
+  --itranslate-bubble-bg: linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%);
+  --itranslate-bubble-bar: linear-gradient(90deg, #1A73E8, #4285F4, #8AB4F8);
+
+  /* ── Accent Alpha Levels ───────────────────────────── */
+  --itranslate-accent-alpha-06: rgba(26, 115, 232, 0.06);
+  --itranslate-accent-alpha-15: rgba(26, 115, 232, 0.15);
+  --itranslate-accent-alpha-35: rgba(26, 115, 232, 0.35);
+
+  /* ── Misc ──────────────────────────────────────────── */
+  --itranslate-close-color: #80868B;
+  --itranslate-toggle-off: #BDC1C6;
+  --itranslate-shadow-dark: rgba(32, 33, 36, 0.07);
+  --itranslate-toast-dot-bg: rgba(255, 255, 255, 0.3);
+  --itranslate-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+  --itranslate-shadow-bubble: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+
+  /* ── Component-Specific (default = chain to semantic) ─ */
+  --itranslate-popup-dot-selection: var(--itranslate-brand-purple);
+  --itranslate-popup-dot-floating: var(--itranslate-brand-purple);
+  --itranslate-popup-dot-theme: var(--itranslate-brand-purple);
+  --itranslate-popup-switch-selection: var(--itranslate-gradient-brand);
+  --itranslate-popup-switch-floating: var(--itranslate-gradient-brand);
+  --itranslate-float-icon-active: var(--itranslate-brand-purple);
+  --itranslate-float-icon-inactive: var(--itranslate-toggle-off);
+  --itranslate-float-toggle-on: var(--itranslate-gradient-brand);
+  --itranslate-float-icon-color: var(--itranslate-text-on-brand);
+  --itranslate-bubble-brand-color: var(--itranslate-brand-purple);
+  --itranslate-dict-pos-color: var(--itranslate-brand-purple);
+  --itranslate-dict-pos-bg: var(--itranslate-brand-100);
+  --itranslate-dict-num-color: var(--itranslate-brand-purple);
+  --itranslate-loading-dot: var(--itranslate-brand-200);
+  --itranslate-ball-label-color: #fff;
+  --itranslate-toggle-knob-bg: #fff;
+  --itranslate-toggle-knob-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --itranslate-bubble-btn-bg: rgba(255, 255, 255, 0.7);
+
+  /* ── Debug Visualization (dev only) ────────────────── */
+  --itranslate-debug-kept-outline: rgba(34, 197, 94, 0.7);
+  --itranslate-debug-kept-bg: rgba(34, 197, 94, 0.08);
+  --itranslate-debug-skipped-outline: rgba(239, 68, 68, 0.7);
+  --itranslate-debug-skipped-bg: rgba(239, 68, 68, 0.08);
+}

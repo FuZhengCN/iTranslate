@@ -23,4 +23,5 @@ export interface Settings {
   sourceLang: string;
   targetLang: string;
   floatingPanelEnabled: boolean;
+  theme: 'glacier' | 'google-blue' | 'google-logo';
 }

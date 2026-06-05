@@ -28,18 +28,26 @@
 
     <div class="toggle-row">
       <span class="toggle-label">
-        <span class="toggle-dot"></span>
+        <span class="toggle-dot toggle-dot--selection"></span>
         <span id="selectionToggleText">划词翻译</span>
       </span>
-      <button id="selectionToggle" class="toggle-switch off"></button>
+      <button id="selectionToggle" class="toggle-switch toggle-switch--selection off"></button>
     </div>
 
     <div class="toggle-row">
       <span class="toggle-label">
-        <span class="toggle-dot"></span>
+        <span class="toggle-dot toggle-dot--floating"></span>
         <span id="floatingPanelToggleText">悬浮开关</span>
       </span>
-      <button id="floatingPanelToggle" class="toggle-switch"></button>
+      <button id="floatingPanelToggle" class="toggle-switch toggle-switch--floating"></button>
+    </div>
+
+    <div class="theme-row">
+      <span class="toggle-label">
+        <span class="toggle-dot toggle-dot--theme"></span>
+        <span id="themeLabel">Theme</span>
+      </span>
+      <select id="themeSelect" class="theme-select"></select>
     </div>
 
     <button id="translateBtn" class="btn-primary">Translate This Page</button>
