@@ -18,6 +18,7 @@ let translateInProgress = false;
 let catchUpInProgress = false;
 
 import { sendToBgWithRetry } from './retry';
+import { createFloatingPanel, setTranslateState, setSelectionState } from './floating-panel';
 
 async function catchUpNewContent(): Promise<void> {
   if (catchUpInProgress) return;
@@ -71,6 +72,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
     return;
   }
   translateInProgress = true;
+  setTranslateState('translating');
   const t0 = performance.now();
 
   try {
@@ -116,6 +118,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
       console.error(`[iTranslate] ❌ Translation failed: ${response.error}`);
       alert(`Translation failed: ${response.error}`);
       removeTranslations();
+      setTranslateState('translate');
       chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
       return;
     }
@@ -123,6 +126,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
     console.log(`[iTranslate] 📊 Cache stats: ${response.stats.hits} hits, ${response.stats.misses} misses`);
 
     renderTranslations(response.results, extraction.sourceElements);
+    setTranslateState('undo');
 
     chrome.runtime.sendMessage({
       action: 'translationComplete',
@@ -148,6 +152,7 @@ async function translatePage(caller = 'popup'): Promise<void> {
 
   } catch (err) {
     console.error('[iTranslate] Error:', err);
+    setTranslateState('translate');
     alert(`Translation error: ${(err as Error).message}`);
     removeTranslations();
     chrome.runtime.sendMessage({ action: 'translationError' }).catch(() => {});
@@ -169,6 +174,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'undoTranslation') {
     removeTranslations();
     stopObserving();
+    setTranslateState('translate');
     sendResponse({ received: true });
     return true;
   }
@@ -181,6 +187,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       disableSelection();
       console.log('[iTranslate] 📋 disableSelection() called');
     }
+    setSelectionState(message.enabled);
     sendResponse({ received: true });
     return true;
   }
@@ -189,5 +196,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ pong: true });
     return true;
   }
+});
+
+createFloatingPanel({
+  onTranslate: () => translatePage('floating-panel'),
+  onUndo: () => {
+    removeTranslations();
+    stopObserving();
+    setTranslateState('translate');
+  },
+  onSelectionToggle: (enable: boolean) => {
+    if (enable) {
+      enableSelection();
+    } else {
+      disableSelection();
+    }
+    setSelectionState(enable);
+  },
 });
 
