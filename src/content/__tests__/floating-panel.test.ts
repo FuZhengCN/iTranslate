@@ -140,6 +140,7 @@ describe('setSelectionState', () => {
 
     const btn = document.querySelector('.itranslate-float-btn-selection')!;
     expect(btn.classList.contains('active')).toBe(true);
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('sets selection button to inactive (hollow) state', () => {
@@ -154,6 +155,7 @@ describe('setSelectionState', () => {
 
     const btn = document.querySelector('.itranslate-float-btn-selection')!;
     expect(btn.classList.contains('active')).toBe(false);
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
   });
 });
 
@@ -231,5 +233,11 @@ describe('removeFloatingPanel', () => {
     removeFloatingPanel();
 
     expect(document.querySelector('.itranslate-float-panel')).toBeNull();
+  });
+
+  it('is safe to call setters before createFloatingPanel', () => {
+    // Should not throw when buttons don't exist yet
+    expect(() => setTranslateState('translate')).not.toThrow();
+    expect(() => setSelectionState(true)).not.toThrow();
   });
 });

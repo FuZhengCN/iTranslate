@@ -14,6 +14,7 @@ export function createFloatingPanel(actions: PanelActions): void {
 
   panelEl = document.createElement('div');
   panelEl.className = 'itranslate-float-panel';
+  // Inline for jsdom test compatibility — styles.css also sets these values.
   panelEl.style.position = 'fixed';
   panelEl.style.right = '0';
 
