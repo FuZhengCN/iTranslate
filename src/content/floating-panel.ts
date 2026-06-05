@@ -20,6 +20,7 @@ export function createFloatingPanel(actions: PanelActions): void {
   translateBtn.className = 'itranslate-float-btn-translate';
   translateBtn.textContent = '文';
   translateBtn.title = '翻译此页';
+  translateBtn.setAttribute('aria-label', 'Translate page');
   translateBtn.addEventListener('click', () => {
     if (translateState === 'translating') return;
     if (translateState === 'undo') {
@@ -35,8 +36,11 @@ export function createFloatingPanel(actions: PanelActions): void {
   selectionBtn.className = 'itranslate-float-btn-selection';
   selectionBtn.textContent = '选';
   selectionBtn.title = '划词翻译';
+  selectionBtn.setAttribute('aria-label', 'Toggle selection translation');
+  selectionBtn.setAttribute('aria-pressed', 'false');
   selectionBtn.addEventListener('click', () => {
-    const enabling = !selectionBtn?.classList.contains('active');
+    if (!selectionBtn) return;
+    const enabling = !selectionBtn.classList.contains('active');
     actions.onSelectionToggle(enabling);
   });
   panelEl.appendChild(selectionBtn);
@@ -70,9 +74,6 @@ export function setTranslateState(state: 'translate' | 'translating' | 'undo'): 
 
 export function setSelectionState(enabled: boolean): void {
   if (!selectionBtn) return;
-  if (enabled) {
-    selectionBtn.classList.add('active');
-  } else {
-    selectionBtn.classList.remove('active');
-  }
+  selectionBtn.classList.toggle('active', enabled);
+  selectionBtn.setAttribute('aria-pressed', String(enabled));
 }
