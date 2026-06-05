@@ -2,7 +2,6 @@ import { getSettings, saveSettings } from '../shared/storage';
 import { DEFAULT_SETTINGS } from '../shared/constants';
 import type { Settings } from '../shared/types';
 import { t } from '../shared/i18n';
-import { applyTheme, THEME_OPTIONS } from '../shared/theme-loader';
 
 const settingsTitleEl = document.getElementById('settingsTitle') as HTMLHeadingElement;
 const apiEndpointLabel = document.getElementById('apiEndpointLabel') as HTMLLabelElement;
@@ -20,8 +19,6 @@ const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement;
 const testBtn = document.getElementById('testBtn') as HTMLButtonElement;
 const clearCacheBtn = document.getElementById('clearCacheBtn') as HTMLButtonElement;
 const statusDiv = document.getElementById('status') as HTMLDivElement;
-const themeSelect = document.getElementById('themeSelect') as HTMLSelectElement;
-const themeLabel = document.getElementById('themeLabel') as HTMLLabelElement;
 
 async function loadSettings(): Promise<void> {
   const settings = await getSettings();
@@ -29,8 +26,6 @@ async function loadSettings(): Promise<void> {
   apiKeyEl.value = settings.apiKey;
   modelEl.value = settings.model;
   systemPromptEl.value = settings.systemPrompt;
-  themeSelect.value = settings.theme || 'glacier';
-  applyTheme(settings.theme || 'glacier');
 }
 
 function showStatus(message: string, type: 'success' | 'error'): void {
@@ -48,7 +43,6 @@ function getFormSettings(): Settings {
     sourceLang: '',
     targetLang: '',
     floatingPanelEnabled: true,
-    theme: 'glacier',
   };
 }
 
@@ -63,7 +57,6 @@ saveBtn.addEventListener('click', async () => {
   settings.sourceLang = current.sourceLang;
   settings.targetLang = current.targetLang;
   settings.floatingPanelEnabled = current.floatingPanelEnabled;
-  settings.theme = current.theme;
   await saveSettings(settings);
   showStatus(t('settingsSaved'), 'success');
 });
@@ -78,7 +71,6 @@ testBtn.addEventListener('click', async () => {
   settings.sourceLang = current.sourceLang;
   settings.targetLang = current.targetLang;
   settings.floatingPanelEnabled = current.floatingPanelEnabled;
-  settings.theme = current.theme;
   await saveSettings(settings);
 
   try {
@@ -115,25 +107,8 @@ systemPromptEditable.textContent = t('systemPromptEditable');
 saveBtn.textContent = t('save');
 testBtn.textContent = t('testConnection');
 clearCacheBtn.textContent = t('clearCache');
-themeLabel.textContent = t('theme');
-
-// Populate theme selector
-THEME_OPTIONS.forEach((opt) => {
-  const option = document.createElement('option');
-  option.value = opt.value;
-  option.textContent = opt.label;
-  themeSelect.appendChild(option);
-});
 
 loadSettings();
-
-themeSelect.addEventListener('change', async () => {
-  const theme = themeSelect.value as Settings['theme'];
-  applyTheme(theme);
-  const settings = await getSettings();
-  settings.theme = theme;
-  await saveSettings(settings);
-});
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {

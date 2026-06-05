@@ -19,7 +19,7 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: var(--itranslate-loading-dot);
+  background: var(--itranslate-brand-200);
   border-radius: 50%;
   animation: itranslate-bounce 0.8s infinite ease-in-out;
 }
@@ -113,10 +113,10 @@
   width: 380px;
   max-width: calc(100vw - 24px);
   max-height: 360px;
-  background: var(--itranslate-bubble-bg);
-  border: 1px solid var(--itranslate-accent-bg-subtle);
+  background: linear-gradient(180deg, #FCFBF9 0%, #F5F3EF 100%);
+  border: 1px solid rgba(107, 174, 207, 0.12);
   border-radius: 14px;
-  box-shadow: 0 4px 20px var(--itranslate-shadow-dark), 0 1px 4px var(--itranslate-accent-alpha-06);
+  box-shadow: 0 4px 20px rgba(42,48,56,0.06), 0 1px 4px rgba(107,174,207,0.08);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   display: flex;
   flex-direction: column;
@@ -134,7 +134,7 @@
 /* ── Bar: 4px gradient line (part of drag area) ── */
 .itranslate-selection-bubble .itranslate-bubble-bar {
   height: 4px;
-  background: var(--itranslate-bubble-bar);
+  background: linear-gradient(90deg, #6BAECF, #94C8E0, #B8D9EA);
   flex-shrink: 0;
   cursor: grab;
 }
@@ -157,7 +157,7 @@
 .itranslate-selection-bubble .itranslate-bubble-brand {
   font-size: 11px;
   font-weight: 600;
-  color: var(--itranslate-bubble-brand-color);
+  color: #6BAECF;
   opacity: 0.7;
   letter-spacing: 0.3px;
 }
@@ -166,7 +166,7 @@
   margin-left: auto;
   font-size: 9px;
   color: var(--itranslate-text-muted);
-  background: var(--itranslate-accent-alpha-06);
+  background: rgba(107, 174, 207, 0.06);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -182,7 +182,7 @@
 /* ── Original text (collapsed + gradient fade) ── */
 .itranslate-selection-bubble .itranslate-bubble-original {
   font-size: 12px;
-  color: var(--itranslate-text-muted);
+  color: #999;
   line-height: 1.6;
   max-height: 58px;
   overflow: hidden;
@@ -195,7 +195,7 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 22px;
-  background: linear-gradient(transparent, var(--itranslate-brand-bg-soft));
+  background: linear-gradient(transparent, #F5F3EF);
 }
 
 /* ── Translation text ── */
@@ -207,7 +207,7 @@
   -webkit-user-select: text;
   user-select: text;
   padding-top: 10px;
-  border-top: 1px solid var(--itranslate-accent-bg-subtle);
+  border-top: 1px solid rgba(107, 174, 207, 0.12);
 }
 
 /* ── Actions ── */
@@ -222,8 +222,8 @@
 .itranslate-selection-bubble .itranslate-bubble-btn {
   height: 28px;
   padding: 0 12px;
-  border: 1px solid var(--itranslate-accent-alpha-15);
-  background: var(--itranslate-bubble-btn-bg);
+  border: 1px solid rgba(107, 174, 207, 0.15);
+  background: rgba(255,255,255,0.7);
   border-radius: 14px;
   font-size: 11px;
   color: var(--itranslate-text-icon);
@@ -308,8 +308,8 @@
 .itranslate-dict-pos {
   font-size: 10px;
   font-weight: 600;
-  color: var(--itranslate-dict-pos-color);
-  background: var(--itranslate-dict-pos-bg);
+  color: var(--itranslate-brand-purple);
+  background: var(--itranslate-brand-100);
   padding: 1px 7px;
   border-radius: 4px;
   letter-spacing: 0.3px;
@@ -317,7 +317,7 @@
 
 .itranslate-dict-sep {
   padding-top: 10px;
-  border-top: 1px solid var(--itranslate-accent-bg-subtle);
+  border-top: 1px solid rgba(107, 174, 207, 0.12);
   margin-bottom: 8px;
 }
 
@@ -337,7 +337,7 @@
 .itranslate-dict-num-primary {
   font-size: 11px;
   font-weight: 700;
-  color: var(--itranslate-dict-num-color);
+  color: var(--itranslate-brand-purple);
   flex-shrink: 0;
 }
 
@@ -381,7 +381,7 @@
   opacity: 0;
   font-size: 8px;
   font-weight: 600;
-  color: var(--itranslate-ball-label-color);
+  color: #fff;
   line-height: 1;
   transition: opacity 0.3s ease;
 }
@@ -401,7 +401,7 @@
   }
   100% {
     transform: translateY(-12px) scale(2);
-    box-shadow: 0 0 0 10px var(--itranslate-accent-alpha-15), 0 4px 20px var(--itranslate-accent-alpha-35);
+    box-shadow: 0 0 0 10px rgba(107, 174, 207, 0.15), 0 4px 20px rgba(107, 174, 207, 0.35);
   }
 }
 
@@ -419,18 +419,18 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  background: var(--itranslate-bubble-bg);
-  border: 1px solid var(--itranslate-accent-alpha-15);
+  background: linear-gradient(180deg, #FCFBF9, #F5F3EF);
+  border: 1px solid rgba(107, 174, 207, 0.18);
   border-right: none;
   border-radius: 10px 0 0 10px;
-  box-shadow: -2px 2px 14px var(--itranslate-shadow-dark);
+  box-shadow: -2px 2px 14px rgba(42, 48, 56, 0.07);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .itranslate-float-sep {
   width: 20px;
   height: 1px;
-  background: var(--itranslate-accent-bg-subtle);
+  background: rgba(107, 174, 207, 0.12);
   flex-shrink: 0;
 }
 
@@ -445,7 +445,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 3px var(--itranslate-accent-bg-hover);
+  box-shadow: 0 1px 3px rgba(107, 174, 207, 0.25);
   transition: background 0.2s;
 }
 
@@ -499,25 +499,25 @@
   width: 24px;
   height: 14px;
   border-radius: 7px;
-  background: var(--itranslate-toggle-off);
+  background: #bbb;
   position: relative;
   transition: background 0.15s;
   flex-shrink: 0;
 }
 
 .itranslate-float-toggle.active {
-  background: var(--itranslate-float-toggle-on);
+  background: var(--itranslate-gradient-brand);
 }
 
 .itranslate-float-toggle-knob {
   width: 11px;
   height: 11px;
-  background: var(--itranslate-toggle-knob-bg);
+  background: #fff;
   border-radius: 50%;
   position: absolute;
   top: 1.5px;
   left: 1.5px;
-  box-shadow: var(--itranslate-toggle-knob-shadow);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
   transition: left 0.15s;
 }
 

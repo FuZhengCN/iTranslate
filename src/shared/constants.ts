@@ -18,7 +18,6 @@ export const DEFAULT_SETTINGS: Settings = {
   sourceLang: 'English',
   targetLang: 'Chinese',
   floatingPanelEnabled: true,
-  theme: 'glacier',
 };
 
 export const CACHE_DB_NAME = 'itranslate-cache';

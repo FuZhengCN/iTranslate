@@ -35,6 +35,5 @@
   "translationFailed":      { "message": "翻译失败" },
   "ballLabel":              { "message": "译" },
   "dictLabel":              { "message": "词典" },
-  "floatingPanelToggle":    { "message": "悬浮开关" },
-  "theme":                  { "message": "主题" }
+  "floatingPanelToggle":    { "message": "悬浮开关" }
 }
