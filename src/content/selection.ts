@@ -49,6 +49,7 @@ export function getBubblePosition(rect: DOMRect): { top: number; left: number } 
 
 function hideBubble(clearSelection = false): void {
   if (currentBubble) {
+    console.log('[iTranslate] 🐛 hideBubble: removing existing bubble');
     currentBubble.remove();
     currentBubble = null;
   }
@@ -63,29 +64,42 @@ function removeBall(): void {
   if (ballHoverTimer) {
     clearTimeout(ballHoverTimer);
     ballHoverTimer = null;
+    console.log('[iTranslate] 🐛 removeBall: timer cleared');
   }
   if (currentBall) {
+    const pos = currentBall.getBoundingClientRect();
+    console.log(`[iTranslate] 🐛 removeBall: removing ball at viewport(${pos.left.toFixed(0)},${pos.top.toFixed(0)})`);
     currentBall.remove();
     currentBall = null;
   }
+}
+
+function getLastCharRect(sel: Selection): DOMRect {
+  const range = sel.getRangeAt(0).cloneRange();
+  range.collapse(false); // collapse to end → cursor after last selected character
+  return range.getBoundingClientRect();
 }
 
 function positionBall(rect: DOMRect): { top: number; left: number } {
   const BALL_SIZE = 12;
   const GAP = 2;
 
-  let top = rect.top - BALL_SIZE - GAP;
+  // Default: bottom-right of selection
+  let top = rect.bottom + GAP;
   let left = rect.right + GAP;
 
-  // Vertical boundary: don't go above viewport
-  if (top < GAP) top = rect.bottom + GAP;
+  // Vertical overflow: flip above selection
+  if (top + BALL_SIZE > window.innerHeight - GAP) {
+    top = rect.top - BALL_SIZE - GAP;
+  }
 
-  // Horizontal boundary: don't go past right edge
+  // Horizontal overflow: flip to left of selection
   if (left + BALL_SIZE > window.innerWidth - GAP) {
     left = rect.left - BALL_SIZE - GAP;
   }
-  // Final clamp: don't go past left edge (fallback for full-width selections)
+  // Final clamp edges
   if (left < GAP) left = GAP;
+  if (top < GAP) top = GAP;
 
   return { top, left };
 }
@@ -100,20 +114,30 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
   ball.style.left = `${pos.left}px`;
   ball.dataset.label = t('ballLabel');
 
+  console.log(`[iTranslate] 🐛 createBall: ball at viewport(${pos.left},${pos.top}) selection(${rect.left.toFixed(0)},${rect.top.toFixed(0)},${rect.right.toFixed(0)},${rect.bottom.toFixed(0)})`);
+
   ball.addEventListener('mouseenter', () => {
     if (ballHoverTimer) return;
-    // Trigger CSS animation via class so micro-movements don't restart it
+    console.log('[iTranslate] 🐛 ball mouseenter: timer started (1s)');
     ball.classList.add('animating');
     ballHoverTimer = setTimeout(() => {
       ballHoverTimer = null;
-      if (!currentBall) return;
+      if (!currentBall) {
+        console.log('[iTranslate] 🐛 ball timer fired but currentBall is null — skip');
+        return;
+      }
+      console.log('[iTranslate] 🐛 ball timer fired → calling showBubble');
       removeBall();
       const sel = window.getSelection();
       const currentRect = (sel && sel.rangeCount > 0)
-        ? sel.getRangeAt(0).getBoundingClientRect()
+        ? getLastCharRect(sel)
         : rect;
       showBubble(currentRect, text);
     }, 1000);
+  });
+
+  ball.addEventListener('mouseleave', () => {
+    console.log('[iTranslate] 🐛 ball mouseleave: mouse left ball (animation moved it?)');
   });
 
   document.body.appendChild(ball);
@@ -176,6 +200,8 @@ function renderDictionaryResult(body: HTMLElement, jsonStr: string): void {
 }
 
 async function showBubble(rect: DOMRect, text: string): Promise<void> {
+  console.log(`[iTranslate] 🐛 showBubble: entry — mode=${(isSingleWord(text) && isEnglishText(text)) ? 'dictionary' : 'translate'} text="${text.slice(0, 40)}"`);
+
   hideBubble();
 
   const mode = (isSingleWord(text) && isEnglishText(text)) ? 'dictionary' : 'translate';
@@ -259,8 +285,8 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
   bubble.appendChild(header);
   bubble.appendChild(body);
   bubble.appendChild(actions);
-  console.log(`[iTranslate] 🔎 showBubble: appending bubble to body, mode=${mode}, text="${text.slice(0, 40)}"`);
   document.body.appendChild(bubble);
+  console.log(`[iTranslate] 🐛 showBubble: bubble appended to body — size(${bubble.offsetWidth}x${bubble.offsetHeight}) pos(${bubble.style.top}, ${bubble.style.left})`);
 
   const pos = getBubblePosition(rect);
   bubble.style.top = `${pos.top}px`;
@@ -304,6 +330,7 @@ async function showBubble(rect: DOMRect, text: string): Promise<void> {
       } else {
         const translationEl = document.createElement('div');
         translationEl.className = 'itranslate-bubble-translation';
+        translationEl.style.whiteSpace = 'pre-line';
         translationEl.textContent = response.results[0].translated;
         body.appendChild(translationEl);
       }
@@ -347,7 +374,7 @@ function onMouseUp(e: MouseEvent): void {
 
     const sel = window.getSelection()!;
     const text = sel.toString().trim();
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const rect = getLastCharRect(sel);
     console.log(`[iTranslate] 🔍 Selection detected — "${text.slice(0, 50)}"`);
     createBall(rect, text);
   }, 0);

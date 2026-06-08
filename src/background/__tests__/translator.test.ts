@@ -77,6 +77,38 @@ describe('translator', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  it('captures multi-line translation for a single segment', async () => {
+    const mockSettings = {
+      apiEndpoint: 'https://api.deepseek.com/v1',
+      apiKey: 'sk-test',
+      model: 'deepseek-chat',
+      systemPrompt: 'Translate.',
+    };
+
+    vi.stubGlobal('chrome', {
+      storage: {
+        sync: {
+          get: vi.fn().mockResolvedValue({ itranslate_settings: mockSettings }),
+        },
+      },
+    });
+
+    // LLM returns multi-paragraph translation for a single segment
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        choices: [{ message: { content: '[0] 第一段。\n\n第二段。' } }],
+      }),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { translateBatch } = await import('../translator');
+    const results = await translateBatch(['First paragraph.\n\nSecond paragraph.']);
+
+    expect(results).toEqual(['第一段。\n\n第二段。']);
+  });
+
   it('throws when API key is missing', async () => {
     vi.stubGlobal('chrome', {
       storage: {

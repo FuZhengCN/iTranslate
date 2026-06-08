@@ -47,7 +47,6 @@ export function createFloatingPanel(actions: PanelActions): void {
   selectionEl.className = 'itranslate-float-selection';
   selectionEl.title = '划词翻译';
   selectionEl.setAttribute('aria-label', 'Toggle selection translation');
-  selectionEl.setAttribute('tabindex', '0');
   selectionEl.innerHTML = SVG_SELECTION;
 
   const toggleEl = document.createElement('div');
@@ -59,7 +58,13 @@ export function createFloatingPanel(actions: PanelActions): void {
 
   selectionEl.addEventListener('click', () => {
     const enabling = !toggleEl.classList.contains('active');
+    console.log(`[iTranslate] 🐛 floating-panel toggle clicked → ${enabling ? 'enable' : 'disable'}`);
     actions.onSelectionToggle(enabling);
+  });
+
+  // 诊断：监听 toggle 是否意外获得焦点
+  selectionEl.addEventListener('focus', () => {
+    console.log('[iTranslate] 🐛 floating-panel toggle received FOCUS');
   });
 
   panelEl.appendChild(selectionEl);

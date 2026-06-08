@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **语言要求：所有回复、解释、注释、说明使用简体中文，代码关键字/标识符保留英文。**
-**铁律见全局 `~/.claude/CLAUDE.md`（6 条），本项目不再重复。**
+**铁律见全局 `~/.claude/CLAUDE.md`（7 条），本项目不再重复。**
 
 ## Build & Test Commands
 
@@ -108,7 +108,7 @@ Popup click → content script
 
 **调试 "No translatable content"：** 控制台日志分两阶段 — `📄 Extracted N raw blocks`（extractor 产出）→ `✅ Extracted M blocks (K filtered)`（filter 后）。若 N > 0 但 M = 0，说明 `structuredFilter` 的 `hasSkippableAncestor()` 或噪音模式把所有 block 过滤了，需在页面控制台沿祖先链排查哪个元素 class/id 命中了 `SKIP_CLASS_NAMES`。
 
-**诊断日志标记约定：** `🔎` 前缀标记 Observer → catchUpNewContent → filter 全链路诊断日志，用于排查"翻译内容被二次翻译"类问题。`👁` 前缀标记 Observer 触发及新增节点详情。
+**诊断日志标记约定：** `🔎` 前缀标记 Observer → catchUpNewContent → filter 全链路诊断日志，用于排查"翻译内容被二次翻译"类问题。`👁` 前缀标记 Observer 触发及新增节点详情。`🐛` 前缀标记划词小球/泡泡/面板诊断日志，覆盖小球生命周期（createBall→mouseenter/mouseleave→timer→removeBall→showBubble→bubble append）和浮动面板 focus/click 事件。
 
 **Content → Background 重试机制：** `sendToBgWithRetry()` 包装 `chrome.runtime.sendMessage`。MV3 Service Worker 空闲终止后重新唤醒存在竞态：消息到达时 `onMessage` 监听器可能尚未注册，导致 "Receiving end does not exist" 错误。重试 3 次（间隔 600ms）给 SW 足够的启动时间。仅对连接类错误重试，其它错误直接抛出。
 
@@ -125,7 +125,7 @@ Popup click → content script
 ```
 用户选中文字 → mouseup
   ├─ 300ms 防抖 → isValidSelection()
-  ├─ 选区 Rect → positionBall() → createBall()  // 12px 小球在选区右上角
+  ├─ 选区 Rect → positionBall() → createBall()  // 12px 小球在选区最后字右下角
   └─ 悬停 1s → showBubble(rect, text)
         ├─ isSingleWord(text) → whitespace split 判断
         ├─ isEnglishText(text) → CJK/假名/谚文正则拒绝
@@ -142,16 +142,16 @@ Popup click → content script
         │     ↓
         ├─ mode='dictionary' → renderDictionaryResult(body, json)
         │     └─ 词条头（单词+音标+词性标签）→ 分隔线 → 编号义项
-        └─ mode='translate' → 原文 + 译文（现有翻译气泡）
+        └─ mode='translate' → 原文(textContent) + 译文(white-space:pre-line 分段)
 ```
 
-小球位置逻辑（`positionBall`，`selection.ts:64`）：优先选区右上角外侧 2px → 顶部溢出翻到下方 → 右侧溢出翻到左侧 → 左边界 clamp 2px。气泡位置逻辑（`getBubblePosition`）：优先选区下方居中 → 底部溢出翻到上方。
+小球位置逻辑（`getLastCharRect` + `positionBall`，`selection.ts`）：`getLastCharRect()` 用 `Range.collapse(false)` 缩到末尾光标位置获取最后字坐标，`positionBall()` 默认右下角（rect.bottom + 2, rect.right + 2）。底部溢出翻到上方，右侧溢出翻到左侧，左上均 clamp 2px。气泡位置逻辑（`getBubblePosition`）：优先选区下方居中 → 底部溢出翻到上方。
 
 ### Key Modules
 
 - **`src/content/retry.ts`** — `sendToBgWithRetry()` 提取至独立模块，避免 `index.ts` ↔ `selection.ts` 循环依赖。对 "Receiving end does not exist" / "Could not establish connection" 重试（3 次 / 600ms 间隔），应对 MV3 Service Worker 冷启动竞态。"Extension context invalidated" 抛出专用错误码 `EXTENSION_CONTEXT_INVALIDATED`（不重试，上下文已死），调用方展示刷新提示。
-- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾右上方出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 1s 膨胀动画后触发翻译（JS 驱动 `.animating` class，防鼠标微移重启）。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。`showBubble()` 中 `isSingleWord()` + `isEnglishText()` 自动判断 mode（单拉丁单词 → dictionary，其余 → translate），Background 返回结果后 `renderDictionaryResult()` 或翻译气泡分支渲染。词典气泡与翻译气泡结构一致（bar→header→body→actions），展示词条头（单词+音标+词性标签）+编号义项列表。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区。气泡支持拖拽移动。注入 `::selection` 高亮背景。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
-- **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。`translateBatch()` 按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批，并行 3 批并发。`translateDictionary(word)` 专用于单次词典请求，使用内置 `DICT_SYSTEM_PROMPT`（非用户 settings.systemPrompt），返回 `{ success, data }`。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式。
+- **`src/content/selection.ts`** — 划词翻译。`enableSelection()` 注册 document mouseup 监听器，用户选中文字后在选区末尾最后字右下角出现 12px 冰川蓝小球（`itranslate-selection-ball`），悬停小球 1s 膨胀动画后触发翻译（JS 驱动 `.animating` class，防鼠标微移重启）。小球与选区状态绑定，文字通过 `createBall(rect, text)` 捕获到闭包中防浏览器清除选区。`showBubble()` 中 `isSingleWord()` + `isEnglishText()` 自动判断 mode（单拉丁单词 → dictionary，其余 → translate），Background 返回结果后 `renderDictionaryResult()` 或翻译气泡分支渲染。词典气泡与翻译气泡结构一致（bar→header→body→actions），展示词条头（单词+音标+词性标签）+编号义项列表。`hideBubble(clearSelection?)` 仅在用户主动关闭（× / Esc / 滚动 / 禁用开关）时清除选区。气泡支持拖拽移动。注入 `::selection` 高亮背景。**每个页面默认关闭**，需通过 Popup 开关手动开启，状态不持久化（仅对当前标签生效）。
+- **`src/background/translator.ts`** — OpenAI 兼容 API 客户端（`/chat/completions`）。`translateBatch()` 按 token 数分批：CJK 1.5 tok/字、拉丁 0.35 tok/字，目标 1500 tok/批，并行 3 批并发。`translateDictionary(word)` 专用于单次词典请求，使用内置 `DICT_SYSTEM_PROMPT`（非用户 settings.systemPrompt），返回 `{ success, data }`。仅 429/5xx 重试（最多 3 次），4xx 不重试。Temperature 0.1。发送 `thinking: { type: 'disabled' }` 阻止推理模型产生空内容。`max_tokens` 根据 prompt 长度动态估算。`parseResponse()` 支持 `[N]`、`N.`、`N)`、`N、` 格式，遇到新标签时 flush 上一段，标签间续行累积，多段落译文不再被截断。
 - **`src/background/dict-prompt.ts`** — 词典 prompt 预制内置（不在 settings 中，用户不可编辑）。`DICT_SYSTEM_PROMPT` 为英→中词典 system prompt（JSON 输出格式：`{word, ipa, pos, definitions: [{zh}]}`）。`dictUserPrompt(word)` 生成 `Define: ${word}`。`parseDictionaryResponse(raw)` 解析 JSON 响应，清理 markdown fences，校验必填字段，失败返回 null。当前仅英→中一份 prompt，后期扩展改为语言对注册表。
 - **`src/background/cache.ts`** — IndexedDB 封装（依赖 `idb`）。Key：`segmentKey(text, targetLang)` = djb2 hash + 文本长度 + 目标语言。Value：`{ original, translated, timestamp }`。**原文存储并在查找时校验**，防止哈希碰撞。`cacheGetBulk` 用并行 `Promise.all`。`dbPromise` 打开失败时重置以支持重试。
 - **`src/background/router.ts`** — 编排缓存查找 + API 调用。`handleTranslate(segments, tabId?, mode?)` 支持 `'translate'` 和 `'dictionary'` 双模式。缓存 key 含 mode 前缀（`dict_`/`seg_`）和目标语言，词典/翻译缓存互不覆盖。词典模式先校验语言对（仅英→中），不满足则降级翻译。`translateDictionary()` JSON 解析失败时自动 fallback 到 `translateBatch()`。结果用位置映射（position map）排序。每次翻译前重新读取 settings 以获取最新 targetLang。
@@ -198,7 +198,7 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Test Strategy
 
-Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件（11 个，102 个用例）位于各模块的 `__tests__/` 目录：
+Vitest + jsdom + `fake-indexeddb` (auto-loaded via `setupFiles`)。测试文件（11 个，103 个用例）位于各模块的 `__tests__/` 目录：
 
 | 测试文件 | 覆盖 |
 |----------|------|

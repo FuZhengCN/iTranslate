@@ -46,25 +46,43 @@ function buildPrompt(texts: string[]): string {
 function parseResponse(response: string, count: number): string[] {
   const translations: (string | null)[] = new Array(count).fill(null);
 
-  // Try multiple numbering formats that models commonly produce
   const patterns = [
     /^\[(\d+)\]\s*(.+)/,       // [0] text
     /^(\d+)[\.\)、]\s*(.+)/,   // 0. text, 0) text, 0、text
   ];
 
+  let currentIdx: number | null = null;
+  let currentLines: string[] = [];
+
+  function flush(): void {
+    if (currentIdx !== null && currentLines.length > 0 && translations[currentIdx] === null) {
+      translations[currentIdx] = currentLines.join('\n').trim();
+    }
+    currentIdx = null;
+    currentLines = [];
+  }
+
   const lines = response.split('\n');
   for (const line of lines) {
+    let matched = false;
     for (const pattern of patterns) {
       const match = line.match(pattern);
       if (match) {
+        flush();
         const idx = parseInt(match[1], 10);
-        if (idx >= 0 && idx < count && translations[idx] === null) {
-          translations[idx] = match[2].trim();
+        if (idx >= 0 && idx < count) {
+          currentIdx = idx;
+          currentLines = [match[2]];
         }
+        matched = true;
         break;
       }
     }
+    if (!matched && currentIdx !== null) {
+      currentLines.push(line);
+    }
   }
+  flush();
 
   return translations.map((t, i) => t ?? `[Translation unavailable for segment ${i}]`);
 }
