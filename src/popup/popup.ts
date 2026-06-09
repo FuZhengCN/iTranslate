@@ -14,6 +14,7 @@ const targetLangEl = document.getElementById('targetLang') as HTMLSelectElement;
 const swapBtn = document.getElementById('swapBtn') as HTMLButtonElement;
 const errorDiv = document.getElementById('error') as HTMLDivElement;
 const appNameLabel = document.getElementById('appNameLabel') as HTMLSpanElement;
+const appSubtitleLabel = document.getElementById('appSubtitleLabel') as HTMLSpanElement;
 const versionLabel = document.getElementById('versionLabel') as HTMLSpanElement;
 
 let isTranslated = false;
@@ -176,6 +177,7 @@ async function syncState(): Promise<void> {
 
 // Set localized UI text (before async init so text is ready immediately)
 appNameLabel.textContent = t('appName');
+appSubtitleLabel.textContent = t('appSubtitle');
 settingsBtn.title = t('settings');
 swapBtn.title = t('swapLanguages');
 translateBtn.textContent = t('translatePage');

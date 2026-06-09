@@ -11,6 +11,11 @@ let setSelectionState: (enabled: boolean) => void;
 
 beforeEach(async () => {
   vi.resetModules();
+  vi.stubGlobal('chrome', {
+    i18n: {
+      getMessage: vi.fn().mockImplementation((key: string) => key),
+    },
+  });
   document.body.innerHTML = '';
   const mod = await import('../floating-panel');
   createFloatingPanel = mod.createFloatingPanel;

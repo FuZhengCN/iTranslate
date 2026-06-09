@@ -46,7 +46,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 - 开发：`npm run dev` 启动 Vite dev server，Chrome 加载**源码目录**（项目根目录，非 `dist/`）
 - 生产：`npm run build`，Chrome 加载 `dist/` 目录
 
-**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 38 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
+**国际化（i18n）：** 支持简体中文/英文双语，根据 `navigator.language` 自动选择。翻译文件 `_locales/{en,zh_CN}/messages.json`（各 39 条）。JS 通过 `src/shared/i18n.ts` 的 `t()` 函数获取文本。**注意：HTML 中不能使用 `__MSG_*__` 占位符**（Vite/Crxjs dev server 会拦截），所有 UI 文本在 TS 初始化时通过 JS 设置。
 
 ### Extension Contexts (4 isolated execution environments)
 
@@ -54,7 +54,7 @@ npx tsc --noEmit         # TypeScript check only (no emit)
 |---------|-------|------|
 | **Background** (service worker) | `src/background/index.ts` | 处理 AI API 调用，管理 IndexedDB 缓存，校验消息 |
 | **Content script** | `src/content/index.ts` | 构建时通过 `content_scripts` 自动注入所有页面（`assets/content.js`，IIFE 格式）。提取文本块，发送到 background 翻译，结果渲染到 DOM。CSS 内联于 JS 中，注入时同时创建 `<style>` 标签。初始化时创建浮动翻译面板（`floating-panel.ts`） |
-| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — 翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，深色文字 `#2A3038`），源/目标语言选择 + 互换，划词翻译开关，**浮动面板开关**（默认开启，持久化到 `chrome.storage.sync`）。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置。**受限页面检测**（`chrome://`、`edge://` 等）：`syncState()` 检测 `tab.url`，若为受限协议则调用 `disableAllControls()` 禁用所有按钮并显示错误提示，toggle/translate handler 通过 `isRestrictedPage` 短路保护 |
+| **Popup** | `src/popup/popup.html` + `popup.ts` | 工具栏弹窗 — Header 显示应用名+副标题（`appSubtitle` i18n key，11px `text-muted`），翻译/撤销按钮（`setButtonState()` 统一切换：冰川蓝渐变背景=翻译，暖陶色渐变=撤销，深色文字 `#2A3038`），源/目标语言选择 + 互换，划词翻译开关，**浮动面板开关**（默认开启，持久化到 `chrome.storage.sync`）。打开时自动从 `<html lang>` 检测源语言、从 `navigator.language` 检测目标语言。语言锁定为 **per-tab**：用户手动改语言后仅当前标签锁定，锁存在 `chrome.storage.session`（key 含 `tabId`），换标签或重启浏览器即重置。**受限页面检测**（`chrome://`、`edge://` 等）：`syncState()` 检测 `tab.url`，若为受限协议则调用 `disableAllControls()` 禁用所有按钮并显示错误提示，toggle/translate handler 通过 `isRestrictedPage` 短路保护 |
 | **Settings** | `src/settings/settings.html` + `settings.ts` | 选项页 — API endpoint、API key、模型名称、自动生成的 system prompt（可编辑）、测试连接、清除缓存 |
 
 ### Message Catalog
@@ -114,7 +114,7 @@ Popup click → content script
 
 **内容脚本注入机制：** 生产构建时通过 `content_scripts`（`<all_urls>`，`document_idle`）自动注入所有页面。Popup 仍保留 `ensureContentScript(tabId)` 用于开发场景和扩展更新后恢复（发送 `ping` 探测 → 未响应则注入 → 重试 ping）。
 
-**浮动面板（floating panel）：** `src/content/floating-panel.ts` 在右上角创建竖型迷你面板，包含翻译动作按钮（SVG 图标，蓝底=可翻译/暖陶底=可撤销）和划词 mini toggle switch。通过 `PanelActions` 接口依赖注入，与 `index.ts` 解耦。显示由 `Settings.floatingPanelEnabled` 控制（默认 true），popup 开关持久化到 `chrome.storage.sync`，区别于划词翻译的 per-tab session 模式。
+**浮动面板（floating panel）：** `src/content/floating-panel.ts` 在右上角创建竖型迷你面板，包含翻译动作按钮（`buildTranslateIcon()` 动态生成 SVG，显示 `ballLabel` 单字 "译"/"Tr"，蓝底渐变=可翻译/暖陶渐变=可撤销）和划词 mini toggle switch。通过 `PanelActions` 接口依赖注入，与 `index.ts` 解耦。显示由 `Settings.floatingPanelEnabled` 控制（默认 true），popup 开关持久化到 `chrome.storage.sync`，区别于划词翻译的 per-tab session 模式。
 
 内容脚本为 IIFE 格式（`vite.content.config.ts` 单独构建），因 `executeScript` 不支持 ESM `import` 语句。CSS（`theme.css` + `styles.css`）通过 `?inline` 导入为字符串，注入时创建 `<style>` 标签插入页面。
 
@@ -163,8 +163,9 @@ Popup click → content script
   - **`debug-visualization.ts`** — 调试可视化（独立 dev 入口）。绿色/红色高亮标注保留/过滤元素，通过 `window.__itranslateFilterV2` 暴露。
 - **`src/content/renderer.ts`** — 两阶段渲染：`renderPlaceholders()` 注入 3 点动画的克隆元素（clone 后清空 display/visibility/overflow 内联样式，不调用 `applyTextStyles` 避免源页面样式遮盖）；`renderTranslations()` 替换为真实翻译文本。`createClone()` 统一创建翻译元素（`<li>` 在 `<ol>`/`<ul>` 内时改用 `<div>` 标签，避免浏览器对翻译副本自动编号/加 bullet）。`findTextLeaf()` 选文本最长的后代节点获取代表性样式。`applyTextStyles()` 从文本叶节点复制 color、fontSize、fontWeight、lineHeight（不复制 fontFamily，CSS 全局设为 `sans-serif`）。重置高度约束使翻译可扩展/收缩。白色文字设为 opacity=1。去重检查 `nextElementSibling`。`removeTranslations()` 清除所有 `.itranslate-translation`。
 - **`src/content/observer.ts`** — MutationObserver 封装，默认 1000ms 防抖。
+- **`src/content/floating-panel.ts`** — 页面右侧竖型迷你面板。`createFloatingPanel()` 通过 `PanelActions` 依赖注入与 `index.ts` 解耦。`buildTranslateIcon()` 动态生成 SVG（`ballLabel` i18n 单字居中），`setTranslateState()` 管理翻译/翻译中/撤销三态图标和 class 切换。划词开关含 mini toggle + 笔刷图标。
 - **`src/shared/i18n.ts`** — 国际化辅助模块。`t(key, substitutions?)` 封装 `chrome.i18n.getMessage`，缺失 key 时回退显示 key 本身。`detectUILanguage()` 根据浏览器 UI 语言返回 `'en'` 或 `'zh_CN'`（**注意：该函数未被调用**，Chrome 扩展框架根据 `_locales/` 目录自动选择语言，无需手动切换）。
-- **`src/shared/theme.css`** — 极地冰川主题 CSS 变量。`:root` 上定义 `--itranslate-*` 变量（品牌色 `#6BAECF`、暖陶撤销色 `#CF8B6B`、米白基底 `#F5F3EF` 等）。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。
+- **`src/shared/theme.css`** — 极地冰川主题 CSS 变量。`:root` 上定义 `--itranslate-*` 变量（品牌色 `#6BAECF`、暖陶撤销色 `#E08860`、米白基底 `#F5F3EF` 等）。popup/settings 通过 `@import` 引入，内容脚本中通过 Vite `?inline` 导入为字符串、注入时创建 `<style>` 标签。
 - **`src/shared/storage.ts`** — `chrome.storage.sync` 封装。`getSettings()` 将已保存的值合并到默认值之上，新增字段对旧用户自动获得默认值。语言锁定不在此模块——per-tab lock 由 popup.ts 通过 `chrome.storage.session` 独立管理。
 - **`src/shared/constants.ts`** — `DEFAULT_SETTINGS`（含 `sourceLang`、`targetLang`、`floatingPanelEnabled: true` 等）、`LANGUAGE_OPTIONS`（6 种语言）、缓存 DB/store 名称、storage key。
 - **`src/shared/lang-detect.ts`** — 语言检测工具。`detectPageLang(tag)` 通过 `LANG_TAG_MAP`（zh/en/ja/ko/fr/de → 中/英/日/韩/法/德）将 BCP 47 标签映射为语言名。`detectLangFromText(text)` 扫描 Unicode 脚本范围（CJK、平假名、片假名、谚文）从正文检测语言，用于 `<html lang>` 缺失时的回退。
@@ -188,7 +189,7 @@ npx sharp-cli@latest -i icons/icon128.png -o icons/icon16.png resize 16 16
 
 ### Visual Design
 
-**主题：** `src/shared/theme.css` 定义极地冰川主题 — 米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF`/`#94C8E0` + 深炭灰文字 `#2A3038` + 暖陶撤销色 `#CF8B6B`。所有 CSS 变量以 `--itranslate-` 为前缀。各组件圆角统一为 **6px**（气泡/浮动面板/popup/设置页），特殊形状（toggle 胶囊、圆形按钮、Toast）保持原状。
+**主题：** `src/shared/theme.css` 定义极地冰川主题 — 米白基底 `#F5F3EF` + 冰川蓝 `#6BAECF` + spark 点睛蓝 `#1DA8D6` + 深炭灰文字 `#2A3038` + 暖陶撤销色 `#E08860`。所有 CSS 变量以 `--itranslate-` 为前缀。各组件圆角统一为 **6px**（气泡/浮动面板/popup/设置页），特殊形状（toggle 胶囊、圆形按钮、Toast）保持原状。
 
 **组件视觉：** Popup 主按钮冰川蓝渐变+深色文字（`#2A3038`），浮动面板按钮冰川蓝渐变+白色图标/文字。撤销按钮暖陶色渐变。`setButtonState()` / `setTranslateState()` 统一切换。划词翻译气泡（`itranslate-selection-bubble`）含品牌名拖拽手柄、原文折叠、译文分割线、复制/关闭按钮。触发小球（`itranslate-selection-ball`）悬停膨胀动画后展示气泡。翻译文本样式从原文元素动态复制，字体统一 `sans-serif`。`::selection` 高亮色通过 CSS 变量注入。
 

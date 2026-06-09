@@ -1,5 +1,6 @@
 {
   "appName":                { "message": "通译" },
+  "appSubtitle":            { "message": "内联双语 · 无缝阅读" },
   "settings":               { "message": "设置" },
   "swapLanguages":          { "message": "交换语言" },
   "translatePage":          { "message": "翻译此页面" },
