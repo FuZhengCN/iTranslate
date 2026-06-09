@@ -126,13 +126,9 @@ function createBall(rect: DOMRect, text: string): HTMLElement {
         console.log('[iTranslate] 🐛 ball timer fired but currentBall is null — skip');
         return;
       }
-      console.log('[iTranslate] 🐛 ball timer fired → calling showBubble');
+      console.log(`[iTranslate] ball timer fired → rect=(${rect.left.toFixed(0)},${rect.top.toFixed(0)})`);
       removeBall();
-      const sel = window.getSelection();
-      const currentRect = (sel && sel.rangeCount > 0)
-        ? getLastCharRect(sel)
-        : rect;
-      showBubble(currentRect, text);
+      showBubble(rect, text);
     }, 1000);
   });
 
@@ -200,7 +196,7 @@ function renderDictionaryResult(body: HTMLElement, jsonStr: string): void {
 }
 
 async function showBubble(rect: DOMRect, text: string): Promise<void> {
-  console.log(`[iTranslate] 🐛 showBubble: entry — mode=${(isSingleWord(text) && isEnglishText(text)) ? 'dictionary' : 'translate'} text="${text.slice(0, 40)}"`);
+  console.log(`[iTranslate] showBubble: mode=${(isSingleWord(text) && isEnglishText(text)) ? 'dictionary' : 'translate'} rect=(${rect.left.toFixed(0)},${rect.top.toFixed(0)},${rect.right.toFixed(0)},${rect.bottom.toFixed(0)}) text="${text.slice(0, 40)}"`);
 
   hideBubble();
 
@@ -356,7 +352,8 @@ function onMouseUp(e: MouseEvent): void {
   if (currentBubble && currentBubble.contains(e.target as Node)) {
     return;
   }
-
+  // Ball hover timer is active - do not kill the ball on accidental click
+  if (currentBall && ballHoverTimer) return;
   // Defer to next tick so getSelection reflects the completed selection
   setTimeout(() => {
     if (!selectionEnabled) return;
