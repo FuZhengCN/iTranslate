@@ -113,7 +113,7 @@
   width: 380px;
   max-width: calc(100vw - 24px);
   max-height: 360px;
-  background: linear-gradient(180deg, #FCFBF9 0%, #F5F3EF 100%);
+  background: linear-gradient(180deg, #FCFBF9 0%, var(--itranslate-brand-bg-soft) 100%);
   border: 1px solid rgba(107, 174, 207, 0.12);
   border-radius: 6px;
   box-shadow: 0 4px 20px rgba(42,48,56,0.06), 0 1px 4px rgba(107,174,207,0.08);
@@ -134,7 +134,7 @@
 /* ── Bar: 4px gradient line (part of drag area) ── */
 .itranslate-selection-bubble .itranslate-bubble-bar {
   height: 4px;
-  background: linear-gradient(90deg, #6BAECF, #94C8E0, #B8D9EA);
+  background: linear-gradient(90deg, var(--itranslate-brand-blue), var(--itranslate-brand-200));
   flex-shrink: 0;
   cursor: grab;
 }
@@ -157,7 +157,7 @@
 .itranslate-selection-bubble .itranslate-bubble-brand {
   font-size: 11px;
   font-weight: 600;
-  color: #6BAECF;
+  color: var(--itranslate-brand-blue);
   opacity: 0.7;
   letter-spacing: 0.3px;
 }
@@ -195,7 +195,7 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 22px;
-  background: linear-gradient(transparent, #F5F3EF);
+  background: linear-gradient(transparent, var(--itranslate-brand-bg-soft));
 }
 
 /* ── Translation text ── */
@@ -240,7 +240,7 @@
 .itranslate-bubble-btn:hover {
   background: var(--itranslate-brand-bg-soft);
   border-color: var(--itranslate-brand-200);
-  color: var(--itranslate-brand-purple);
+  color: var(--itranslate-brand-blue);
 }
 
 .itranslate-bubble-btn:active {
@@ -248,7 +248,7 @@
 }
 
 .itranslate-bubble-btn:focus-visible {
-  outline: 2px solid var(--itranslate-brand-200);
+  outline: 2px solid var(--itranslate-accent-spark);
   outline-offset: 1px;
 }
 
@@ -277,11 +277,11 @@
 
 .itranslate-bubble-close:active {
   background: var(--itranslate-brand-100);
-  color: var(--itranslate-brand-purple);
+  color: var(--itranslate-brand-blue);
 }
 
 .itranslate-bubble-close:focus-visible {
-  outline: 2px solid var(--itranslate-brand-200);
+  outline: 2px solid var(--itranslate-accent-spark);
   outline-offset: 1px;
 }
 
@@ -308,7 +308,7 @@
 .itranslate-dict-pos {
   font-size: 10px;
   font-weight: 600;
-  color: var(--itranslate-brand-purple);
+  color: var(--itranslate-brand-blue);
   background: var(--itranslate-brand-100);
   padding: 1px 7px;
   border-radius: 4px;
@@ -337,7 +337,7 @@
 .itranslate-dict-num-primary {
   font-size: 11px;
   font-weight: 700;
-  color: var(--itranslate-brand-purple);
+  color: var(--itranslate-brand-blue);
   flex-shrink: 0;
 }
 
@@ -368,7 +368,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--itranslate-gradient-accent);
+  background: var(--itranslate-accent-spark);
   box-shadow: 0 1px 4px var(--itranslate-accent-shadow);
   cursor: pointer;
   display: flex;
@@ -381,7 +381,7 @@
   opacity: 0;
   font-size: 8px;
   font-weight: 600;
-  color: #fff;
+  color: var(--itranslate-surface-white);
   line-height: 1;
   transition: opacity 0.3s ease;
 }
@@ -419,7 +419,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(180deg, #FCFBF9, #F5F3EF);
+  background: linear-gradient(180deg, #FCFBF9, var(--itranslate-brand-bg-soft));
   border: 1px solid rgba(107, 174, 207, 0.18);
   border-right: none;
   border-radius: 6px 0 0 6px;
@@ -441,7 +441,7 @@
   height: 28px;
   border-radius: 6px;
   background: var(--itranslate-gradient-brand);
-  color: #fff;
+  color: var(--itranslate-surface-white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -457,7 +457,7 @@
   filter: brightness(0.95);
 }
 .itranslate-float-btn-translate:focus-visible {
-  outline: 2px solid var(--itranslate-brand-200);
+  outline: 2px solid var(--itranslate-accent-spark);
   outline-offset: 1px;
 }
 
@@ -466,7 +466,7 @@
 }
 
 .itranslate-float-btn-translate.translating {
-  color: #fff;
+  color: var(--itranslate-surface-white);
   font-size: 20px;
   font-weight: 700;
   line-height: 1;
@@ -491,7 +491,7 @@
 }
 
 .itranslate-float-selection:focus-visible {
-  outline: 2px solid var(--itranslate-brand-200);
+  outline: 2px solid var(--itranslate-accent-spark);
   outline-offset: 1px;
   border-radius: 4px;
 }
@@ -512,13 +512,13 @@
 }
 
 .itranslate-float-toggle.active {
-  background: var(--itranslate-gradient-brand);
+  background: var(--itranslate-accent-spark);
 }
 
 .itranslate-float-toggle-knob {
   width: 11px;
   height: 11px;
-  background: #fff;
+  background: var(--itranslate-surface-white);
   border-radius: 50%;
   position: absolute;
   top: 1.5px;

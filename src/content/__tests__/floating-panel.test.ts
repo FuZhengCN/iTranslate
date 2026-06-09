@@ -145,7 +145,7 @@ describe('setSelectionState', () => {
     expect(toggle.classList.contains('active')).toBe(true);
 
     const icon = document.querySelector('.itranslate-float-selection-icon')!;
-    expect(icon.getAttribute('stroke')).toBe('#6BAECF');
+    expect((icon as SVGElement).style.stroke).toBe('var(--itranslate-brand-blue)');
   });
 
   it('sets toggle to inactive and icon stroke to gray', () => {
@@ -162,7 +162,7 @@ describe('setSelectionState', () => {
     expect(toggle.classList.contains('active')).toBe(false);
 
     const icon = document.querySelector('.itranslate-float-selection-icon')!;
-    expect(icon.getAttribute('stroke')).toBe('#bbb');
+    expect((icon as SVGElement).style.stroke).toBe('#bbb');
   });
 });
 

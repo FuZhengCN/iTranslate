@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iTranslate 配色方案 — 极地冰川主题</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand-indigo: #94C8E0;
+    --brand-blue: #6BAECF;
+    --brand-hover: #62B8D9;
+    --brand-bg-soft: #F5F3EF;
+    --brand-100: #E8F4F8;
+    --brand-200: #B8DCEB;
+    --surface-white: #ffffff;
+    --surface-inverse: #2A3038;
+    --surface-hover: #EDEAE6;
+    --text-primary: #2A3038;
+    --text-secondary: #5A6270;
+    --text-muted: #9BA8B5;
+    --text-disabled: #C5CDD5;
+    --border-primary: #D9E4EA;
+    --success-bg: #f0fff4;
+    --success-border: #c6f6d5;
+    --success-text: #276749;
+    --error-bg: #fff5f5;
+    --error-border: #feb2b2;
+    --error-text: #c53030;
+    --close-color: #9BA8B5;
+  }
+
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #F5F3EF;
+    color: #2A3038;
+    line-height: 1.6;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #6BAECF, #62B8D9);
+    color: #2A3038;
+    padding: 56px 24px 48px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.5px; }
+  .hero .sub { margin-top: 8px; font-size: 16px; opacity: 0.75; }
+  .hero .badge {
+    display: inline-block; margin-top: 16px; padding: 4px 14px;
+    background: rgba(42,48,56,0.10); border-radius: 20px; font-size: 13px;
+  }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .section { margin-bottom: 48px; }
+  .section h2 {
+    font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #2A3038;
+  }
+  .section .desc { font-size: 14px; color: #5A6270; margin-bottom: 20px; }
+
+  /* Swatch Grid */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .swatch {
+    background: #fff; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .swatch:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
+  .swatch .chip { height: 80px; position: relative; }
+  .swatch .info { padding: 12px 14px; }
+  .swatch .name { font-size: 13px; font-weight: 600; color: #2A3038; }
+  .swatch .hex  { font-size: 12px; color: #9BA8B5; margin-top: 2px; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; }
+  .swatch .var  { font-size: 11px; color: #C5CDD5; margin-top: 1px; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; word-break: break-all; }
+
+  /* Gradient cards are wider */
+  .gradients { display: flex; flex-direction: column; gap: 12px; }
+  .grad-card {
+    border-radius: 10px; overflow: hidden; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: flex; align-items: stretch;
+  }
+  .grad-card .chip { width: 200px; min-height: 80px; flex-shrink: 0; }
+  .grad-card .info { padding: 16px 18px; display: flex; flex-direction: column; justify-content: center; }
+  .grad-card .name { font-size: 14px; font-weight: 600; color: #2A3038; }
+  .grad-card .val  { font-size: 12px; color: #9BA8B5; margin-top: 2px; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; }
+
+  /* Semantic */
+  .semantic-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .semantic-card {
+    flex: 1; min-width: 280px; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .semantic-card .header { padding: 12px 16px; font-weight: 600; font-size: 14px; }
+  .semantic-card .body { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .semantic-card .row { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .semantic-chip { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; }
+
+  /* Text scale */
+  .text-scale { display: flex; flex-direction: column; gap: 8px; }
+  .text-row {
+    display: flex; align-items: center; gap: 16px; padding: 12px 16px;
+    background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .text-row .label { min-width: 140px; font-size: 13px; font-weight: 600; color: #5A6270; }
+  .text-row .preview { font-size: 20px; flex: 1; }
+  .text-row .val { font-size: 12px; color: #C5CDD5; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; }
+
+  /* Surface */
+  .surface-demo { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .surface-card {
+    border-radius: 10px; padding: 20px 16px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    font-size: 13px; font-weight: 600;
+  }
+
+  /* Tokens reference */
+  .token-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .token-table th { text-align: left; padding: 8px 12px; color: #9BA8B5; font-weight: 500; border-bottom: 1px solid #D9E4EA; }
+  .token-table td { padding: 8px 12px; border-bottom: 1px solid #F5F3EF; }
+  .token-table .dot { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; margin-right: 8px; border: 1px solid rgba(0,0,0,0.08); }
+  .token-table code { font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; font-size: 12px; color: #5A6270; }
+  .token-table .usage { color: #9BA8B5; font-size: 12px; }
+
+  footer {
+    text-align: center; padding: 32px 24px; color: #9BA8B5; font-size: 13px;
+    border-top: 1px solid #D9E4EA;
+  }
+
+  /* Usage badges inline */
+  .usage-tag {
+    display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px;
+    background: #E8F4F8; color: #5A6270; margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>iTranslate 配色方案</h1>
+  <p class="sub">极地冰川主题 · Polar Glacier Design System</p>
+  <span class="badge">v1.4.x · 设计 tokens 参考</span>
+</div>
+
+<div class="container">
+
+  <!-- Brand Primitives -->
+  <div class="section">
+    <h2>品牌主色 <span class="usage-tag">Brand Primitives</span></h2>
+    <p class="desc">冰川蓝系——冷调亲和，传递可靠与专业感。</p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#6BAECF;"></div>
+        <div class="info">
+          <div class="name">品牌主蓝</div>
+          <div class="hex">#6BAECF</div>
+          <div class="var">--itranslate-brand-blue</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#62B8D9;"></div>
+        <div class="info">
+          <div class="name">悬停态</div>
+          <div class="hex">#62B8D9</div>
+          <div class="var">--itranslate-brand-*-hover</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#4FA8CC;"></div>
+        <div class="info">
+          <div class="name">渐变深端</div>
+          <div class="hex">#4FA8CC</div>
+          <div class="var">gradient-brand-hover 终点</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accent Spark -->
+  <div class="section">
+    <h2>点睛湖蓝 <span class="usage-tag">Accent Spark</span></h2>
+    <p class="desc">高饱和湖蓝（参考手表 #24A8D0），仅用于 toggle 激活态、小球、焦点环等微型交互元素。</p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#1DA8D6;"></div>
+        <div class="info">
+          <div class="name">点睛蓝</div>
+          <div class="hex">#1DA8D6</div>
+          <div class="var">--itranslate-accent-spark</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#1898C2;"></div>
+        <div class="info">
+          <div class="name">点睛蓝悬停</div>
+          <div class="hex">#1898C2</div>
+          <div class="var">--itranslate-accent-spark-hover</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accent Warm -->
+  <div class="section">
+    <h2>暖橘橙 <span class="usage-tag">Accent Warm</span></h2>
+    <p class="desc">暖橘橙点缀（参考手表 #F28A38），用于撤销按钮渐变起点和细节强调。</p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#E08860;"></div>
+        <div class="info">
+          <div class="name">暖橘橙</div>
+          <div class="hex">#E08860</div>
+          <div class="var">--itranslate-accent-warm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gradients -->
+  <div class="section">
+    <h2>渐变 <span class="usage-tag">Gradients</span></h2>
+    <p class="desc">按钮、CTA、撤销操作的渐变背景。</p>
+    <div class="gradients">
+      <div class="grad-card">
+        <div class="chip" style="background:linear-gradient(135deg, #6BAECF, #62B8D9);"></div>
+        <div class="info">
+          <div class="name">翻译按钮渐变</div>
+          <div class="val">linear-gradient(135deg, #6BAECF, #62B8D9)</div>
+        </div>
+      </div>
+      <div class="grad-card">
+        <div class="chip" style="background:linear-gradient(135deg, #62B8D9, #4FA8CC);"></div>
+        <div class="info">
+          <div class="name">翻译按钮悬停渐变</div>
+          <div class="val">linear-gradient(135deg, #62B8D9, #4FA8CC)</div>
+        </div>
+      </div>
+      <div class="grad-card">
+        <div class="chip" style="background:linear-gradient(135deg, #E08860, #E8A080);"></div>
+        <div class="info">
+          <div class="name">撤销按钮渐变 — 暖橘橙</div>
+          <div class="val">linear-gradient(135deg, #E08860, #E8A080)</div>
+        </div>
+      </div>
+      <div class="grad-card">
+        <div class="chip" style="background:linear-gradient(90deg, #6BAECF, #62B8D9);"></div>
+        <div class="info">
+          <div class="name">强调渐变</div>
+          <div class="val">linear-gradient(90deg, #6BAECF, #62B8D9)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alpha Variants -->
+  <div class="section">
+    <h2>品牌透明度变体 <span class="usage-tag">Alpha Variants</span></h2>
+    <p class="desc">用于背景、边框、选区高亮等半透明场景。</p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#E8F4F8;"></div>
+        <div class="info"><div class="name">品牌 100</div><div class="hex">#E8F4F8</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#B8DCEB;"></div>
+        <div class="info"><div class="name">品牌 200</div><div class="hex">#B8DCEB</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:rgba(107,174,207,0.12);"></div>
+        <div class="info"><div class="name">强调背景 12%</div><div class="hex">rgba(107,174,207,0.12)</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:rgba(107,174,207,0.25);"></div>
+        <div class="info"><div class="name">悬停背景 25%</div><div class="hex">rgba(107,174,207,0.25)</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:rgba(148,200,224,0.40);"></div>
+        <div class="info"><div class="name">选区高亮 40%</div><div class="hex">rgba(148,200,224,0.40)</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:rgba(148,200,224,0.50);"></div>
+        <div class="info"><div class="name">边框 50%</div><div class="hex">rgba(148,200,224,0.50)</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:rgba(107,174,207,0.28);"></div>
+        <div class="info"><div class="name">阴影 28%</div><div class="hex">rgba(107,174,207,0.28)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Surfaces -->
+  <div class="section">
+    <h2>表面 / 背景 <span class="usage-tag">Surfaces</span></h2>
+    <p class="desc">页面容器、卡片、面板的背景色。</p>
+    <div class="surface-demo">
+      <div class="surface-card" style="background:#ffffff; border:1px solid #D9E4EA;">
+        <div style="color:#2A3038;">纯白</div>
+        <div style="font-size:11px;color:#9BA8B5;margin-top:4px;font-weight:400;">#FFFFFF<br>卡片背景</div>
+      </div>
+      <div class="surface-card" style="background:#F5F3EF;">
+        <div style="color:#2A3038;">米白基底</div>
+        <div style="font-size:11px;color:#9BA8B5;margin-top:4px;font-weight:400;">#F5F3EF<br>页面底色</div>
+      </div>
+      <div class="surface-card" style="background:#EDEAE6;">
+        <div style="color:#2A3038;">悬停面</div>
+        <div style="font-size:11px;color:#9BA8B5;margin-top:4px;font-weight:400;">#EDEAE6<br>列表行 hover</div>
+      </div>
+      <div class="surface-card" style="background:#E6E3DE;">
+        <div style="color:#2A3038;">中性过渡灰</div>
+        <div style="font-size:11px;color:#9BA8B5;margin-top:4px;font-weight:400;">#E6E3DE<br>刻度环过渡</div>
+      </div>
+      <div class="surface-card" style="background:#2A3038;">
+        <div style="color:#F5F3EF;">深炭灰</div>
+        <div style="font-size:11px;color:#9BA8B5;margin-top:4px;font-weight:400;">#2A3038<br>深色面板</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text Colors -->
+  <div class="section">
+    <h2>文字层级 <span class="usage-tag">Text</span></h2>
+    <p class="desc">四级灰阶，覆盖主标题到禁用态。</p>
+    <div class="text-scale">
+      <div class="text-row">
+        <span class="label">主文字</span>
+        <span class="preview" style="color:#2A3038;font-weight:600;">北极冰川 · Polar Glacier</span>
+        <span class="val">#2A3038</span>
+      </div>
+      <div class="text-row">
+        <span class="label">次要文字</span>
+        <span class="preview" style="color:#5A6270;">北极冰川 · Polar Glacier</span>
+        <span class="val">#5A6270</span>
+      </div>
+      <div class="text-row">
+        <span class="label">辅助文字</span>
+        <span class="preview" style="color:#9BA8B5;">北极冰川 · Polar Glacier</span>
+        <span class="val">#9BA8B5</span>
+      </div>
+      <div class="text-row">
+        <span class="label">禁用文字</span>
+        <span class="preview" style="color:#C5CDD5;">北极冰川 · Polar Glacier</span>
+        <span class="val">#C5CDD5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Borders -->
+  <div class="section">
+    <h2>边框 <span class="usage-tag">Borders</span></h2>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#fff; display:flex; align-items:center; justify-content:center;">
+          <div style="width:80px;height:40px;border:2px solid #D9E4EA;border-radius:6px;"></div>
+        </div>
+        <div class="info"><div class="name">主边框</div><div class="hex">#D9E4EA</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Semantic Colors -->
+  <div class="section">
+    <h2>语义色 <span class="usage-tag">Semantic</span></h2>
+    <p class="desc">成功、错误状态的背景 + 边框 + 文字三件套。</p>
+    <div class="semantic-row">
+      <div class="semantic-card" style="background:#fff;">
+        <div class="header" style="color:#276749;">✓ 成功 Success</div>
+        <div class="body">
+          <div class="row"><div class="semantic-chip" style="background:#f0fff4;border:1px solid #c6f6d5;"></div> 背景 #f0fff4</div>
+          <div class="row"><div class="semantic-chip" style="background:#c6f6d5;"></div> 边框 #c6f6d5</div>
+          <div class="row"><div class="semantic-chip" style="background:#276749;"></div> 文字 #276749</div>
+          <div class="row" style="margin-top:4px;">
+            <div class="semantic-chip" style="background:#059669;"></div> 复制成功 #059669
+          </div>
+        </div>
+      </div>
+      <div class="semantic-card" style="background:#fff;">
+        <div class="header" style="color:#c53030;">✗ 错误 Error</div>
+        <div class="body">
+          <div class="row"><div class="semantic-chip" style="background:#fff5f5;border:1px solid #feb2b2;"></div> 背景 #fff5f5</div>
+          <div class="row"><div class="semantic-chip" style="background:#feb2b2;"></div> 边框 #feb2b2</div>
+          <div class="row"><div class="semantic-chip" style="background:#c53030;"></div> 文字 #c53030</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shadows & Misc -->
+  <div class="section">
+    <h2>阴影 & 杂项 <span class="usage-tag">Misc</span></h2>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:12px; color:#9BA8B5;">
+          微阴影
+        </div>
+        <div class="info">
+          <div class="name">卡片阴影 sm</div>
+          <div class="hex">0 1px 3px rgba(0,0,0,0.06)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:12px; color:#9BA8B5;">
+          气泡阴影
+        </div>
+        <div class="info">
+          <div class="name">气泡阴影</div>
+          <div class="hex">0 8px 32px rgba(0,0,0,0.10)</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#fff; display:flex; align-items:center; justify-content:center;">
+          <div style="width:20px;height:20px;border-radius:50%;background:#9BA8B5;"></div>
+        </div>
+        <div class="info"><div class="name">关闭按钮</div><div class="hex">#9BA8B5</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#2A3038; display:flex; align-items:center; justify-content:center;">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.3);"></div>
+        </div>
+        <div class="info"><div class="name">Toast 圆点</div><div class="hex">rgba(255,255,255,0.3)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Token Table -->
+  <div class="section">
+    <h2>完整 Token 清单</h2>
+    <p class="desc">所有 CSS 自定义属性一览。</p>
+    <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+    <table class="token-table">
+      <thead>
+        <tr><th>CSS 变量</th><th>色值</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>--itranslate-brand-blue</code></td><td><span class="dot" style="background:#6BAECF;"></span> #6BAECF</td><td class="usage">品牌主蓝</td></tr>
+        <tr><td><code>--itranslate-brand-blue-hover</code></td><td><span class="dot" style="background:#62B8D9;"></span> #62B8D9</td><td class="usage">悬停态</td></tr>
+        <tr><td><code>--itranslate-gradient-brand</code></td><td><span class="dot" style="background:linear-gradient(135deg,#6BAECF,#62B8D9);"></span> 135deg, #6BAECF→#62B8D9</td><td class="usage">翻译按钮渐变</td></tr>
+        <tr><td><code>--itranslate-gradient-brand-hover</code></td><td><span class="dot" style="background:linear-gradient(135deg,#62B8D9,#4FA8CC);"></span> 135deg, #62B8D9→#4FA8CC</td><td class="usage">翻译按钮 hover</td></tr>
+        <tr><td><code>--itranslate-gradient-accent</code></td><td><span class="dot" style="background:linear-gradient(90deg,#6BAECF,#62B8D9);"></span> 90deg, #6BAECF→#62B8D9</td><td class="usage">强调渐变</td></tr>
+        <tr><td><code>--itranslate-gradient-undo</code></td><td><span class="dot" style="background:linear-gradient(135deg,#E08860,#E8A080);"></span> 135deg, #E08860→#E8A080</td><td class="usage">撤销按钮渐变（暖橘橙）</td></tr>
+        <tr><td><code>--itranslate-accent-spark</code></td><td><span class="dot" style="background:#1DA8D6;"></span> #1DA8D6</td><td class="usage">点睛湖蓝（toggle/小球/焦点环）</td></tr>
+        <tr><td><code>--itranslate-accent-spark-hover</code></td><td><span class="dot" style="background:#1898C2;"></span> #1898C2</td><td class="usage">点睛蓝悬停态</td></tr>
+        <tr><td><code>--itranslate-accent-warm</code></td><td><span class="dot" style="background:#E08860;"></span> #E08860</td><td class="usage">暖橘橙强调色</td></tr>
+        <tr><td><code>--itranslate-surface-neutral</code></td><td><span class="dot" style="background:#E6E3DE;"></span> #E6E3DE</td><td class="usage">中性灰过渡面</td></tr>
+        <tr><td><code>--itranslate-brand-bg-soft</code></td><td><span class="dot" style="background:#F5F3EF;"></span> #F5F3EF</td><td class="usage">页面底色</td></tr>
+        <tr><td><code>--itranslate-brand-100</code></td><td><span class="dot" style="background:#E8F4F8;"></span> #E8F4F8</td><td class="usage">品牌浅底色</td></tr>
+        <tr><td><code>--itranslate-brand-200</code></td><td><span class="dot" style="background:#B8DCEB;"></span> #B8DCEB</td><td class="usage">品牌强调底色</td></tr>
+        <tr><td><code>--itranslate-accent-bg-subtle</code></td><td><span class="dot" style="background:rgba(107,174,207,0.12);"></span> rgba(107,174,207,0.12)</td><td class="usage">微强调背景</td></tr>
+        <tr><td><code>--itranslate-accent-bg-hover</code></td><td><span class="dot" style="background:rgba(107,174,207,0.25);"></span> rgba(107,174,207,0.25)</td><td class="usage">悬停强调背景</td></tr>
+        <tr><td><code>--itranslate-accent-selection</code></td><td><span class="dot" style="background:rgba(148,200,224,0.40);"></span> rgba(148,200,224,0.40)</td><td class="usage">选区高亮</td></tr>
+        <tr><td><code>--itranslate-accent-border</code></td><td><span class="dot" style="background:rgba(148,200,224,0.50);"></span> rgba(148,200,224,0.50)</td><td class="usage">品牌边框</td></tr>
+        <tr><td><code>--itranslate-accent-border-hover</code></td><td><span class="dot" style="background:rgba(107,174,207,0.55);"></span> rgba(107,174,207,0.55)</td><td class="usage">品牌边框 hover</td></tr>
+        <tr><td><code>--itranslate-accent-shadow</code></td><td><span class="dot" style="background:rgba(107,174,207,0.28);"></span> rgba(107,174,207,0.28)</td><td class="usage">品牌阴影</td></tr>
+        <tr><td><code>--itranslate-surface-white</code></td><td><span class="dot" style="background:#fff; border:1px solid #ddd;"></span> #FFFFFF</td><td class="usage">卡片/面板背景</td></tr>
+        <tr><td><code>--itranslate-surface-inverse</code></td><td><span class="dot" style="background:#2A3038;"></span> #2A3038</td><td class="usage">深色面板</td></tr>
+        <tr><td><code>--itranslate-surface-hover</code></td><td><span class="dot" style="background:#EDEAE6;"></span> #EDEAE6</td><td class="usage">列表行 hover</td></tr>
+        <tr><td><code>--itranslate-surface-secondary-hover</code></td><td><span class="dot" style="background:#F5F3EF;"></span> #F5F3EF</td><td class="usage">次级 hover</td></tr>
+        <tr><td><code>--itranslate-text-primary</code></td><td><span class="dot" style="background:#2A3038;"></span> #2A3038</td><td class="usage">主文字</td></tr>
+        <tr><td><code>--itranslate-text-secondary</code></td><td><span class="dot" style="background:#5A6270;"></span> #5A6270</td><td class="usage">次要文字</td></tr>
+        <tr><td><code>--itranslate-text-muted</code></td><td><span class="dot" style="background:#9BA8B5;"></span> #9BA8B5</td><td class="usage">辅助文字</td></tr>
+        <tr><td><code>--itranslate-text-disabled</code></td><td><span class="dot" style="background:#C5CDD5;"></span> #C5CDD5</td><td class="usage">禁用文字</td></tr>
+        <tr><td><code>--itranslate-text-translated</code></td><td><span class="dot" style="background:#2A3038;"></span> #2A3038</td><td class="usage">翻译译文文字</td></tr>
+        <tr><td><code>--itranslate-text-on-brand</code></td><td><span class="dot" style="background:#2A3038;"></span> #2A3038</td><td class="usage">品牌色上文字</td></tr>
+        <tr><td><code>--itranslate-text-icon</code></td><td><span class="dot" style="background:#5A6270;"></span> #5A6270</td><td class="usage">图标色</td></tr>
+        <tr><td><code>--itranslate-border-primary</code></td><td><span class="dot" style="background:#D9E4EA;"></span> #D9E4EA</td><td class="usage">主边框</td></tr>
+        <tr><td><code>--itranslate-border-footer</code></td><td><span class="dot" style="background:#D9E4EA;"></span> #D9E4EA</td><td class="usage">底部分隔线</td></tr>
+        <tr><td><code>--itranslate-success-bg</code></td><td><span class="dot" style="background:#f0fff4;"></span> #f0fff4</td><td class="usage">成功背景</td></tr>
+        <tr><td><code>--itranslate-success-border</code></td><td><span class="dot" style="background:#c6f6d5;"></span> #c6f6d5</td><td class="usage">成功边框</td></tr>
+        <tr><td><code>--itranslate-success-text</code></td><td><span class="dot" style="background:#276749;"></span> #276749</td><td class="usage">成功文字</td></tr>
+        <tr><td><code>--itranslate-error-bg</code></td><td><span class="dot" style="background:#fff5f5;"></span> #fff5f5</td><td class="usage">错误背景</td></tr>
+        <tr><td><code>--itranslate-error-border</code></td><td><span class="dot" style="background:#feb2b2;"></span> #feb2b2</td><td class="usage">错误边框</td></tr>
+        <tr><td><code>--itranslate-error-text</code></td><td><span class="dot" style="background:#c53030;"></span> #c53030</td><td class="usage">错误文字</td></tr>
+        <tr><td><code>--itranslate-copy-success-text</code></td><td><span class="dot" style="background:#059669;"></span> #059669</td><td class="usage">复制成功文字</td></tr>
+        <tr><td><code>--itranslate-copy-success-border</code></td><td><span class="dot" style="background:#a7f3d0;"></span> #a7f3d0</td><td class="usage">复制成功边框</td></tr>
+        <tr><td><code>--itranslate-close-color</code></td><td><span class="dot" style="background:#9BA8B5;"></span> #9BA8B5</td><td class="usage">关闭按钮色</td></tr>
+        <tr><td><code>--itranslate-toast-dot-bg</code></td><td><span class="dot" style="background:rgba(255,255,255,0.3);"></span> rgba(255,255,255,0.3)</td><td class="usage">Toast 圆点</td></tr>
+        <tr><td><code>--itranslate-shadow-sm</code></td><td><span class="dot" style="background:rgba(0,0,0,0.06);"></span> 0 1px 3px rgba(0,0,0,0.06)</td><td class="usage">卡片阴影</td></tr>
+        <tr><td><code>--itranslate-shadow-bubble</code></td><td><span class="dot" style="background:rgba(0,0,0,0.10);"></span> 0 8px 32px rgba(0,0,0,0.10)</td><td class="usage">气泡阴影</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  iTranslate · Polar Glacier Design System · 共 44 个设计 token
+</footer>
+
+</body>
+</html>

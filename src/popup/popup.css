@@ -28,7 +28,7 @@ body {
 .logo {
   font-size: 16px;
   font-weight: 700;
-  background: var(--itranslate-gradient-brand);
+  background: var(--itranslate-gradient-spark);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -49,7 +49,7 @@ body {
 
 .icon-btn:hover {
   background: var(--itranslate-brand-bg-soft);
-  color: var(--itranslate-brand-purple);
+  color: var(--itranslate-brand-blue);
   border-color: var(--itranslate-accent-border-hover);
 }
 
@@ -82,7 +82,7 @@ body {
 
 .lang-select:focus {
   outline: none;
-  border-color: var(--itranslate-brand-purple);
+  border-color: var(--itranslate-accent-spark);
   box-shadow: 0 0 0 2px var(--itranslate-accent-bg-hover);
 }
 
@@ -92,7 +92,7 @@ body {
   background: var(--itranslate-accent-bg-subtle);
   border: 1px solid var(--itranslate-accent-border);
   border-radius: 4px;
-  color: var(--itranslate-brand-purple);
+  color: var(--itranslate-brand-blue);
   font-size: 14px;
   cursor: pointer;
   display: flex;
@@ -157,7 +157,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--itranslate-brand-purple);
+  background: var(--itranslate-accent-spark);
   opacity: 0.8;
 }
 
@@ -165,7 +165,7 @@ body {
   position: relative;
   width: 40px;
   height: 22px;
-  background: var(--itranslate-gradient-brand);
+  background: var(--itranslate-accent-spark);
   border-radius: 11px;
   cursor: pointer;
   border: none;

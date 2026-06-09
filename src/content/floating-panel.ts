@@ -100,5 +100,5 @@ export function setSelectionState(enabled: boolean): void {
   const toggle = panelEl.querySelector('.itranslate-float-toggle');
   const icon = panelEl.querySelector('.itranslate-float-selection-icon');
   if (toggle) toggle.classList.toggle('active', enabled);
-  if (icon) icon.setAttribute('stroke', enabled ? '#6BAECF' : '#bbb');
+  if (icon) (icon as SVGElement).style.stroke = enabled ? 'var(--itranslate-brand-blue)' : '#bbb';
 }
